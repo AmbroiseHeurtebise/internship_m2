@@ -1,0 +1,1 @@
+In the file test_mvica_gauss_sources.py, you can create your own sources using Gaussian r.v. to model the time between two successive peaks and the sinus function to model the shape of the curves outside of the peaks. 
