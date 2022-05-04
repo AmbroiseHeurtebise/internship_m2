@@ -1,4 +1,3 @@
-# %%
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -6,7 +5,7 @@ import time
 from picard import amari_distance
 from multiviewica import multiviewica
 
-# %%
+
 def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_height, noise):
     """
     Create random sources.
@@ -68,11 +67,8 @@ def create_model(n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_h
     return X, A, S, N
 
 
-def initialize_model(sup_delay):
+def initialize_model(n_subjects, p, sup_delay):
     # Parameters
-    n_subjects = 20
-    p = 3
-    n = 200
     sigma = 0.1
     delay = np.random.randint(0, sup_delay, n_subjects)
     mu = 10 * np.random.randn(p) + 40  # np.repeat(40, p)
@@ -82,7 +78,7 @@ def initialize_model(sup_delay):
     peaks_height = 10
     sources_height = 2 * np.random.rand(p) + 0.5
     noise = np.random.rand(p) + 0.5
-    return n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height, sources_height, noise
+    return sigma, delay, mu, var, window_length, peaks_height, sources_height, noise
 
 
 def plot_sources(S):
@@ -132,7 +128,7 @@ def plot_correlation_S(S, S_approx, delay):
     plt.colorbar()
 
 
-def loop_average_amari_distance(sup_delay=1, verbose=False):
+def loop_average_amari_distance(n_subjects, p, n, sup_delay=1, verbose=False):
     """
     Create a model and compute the average Amari distance between A_i and W_i. 
 
@@ -144,7 +140,7 @@ def loop_average_amari_distance(sup_delay=1, verbose=False):
         In order to plot the sources and the permutation matrices or not. 
     """
     # Initialization
-    n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height, sources_height, noise = initialize_model(sup_delay)
+    sigma, delay, mu, var, window_length, peaks_height, sources_height, noise = initialize_model(n_subjects, p, sup_delay)
 
     # Create model
     start = time.time()
@@ -166,11 +162,13 @@ def loop_average_amari_distance(sup_delay=1, verbose=False):
 
     return mean_amari_distances
 
-# %%
+n_subjects = 20
+p = 20
+n = 1000
 amari_distance_delay = []
 delay = np.arange(1, 15)
 for i in delay:
-    mean_amari_distance = loop_average_amari_distance(sup_delay=i)
+    mean_amari_distance = loop_average_amari_distance(n_subjects, p, n, sup_delay=i)
     amari_distance_delay.append(mean_amari_distance)
     print("Average Amari distance with delay {} : {:.5f} \n".format(i, np.mean(mean_amari_distance)))
 
@@ -178,7 +176,4 @@ plt.plot(amari_distance_delay)
 plt.title("Average Amari distance wrt the quantity of delay")
 plt.xlabel('Quantity of delay')
 plt.ylabel('Average Amari distance')
-plt.savefig('amar_dist2.pdf')
 plt.show()
-
-# %%
