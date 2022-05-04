@@ -92,6 +92,21 @@ def plot_sources(S):
     plt.show()
 
 
+def new_amari(W_approx, A):
+    n_subjects = np.shape(A)[0]
+    p = np.shape(A)[1]
+    P = np.zeros((p, p))
+    for i in range(n_subjects):
+        P += np.dot(W_approx[i], A[i])
+    P /= n_subjects
+    P = np.abs(P)
+    if np.max(P) == 0:
+        return 0
+    dist = np.sum(np.sum(P / np.outer(np.max(P, axis=1), np.ones(p)), axis=1) - 1)
+    dist += np.sum(np.sum(P / np.outer(np.ones(p), np.max(P, axis=0)), axis=0) - 1)
+    return dist
+
+
 def ICA_amari(X, A):
     # ICA
     start = time.time()
@@ -160,20 +175,39 @@ def loop_average_amari_distance(n_subjects, p, n, sup_delay=1, verbose=False):
         plot_permutation_matrices(W_approx, A, amari_distances)
         plot_correlation_S(S, S_approx, delay)
 
-    return mean_amari_distances
+    return mean_amari_distances, W_approx, A
 
 n_subjects = 20
 p = 20
 n = 1000
 amari_distance_delay = []
-delay = np.arange(1, 15)
+new_amari_distance_delay = []
+delay = np.arange(1, 30)
 for i in delay:
-    mean_amari_distance = loop_average_amari_distance(n_subjects, p, n, sup_delay=i)
+    mean_amari_distance, W_approx, A = loop_average_amari_distance(n_subjects, p, n, sup_delay=i)
     amari_distance_delay.append(mean_amari_distance)
-    print("Average Amari distance with delay {} : {:.5f} \n".format(i, np.mean(mean_amari_distance)))
+    print("Average Amari distance with delay {} : {:.5f}".format(i, np.mean(mean_amari_distance)))
+    new_amari_distance = new_amari(W_approx, A)
+    new_amari_distance_delay.append(new_amari_distance)
+    print("New Amari distance with delay {} : {:.5f} \n".format(i, np.mean(new_amari_distance)))
 
-plt.plot(amari_distance_delay)
+"""plt.plot(amari_distance_delay)
 plt.title("Average Amari distance wrt the quantity of delay")
 plt.xlabel('Quantity of delay')
 plt.ylabel('Average Amari distance')
+plt.show()"""
+
+fig, ax1 = plt.subplots()
+color = 'tab:red'
+ax1.set_xlabel('Quantity of delay')  
+ax1.set_ylabel('Average Amari distance', color = color)  
+ax1.plot(amari_distance_delay, color = color)  
+ax1.tick_params(axis ='y', labelcolor = color)  
+ax2 = ax1.twinx()
+color = 'tab:green'
+ax2.set_ylabel('New Amari distance', color = color)
+ax2.plot(new_amari_distance_delay, color = color)
+ax2.tick_params(axis ='y', labelcolor = color)
+plt.title('Average and new Amari distances wrt the quantity of delay', fontweight ="bold")
+plt.savefig('new_amari.pdf')
 plt.show()
