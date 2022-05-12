@@ -8,4 +8,4 @@ The effect of this delay on the estimated unmixing matrices is represented in th
 
 Then, the file ```amari_delay_comparison_2.py``` show the Amari distance for the 3 algorithms with respect to the quantity of delay. The idea is that MVICA outperforms GroupICA and UniviewICA when there is no delay, but it isn't the case anymore when sufficient delay is introduced. 
 
-Finally, we create a new distance in ```plot_combined_distance.py```. It is a combination of the Amari distance between W^i and A^i and the MSE between W^i A^i and W^j A^j. 
+Finally, we create a new distance in ```plot_combined_distance.py```. It is a combination of the Amari distance between W^i and A^i and the MSE between W^i A^i and W^j A^j. Unlike the Amari distance alone, this distance also takes into account the fact that the matrices W^i A^i should be the same for all the subjects. 
