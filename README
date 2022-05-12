@@ -1,7 +1,5 @@
-In the file test_mvica_gauss_sources.py, you can create your own sources using Gaussian r.v. to model the time between two successive peaks and the sinus function to model the shape of the curves outside of the peaks. 
+In all the four Python files, you can create your own sources using Gaussian r.v. to model the time between two successive peaks and the sinus function to model the shape of the curves outside of the peaks. The plot_sources.py file will show you how these sources behave.  
 
-Once the sources are generated, you can compute the signals of each subjects, using mixing matrices sampled from a Gaussian distributions. 
+Once the sources are generated, you can compute the signals of each subjects, using mixing matrices sampled from a Gaussian distributions. Then, you can perform ICA in order to reconstruct the sources. Three different ICA algorithms are proposed: MVICA, GroupICA and UniviewICA. 
 
-Then, you can perform ICA in order to reconstruct the sources. 
-
-The evaluation of the quality of the reconstruction is done using the Amari distance. There are two different ways of using this distance, as shown at the end of the file. 
+The evaluation of the quality of the reconstruction is done using the Amari distance. The quality of the reconstruction will depend on the lag of the subjects. 
