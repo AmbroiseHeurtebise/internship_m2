@@ -84,7 +84,7 @@ def plot_sources(S):
     plt.title('Sources of the model')
     plt.xlabel('Samples')
     plt.yticks([])
-    # plt.savefig('sources.pdf')
+    plt.savefig('sources.pdf')
     plt.show()
 
 
