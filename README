@@ -1,3 +1,5 @@
+This README should be updated. 
+
 In all the 4 Python files, you can create your own sources using Gaussian r.v. to model the intervals between two successive peaks and the sinus function to model the shape of the curves outside the peaks. The ```plot_sources.py``` file will show you how these sources behave.  
 
 Once the sources are generated, you can compute the signals of each subject, using mixing matrices sampled from a Gaussian distribution. Then, you can perform ICA in order to reconstruct the sources. Three different ICA algorithms are proposed: MVICA, GroupICA and UniviewICA. 
