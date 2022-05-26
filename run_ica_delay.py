@@ -1,15 +1,20 @@
-import numpy as np
-import pandas as pd
 import math
-from joblib import Parallel, delayed, Memory
-from picard import amari_distance
-from multiviewica import multiviewica
-from multiviewica import groupica
 from itertools import product
 import pickle
 
+import numpy as np
+import pandas as pd
 
-def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_height, noise):
+from joblib import Parallel, delayed, Memory
+from sklearn.utils import check_random_state
+
+from picard import amari_distance
+from multiviewica import multiviewica
+from multiviewica import groupica
+
+
+def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_height, noise,
+                         random_state=None):
     """
     Create random sources.
 
@@ -29,17 +34,26 @@ def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_hei
         Represents the hight of peaks divided by the height of the cruve outside the peaks.
     sources_height : np array of shape (p, )
         Height of each source.
+    random_state : int or RandomState or None
+        The random number generator used for the initialization. If an integer,
+        it is used to seed the random number generator. If None, use the global
+        state.
+    
+    Returns
+    -------
+    XXX
     """
+    rng = check_random_state(random_state)
     # start allows the sources not to begin in 0
-    start = np.outer(np.random.rand(p) * math.pi / 2, np.ones(n))
+    start = np.outer(rng.rand(p) * math.pi / 2, np.ones(n))
     # scale: s(t) = sin(scale * t)
-    scale = np.diag(np.random.rand(p) + 0.5) / 20
+    scale = np.diag(rng.rand(p) + 0.5) / 20
     S = np.sin(start + np.dot(scale, np.outer(np.ones((p, 1)), np.arange(n))))
     window = peaks_height * np.hamming(window_length)
     half_window_length = int((window_length - 1) / 2)
     act_length = int(2*n/np.min(mu))
     # act is a matrix of size (p, int(2*n/np.min(mu)) which contains the activation times of the sources
-    act = np.random.randn(p, act_length)
+    act = rng.randn(p, act_length)
     act = np.dot(np.diag(var), act)
     act += np.outer(mu, np.ones(act_length))
     act = np.cumsum(act, axis=1).astype(int)
@@ -55,32 +69,36 @@ def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_hei
                 new_act[i, j-half_window_length: j+half_window_length+1] = window
     S *= 1 + new_act
     S = np.dot(np.diag(sources_height), S)
-    add_noise = np.dot(np.diag(noise), np.random.randn(p, n))
+    add_noise = np.dot(np.diag(noise), rng.randn(p, n))
     S += add_noise
     return S
 
 
-def create_model(n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height, sources_height, noise):
+def create_model(n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height, sources_height, noise,
+                 random_state=None):
+    """XXX"""
+    rng = check_random_state(random_state)
     max_delay = np.max(delay)
     S = create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_height, noise)
-    A = np.random.randn(n_subjects, p, p)
-    N = np.random.randn(n_subjects, p, n - max_delay)
+    A = rng.randn(n_subjects, p, p)
+    N = rng.randn(n_subjects, p, n - max_delay)
     # X is a matrix of size (p, n - max_delay)
-    X = np.array([A[i].dot(S[:, delay[i]:n - max_delay + delay[i]] + sigma * N[i]) for i in np.arange(n_subjects)])
+    X = np.array([A[i].dot(S[:, delay[i]:n - max_delay + delay[i]] + sigma * N[i]) for i in range(n_subjects)])
     return X, A, S, N
 
 
-def initialize_model(n_subjects, p, sup_delay):
+def initialize_model(n_subjects, p, sup_delay, random_state=None):
     # Parameters
+    rng = check_random_state(random_state)
     sigma = 0.1
-    delay = np.random.randint(0, sup_delay, n_subjects)
-    mu = 200 * np.random.randn(p) + 800
+    delay = rng.randint(0, sup_delay, n_subjects)
+    mu = 200 * rng.randn(p) + 800
     mu[mu < 5] = 5  # treshold
-    var = np.random.exponential(scale=100, size=p)
+    var = rng.exponential(scale=100, size=p)
     window_length = 199  # must be odd
     peaks_height = 10
-    sources_height = 2 * np.random.rand(p) + 0.5
-    noise = np.random.rand(p) / 2 + 0.1
+    sources_height = 2 * rng.rand(p) + 0.5
+    noise = rng.rand(p) / 2 + 0.1
     return sigma, delay, mu, var, window_length, peaks_height, sources_height, noise
 
 
@@ -94,16 +112,21 @@ def univiewica(X, random_state):
     return W_approx
 
 
-mem = Memory()
+mem = Memory('.')
 
 
 @mem.cache
 def run_experiment(algo_name, n_subjects, p, n, sup_delay, random_state):
+    rng = check_random_state(random_state)
     # Initialization
-    sigma, delay, mu, var, window_length, peaks_height, sources_height, noise = initialize_model(n_subjects, p, sup_delay)
+    sigma, delay, mu, var, window_length, peaks_height, sources_height, noise = \
+        initialize_model(n_subjects, p, sup_delay, random_state=rng)
 
     # Create model
-    X, A, S, _ = create_model(n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height, sources_height, noise)
+    X, A, S, _ = create_model(
+        n_subjects, p, n, sigma, delay, mu, var, window_length, peaks_height,
+        sources_height, noise, random_state=rng
+    )
 
     # ICA
     if(algo_name == 'MVICA'):
@@ -118,13 +141,16 @@ def run_experiment(algo_name, n_subjects, p, n, sup_delay, random_state):
     mean_amari_distances = np.mean(amari_distances)
 
     # Output
-    output = {"Algo": algo_name, "Delay": sup_delay, "random_state": random_state, "Sources": S, "Mixing": A, "Unmixing": W_approx, "Amari": amari_distances, "Mean_Amari": mean_amari_distances}
+    output = {"Algo": algo_name, "Delay": sup_delay, "random_state": random_state, "Sources": S,
+              "Mixing": A, "Unmixing": W_approx, "Amari": amari_distances,
+              "Mean_Amari": mean_amari_distances}
     return output
 
 
 if __name__ == '__main__':
     # Parameters
-    N_JOBS = 10
+    # N_JOBS = 10
+    N_JOBS = 60
     algos_name = ['MVICA', 'GroupICA', 'UniviewICA']
     n_subjects = 15
     n_sources = 6
@@ -135,7 +161,7 @@ if __name__ == '__main__':
     # random_states = np.random.choice(1000, nb_expe, replace=False)
 
     # Run experiments in parallel with cartesian product on all parameters
-    results = Parallel(n_jobs=10)(
+    results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(a, n_subjects, n_sources, n_samples, d, r) 
         for a, d, r
         in product(algos_name, sup_delay, random_states)
@@ -143,6 +169,5 @@ if __name__ == '__main__':
     results = pd.DataFrame(results)
 
     # Save results in a csv file
-    save_results_file = open("results_ica", "wb")
-    pickle.dump(results, save_results_file)
-    save_results_file.close()
+    with open("results_ica", "wb") as save_results_file:
+        pickle.dump(results, save_results_file)
