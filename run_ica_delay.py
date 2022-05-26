@@ -169,5 +169,5 @@ if __name__ == '__main__':
     results = pd.DataFrame(results)
 
     # Save results in a csv file
-    with open("results_ica", "wb") as save_results_file:
+    with open("results_ica.pkl", "wb") as save_results_file:
         pickle.dump(results, save_results_file)
