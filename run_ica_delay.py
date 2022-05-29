@@ -38,7 +38,7 @@ def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_hei
         The random number generator used for the initialization. If an integer,
         it is used to seed the random number generator. If None, use the global
         state.
-    
+
     Returns
     -------
     XXX
@@ -130,11 +130,11 @@ def run_experiment(algo_name, n_subjects, p, n, sup_delay, random_state):
 
     # ICA
     if(algo_name == 'MVICA'):
-        _, W_approx, _ = multiviewica(X, random_state=random_state)
+        _, W_approx, _ = multiviewica(X, random_state=rng)
     elif(algo_name == 'GroupICA'):
-        _, W_approx, _ = groupica(X, random_state=random_state)
+        _, W_approx, _ = groupica(X, random_state=rng)
     elif(algo_name == 'UniviewICA'):
-        W_approx = univiewica(X, random_state=random_state)
+        W_approx = univiewica(X, random_state=rng)
 
     # Amari distance
     amari_distances = [amari_distance(w, a) for (w, a) in zip(W_approx, A)]
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     # Run experiments in parallel with cartesian product on all parameters
     results = Parallel(n_jobs=N_JOBS)(
-        delayed(run_experiment)(a, n_subjects, n_sources, n_samples, d, r) 
+        delayed(run_experiment)(a, n_subjects, n_sources, n_samples, d, r)
         for a, d, r
         in product(algos_name, sup_delay, random_states)
     )
