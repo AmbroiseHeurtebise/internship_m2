@@ -28,7 +28,7 @@ def plot_distances(delay, distances):
     ax.plot(delay-1, median_amari[:, 0], label='MVICA', c='r')
     low_curve = median_amari[:, 0] - std_amari[:, 0]
     ax.fill_between(delay-1, low_curve * (low_curve > 0) + eps * (low_curve <= 0), median_amari[:, 0] + std_amari[:, 0], color='r', alpha=.1)
-    ax.plot(delay-1, median_amari[:, 1], label='GroupICA', color='b')
+    ax.plot(delay-1, median_amari[:, 1], label='UniviewICA', color='b')
     low_curve = median_amari[:, 1] - std_amari[:, 1]
     ax.fill_between(delay-1, low_curve * (low_curve > 0) + eps * (low_curve <= 0), median_amari[:, 1] + std_amari[:, 1], color='b', alpha=.1)
 
@@ -36,13 +36,13 @@ def plot_distances(delay, distances):
     ax.set_yscale('log')
     ax.legend()
     plt.title('Combined distance wrt the quantity of delay', fontweight="bold")
-    plt.savefig('combined_distance.pdf')
+    plt.savefig('figures/combined_distances.pdf')
     plt.show()
 
 
 if __name__ == '__main__':
     # Load results
-    savefile_name = "results_ica"
+    savefile_name = "data/results_ica.pkl"
     if os.path.isfile(savefile_name):
         save_results_file = open(savefile_name, "rb")
         results = pickle.load(save_results_file)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     # Get the delays and the distances
     delay = np.unique(results['Delay'])
-    algos = ['MVICA', 'GroupICA']
+    algos = ['MVICA', 'UniviewICA']
     random_states = np.unique(results['random_state'])
 
     distances = np.zeros((len(delay), len(algos), len(random_states)))

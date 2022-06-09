@@ -1,31 +1,27 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from picard import amari_distance
-from multiviewica import multiviewica
 import pickle
 
 
 def plot_permutation_matrices(W_approx, A, amari_distances, with_delay):
-    n_subjects = len(A)
-    fig, ax = plt.subplots(n_subjects // 2, 2)
+    fig, _ = plt.subplots(2, 2)
     fig.suptitle("Permutation matrices " + with_delay + " delay")
-    for (i, w, a) in zip(np.arange(n_subjects), W_approx, A):
-        plt.subplot(n_subjects // 2, 2, i+1)
+    for (i, w, a) in zip(range(4), W_approx, A):
+        plt.subplot(2, 2, i+1)
         plt.imshow(np.abs(np.dot(w, a)))
         dist = amari_distances[i]
         plt.title("Am. dist. = {:.4f}".format(dist))
         plt.axis('off')
-    plt.savefig(with_delay + '.pdf')
-    plt.show()
-    # idea: plots must represent the same permutation matrix 
+    plt.savefig('figures/perm_mat_' + with_delay + '.pdf')
+    # idea: plots must represent the same permutation matrix
     # if there is a delay, these matrices are different, hence the bad reconstruction
     # yet, the Amari distances are low (normally)
 
 
 if __name__ == '__main__':
     # Load results
-    savefile_name = "results_ica"
+    savefile_name = "data/results_ica.pkl"
     if os.path.isfile(savefile_name):
         save_results_file = open(savefile_name, "rb")
         results = pickle.load(save_results_file)

@@ -12,15 +12,16 @@ def amari_distance(P):
 
 if __name__ == '__main__':
     # Parameters
-    max_delay = 50
-    stepsize = 5
+    max_delay = 35
+    stepsize = 2
     delay_abs = np.arange(-max_delay+stepsize, max_delay, stepsize)
 
-    # Get the sources
-    savefile_name = "mvica_datasets.pkl"
-    if os.path.isfile(savefile_name):
-        with open(savefile_name, "rb") as save_ica_file:
-            S1, S2 = pickle.load(save_ica_file)
+    # Load sources
+    savefile_name1 = "data/sources1.npy"
+    savefile_name2 = "data/sources2.npy"
+    if os.path.isfile(savefile_name1) and os.path.isfile(savefile_name2):
+        S1 = np.load(savefile_name1)
+        S2 = np.load(savefile_name2)
     else:
         print("No sources available \n")
 
@@ -43,5 +44,4 @@ if __name__ == '__main__':
     plt.title("Amari distance of the cov. matrices shifted by a delay", fontweight="bold")
     plt.xlabel("Delay")
     plt.ylabel("Amari distance")
-    plt.savefig("optimal_delay.pdf")
-    plt.show()
+    plt.savefig("figures/optimal_delay.pdf")

@@ -139,26 +139,26 @@ def run_experiment(algo_name, n_subjects, p, n, sup_delay, random_state):
     # Amari distance
     amari_distances = [amari_distance(w, a) for (w, a) in zip(W_approx, A)]
     mean_amari_distances = np.mean(amari_distances)
+    median_amari_distances = np.median(amari_distances)
 
     # Output
     output = {"Algo": algo_name, "Delay": sup_delay, "random_state": random_state, "Sources": S,
               "Mixing": A, "Unmixing": W_approx, "Amari": amari_distances,
-              "Mean_Amari": mean_amari_distances}
+              "Mean_Amari": mean_amari_distances, "Median_Amari": median_amari_distances}
     return output
 
 
 if __name__ == '__main__':
     # Parameters
-    # N_JOBS = 10
-    N_JOBS = 60
-    algos_name = ['MVICA', 'GroupICA', 'UniviewICA']
+    N_JOBS = 4
+    # N_JOBS = 60
+    algos_name = ['MVICA', 'UniviewICA']
     n_subjects = 15
     n_sources = 6
-    n_samples = 3500
+    n_samples = 1000
     sup_delay = np.arange(1, 50, 5)
-    nb_expe = 50
+    nb_expe = 200
     random_states = np.arange(nb_expe)
-    # random_states = np.random.choice(1000, nb_expe, replace=False)
 
     # Run experiments in parallel with cartesian product on all parameters
     results = Parallel(n_jobs=N_JOBS)(
@@ -169,5 +169,5 @@ if __name__ == '__main__':
     results = pd.DataFrame(results)
 
     # Save results in a csv file
-    with open("results_ica.pkl", "wb") as save_results_file:
+    with open("data/results_ica.pkl", "wb") as save_results_file:
         pickle.dump(results, save_results_file)

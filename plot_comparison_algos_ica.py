@@ -6,7 +6,7 @@ import seaborn as sns
 
 if __name__ == "__main__":
     # Load results
-    savefile_name = "results_ica.pkl"
+    savefile_name = "data/results_ica.pkl"
     if os.path.isfile(savefile_name):
         with open(savefile_name, "rb") as save_results_file:
             results = pickle.load(save_results_file)
@@ -14,10 +14,6 @@ if __name__ == "__main__":
         print("There isn't any source to plot \n")
 
     # Plot
-    # sns.lineplot(data=results, x="Delay", y="Mean_Amari", hue="Algo")
-    # plt.title("Amari distance wrt the quantity of delay", fontweight="bold")
-    # plt.savefig("amari_delay_comparison.pdf")
-    # plt.show()
     sns.set(font_scale=1.8)
     sns.set_style("white")
     sns.set_style('ticks')
@@ -30,5 +26,4 @@ if __name__ == "__main__":
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Reconstruction error wrt the delay", fontsize=18, fontweight="bold")
-    plt.savefig("amari_delay_comparison.pdf", bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()
+    plt.savefig("figures/comparison_algos_ica.pdf", bbox_extra_artists=[x_, y_], bbox_inches="tight")
