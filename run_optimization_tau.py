@@ -88,9 +88,9 @@ def _optimization_tau_step(Y_list, Y_avg, tau_list):
 
 if __name__ == '__main__':
     # Parameters
-    n_sub = 4  # must be even to plot the sources
-    p = 3
-    n = 100
+    n_sub = 20  # must be even to plot the sources
+    p = 15
+    n = 2000
     noise = 1
 
     # Generate data
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     # Optimization
     loss = []
-    n_iter = 10
+    n_iter = 8
     for i in range(n_iter):
         loss.append(_loss_function(W_list, X_list, Y_avg, noise, tau_list))
         Y_avg, tau_list = _optimization_tau_step(Y_list, Y_avg, tau_list)
