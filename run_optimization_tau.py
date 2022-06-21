@@ -80,7 +80,7 @@ def _optimization_tau_step(Y_list, Y_avg, tau_list):
         # Cross_correlation
         corr = np.array([correlate(y, y_avg) for y, y_avg in zip(Y, Y_avg)])
         corr_norm = np.linalg.norm(corr, axis=0)
-        new_tau_list[i] = np.argmax(corr_norm) - n + 1
+        new_tau_list[i] = tau_list[i] + np.argmax(corr_norm) - n + 1
 
     new_Y_avg = np.mean([_delay_matrix(Y, tau) for Y, tau in zip(Y_list, new_tau_list)], axis=0)
     return new_Y_avg, new_tau_list
@@ -117,4 +117,5 @@ if __name__ == '__main__':
     plt.title("Negative log-likelihood of the model (without function f)")
     plt.xlabel("Iterations")
     plt.ylabel("NLL")
+    plt.savefig("figures/loss_optim_tau.pdf")
     plt.show()
