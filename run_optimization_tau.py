@@ -2,17 +2,19 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from scipy.signal import correlate
+from sklearn.utils import check_random_state
 
 
-def _create_sources(n_sub, p, n):
+def _create_sources(n_sub, p, n, random_state=None):
+    rng = check_random_state(random_state)
     window = np.hamming(n)
     S = window * np.outer(np.ones(p), np.sin(np.linspace(0, 4 * math.pi, n)))
-    flip = np.outer(np.random.randint(0, 2, p), np.ones(n)) * 2 - 1
+    flip = np.outer(rng.randint(0, 2, p), np.ones(n)) * 2 - 1
     S *= flip
-    tau_list = np.random.randint(0, n // 4, size=n_sub)
+    tau_list = rng.randint(0, n // 4, size=n_sub)
     S_list = np.array([_delay_matrix(S, tau) for tau in tau_list])
-    # sources_noise = 0.5 * np.random.randn(n_sub, p, n)
-    # S_list += sources_noise
+    sources_noise = 0.1 * rng.randn(n_sub, p, n)
+    S_list += sources_noise
     return S_list, tau_list
 
 
@@ -53,22 +55,25 @@ def _optimization_tau_step(Y_list, Y_avg):
         corr = np.array([correlate(y, y_avg) for y, y_avg in zip(Y_list[i], Y_avg)])
         corr_norm = np.sum(corr, axis=0)
         new_tau_list[i] = np.argmax(corr_norm) - n + 1
+        Y_avg -= Y_list[i] / n_sub
         Y_list[i] = _delay_matrix(Y_list[i], new_tau_list[i])
+        Y_avg += Y_list[i] / n_sub
 
-    new_Y_avg = np.mean(Y_list, axis=0)
-    return Y_list, new_Y_avg, new_tau_list
+    return Y_list, Y_avg, new_tau_list
 
 
 if __name__ == '__main__':
     # Parameters
     n_sub =4  # must be even to plot the sources
     p = 3
-    n = 500
+    n = 1000
 
     # Generate data
-    S_list, true_tau_list = _create_sources(n_sub, p, n)
+    random_state = 32
+    S_list, true_tau_list = _create_sources(n_sub, p, n, random_state)
     Y_list = np.copy(S_list)
     Y_avg = S_list[0]
+    # Y_avg = np.mean(S_list, axis=0)
     tau_list = np.zeros(n_sub, dtype=int)
 
     # _plot_delayed_sources(Y_list)
