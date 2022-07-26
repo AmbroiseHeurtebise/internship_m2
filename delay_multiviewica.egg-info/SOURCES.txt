@@ -1,0 +1,13 @@
+README
+setup.py
+delay_multiviewica/__init__.py
+delay_multiviewica/_groupica.py
+delay_multiviewica/_multiviewica.py
+delay_multiviewica/_permica.py
+delay_multiviewica/optimization_tau.py
+delay_multiviewica/reduce_data.py
+delay_multiviewica.egg-info/PKG-INFO
+delay_multiviewica.egg-info/SOURCES.txt
+delay_multiviewica.egg-info/dependency_links.txt
+delay_multiviewica.egg-info/requires.txt
+delay_multiviewica.egg-info/top_level.txt

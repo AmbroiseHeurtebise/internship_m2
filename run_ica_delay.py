@@ -11,6 +11,7 @@ from sklearn.utils import check_random_state
 from picard import amari_distance
 from multiviewica import multiviewica
 from multiviewica import groupica
+from delay_multiviewica import multiviewica as delay_multiviewica
 
 
 def create_sources_gauss(p, n, mu, var, window_length, peaks_height, sources_height, noise,
@@ -129,8 +130,10 @@ def run_experiment(algo_name, n_subjects, p, n, sup_delay, random_state):
     )
 
     # ICA
-    if(algo_name == 'MVICA'):
+    if algo_name == 'MVICA':
         _, W_approx, _ = multiviewica(X, random_state=rng)
+    elif(algo_name == 'DelayMVICA'):
+        _, W_approx, _, _ = delay_multiviewica(X, random_state=rng)
     elif(algo_name == 'GroupICA'):
         _, W_approx, _ = groupica(X, random_state=rng)
     elif(algo_name == 'UniviewICA'):
@@ -152,12 +155,12 @@ if __name__ == '__main__':
     # Parameters
     N_JOBS = 4
     # N_JOBS = 60
-    algos_name = ['MVICA', 'UniviewICA']
-    n_subjects = 15
+    algos_name = ['MVICA', 'UniviewICA', 'DelayMVICA']
+    n_subjects = 5
     n_sources = 6
     n_samples = 1000
     sup_delay = np.arange(1, 50, 5)
-    nb_expe = 200
+    nb_expe = 2
     random_states = np.arange(nb_expe)
 
     # Run experiments in parallel with cartesian product on all parameters
