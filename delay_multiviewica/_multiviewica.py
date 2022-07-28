@@ -2,12 +2,12 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 from scipy.linalg import expm
+from time import time
+import warnings
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
-from time import time
 from .optimization_tau import _optimization_tau, _apply_delay_one_sub, _apply_delay
 
 
@@ -19,7 +19,7 @@ def multiviewica(
     max_iter=1000,
     init="permica",
     n_iter_delay=2,
-    init_delay="first_subject",
+    init_delay="mean",
     random_state=None,
     tol=1e-3,
     verbose=False,
@@ -200,10 +200,10 @@ def _multiview_ica_main(
             )
             # Update the average vector (estimate of the sources)
             Y_list[j] = np.dot(basis_list[j], X)
-            # Y_list[j] = _apply_delay_one_sub(np.dot(basis_list[j], X_list[j]), tau_list[j])
+            # Y_list[j] += _apply_delay_one_sub(np.dot(basis_list[j] - W_old, X_list[j]), tau_list[j])
             S_list[j] = _apply_delay_one_sub(Y_list[j], -tau_list[j])
-            # Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
-            Y_avg = np.mean(Y_list, axis=0)  # XXX
+            Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
+            # Y_avg = np.mean(Y_list, axis=0)
             g_norms = max(g_norm, g_norms)
             convergence = converged or convergence
         if convergence is False:

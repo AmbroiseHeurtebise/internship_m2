@@ -93,8 +93,14 @@ def _optimization_tau(S_list, n_iter, init):
         new_tau_list = np.zeros(n_sub, dtype=int)
         for i in range(n_sub):
             new_tau_list[i] = _new_delay_estimation(Y_list[i], Y_avg, n_sub)
+            old_Y = Y_list[i].copy()
             Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
-            Y_avg = np.mean(Y_list, axis=0)
+            # Y_avg = np.mean(Y_list, axis=0)  # XXX ça n'a pas de sens quand on initialise aux sources du premier sujet car ça change l'initialisation dès la deuxième itération
+            if init == "first_subject" and _ == 0 and i > 0:
+                Y_avg += Y_list[i] / i
+                Y_avg *= i / (i+1)
+            if init == "mean" or _ > 0:
+                Y_avg += (Y_list[i] - old_Y) / n_sub
         tau_list += new_tau_list
         tau_list %= n
     return loss, tau_list, Y_avg
