@@ -2,9 +2,9 @@
 # License: BSD 3 clause
 
 import numpy as np
+from sklearn.utils.extmath import randomized_svd
 from picard import picard
 from .reduce_data import reduce_data
-from sklearn.utils.extmath import randomized_svd
 
 def groupica(
     X,
