@@ -1,1 +1,13 @@
-In the file test_mvica_gauss_sources.py, you can create your own sources using Gaussian r.v. to model the time between two successive peaks and the sinus function to model the shape of the curves outside of the peaks. 
+This README should be updated. 
+
+In all the 4 Python files, you can create your own sources using Gaussian r.v. to model the intervals between two successive peaks and the sinus function to model the shape of the curves outside the peaks. The ```plot_sources.py``` file will show you how these sources behave.  
+
+Once the sources are generated, you can compute the signals of each subject, using mixing matrices sampled from a Gaussian distribution. Then, you can perform ICA in order to reconstruct the sources. Three different ICA algorithms are proposed: MVICA, GroupICA and UniviewICA. 
+
+The evaluation of the quality of the reconstruction is done using the Amari distance. The quality of the reconstruction will depend on the lag of the subjects. 
+
+The effect of this delay on the estimated unmixing matrices is represented in the file ```plot_permutation_matrices.py``` where we plot the matrices W^i A^i for 4 subjects with and without lag. Ideally, these matrices should represent the same permutation and scale matrice but it isn't the case when there is a lag.
+
+Then, the file ```amari_delay_comparison_2.py``` show the Amari distance for the 3 algorithms with respect to the quantity of delay. The idea is that MVICA outperforms GroupICA and UniviewICA when there is no delay, but it isn't the case anymore when sufficient delay is introduced. 
+
+Finally, we create a new distance in ```plot_combined_distance.py```. It is a combination of the Amari distance between W^i and A^i and the MSE between W^i A^i and W^j A^j. Unlike the Amari distance alone, this distance also takes into account the fact that the matrices W^i A^i should be the same for all the subjects. 
