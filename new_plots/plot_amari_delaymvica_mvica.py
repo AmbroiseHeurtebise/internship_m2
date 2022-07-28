@@ -14,7 +14,7 @@ def delay_source(x, tau):
     return np.roll(x, -tau, axis=1)
 
 
-def gen_sources(n, m, delay_max, sigma=0.05, random_state=None):
+def create_sources_pierre(n, m, delay_max, sigma=0.05, random_state=None):
     rng = check_random_state(random_state)
     delays = rng.randint(0, 1 + delay_max, m)
     s1 = np.zeros(n)
@@ -37,7 +37,7 @@ def univiewica(X_list, random_state=None):
 
 
 def run_experiment(n, m, algo, delay_max, random_state):
-    X_list, A_list = gen_sources(
+    X_list, A_list = create_sources_pierre(
         n, m, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     m = 6
     p = 2
     delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['univiewICA', 'mvica', 'delay_multiviewica']
+    algos = ['univiewICA', 'mvica', 'delay_multiviewica', 'delay_multiviewica_test1']
     n_expe = 2
     N_JOBS = 4
 
