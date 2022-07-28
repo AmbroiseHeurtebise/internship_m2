@@ -13,7 +13,7 @@ def plot_permutation_matrices(W_approx, A, amari_distances, with_delay):
         dist = amari_distances[i]
         plt.title("Am. dist. = {:.4f}".format(dist))
         plt.axis('off')
-    plt.savefig('figures/perm_mat_' + with_delay + '.pdf')
+    plt.savefig('old_figures/perm_mat_' + with_delay + '.pdf')
     # idea: plots must represent the same permutation matrix
     # if there is a delay, these matrices are different, hence the bad reconstruction
     # yet, the Amari distances are low (normally)

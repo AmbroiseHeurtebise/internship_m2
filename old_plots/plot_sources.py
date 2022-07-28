@@ -9,7 +9,7 @@ def plot_sources(S):
     plt.title('Sources for the first experiment')
     plt.xlabel('Samples')
     plt.yticks([])
-    plt.savefig('figures/sources.pdf')
+    plt.savefig('old_figures/sources.pdf')
 
 
 if __name__ == '__main__':

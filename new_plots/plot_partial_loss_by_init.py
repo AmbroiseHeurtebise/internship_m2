@@ -67,5 +67,5 @@ if __name__ == '__main__':
     plt.title("Partial loss optimization for 2 different initializations")
     plt.xlabel("Number of iterations")
     plt.ylabel("Partial loss")
-    plt.savefig("figures/loss_optim_tau_init.pdf")
+    plt.savefig("new_figures/partial_loss_by_init.pdf")
     plt.show()

@@ -36,7 +36,7 @@ def plot_distances(delay, distances):
     ax.set_yscale('log')
     ax.legend()
     plt.title('Combined distance wrt the quantity of delay', fontweight="bold")
-    plt.savefig('figures/combined_distances.pdf')
+    plt.savefig('old_figures/combined_distances.pdf')
     plt.show()
 
 

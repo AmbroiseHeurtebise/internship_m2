@@ -44,4 +44,4 @@ if __name__ == '__main__':
     plt.title("Amari distance of the cov. matrices shifted by a delay", fontweight="bold")
     plt.xlabel("Delay")
     plt.ylabel("Amari distance")
-    plt.savefig("figures/optimal_delay.pdf")
+    plt.savefig("old_figures/optimal_delay.pdf")

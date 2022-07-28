@@ -26,4 +26,4 @@ if __name__ == "__main__":
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Reconstruction error wrt the delay", fontsize=18, fontweight="bold")
-    plt.savefig("figures/comparison_algos_ica.pdf", bbox_extra_artists=[x_, y_], bbox_inches="tight")
+    plt.savefig("old_figures/comparison_algos_ica.pdf", bbox_extra_artists=[x_, y_], bbox_inches="tight")
