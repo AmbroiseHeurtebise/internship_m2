@@ -3,8 +3,10 @@
 
 from ._multiviewica import multiviewica, _multiview_ica_main
 from ._multiviewica_test1 import multiviewica_test1
+from ._multiviewica_test2 import multiviewica_test2
 from ._groupica import groupica
 from ._permica import permica, _hungarian
-from .optimization_tau import _optimization_tau, _create_sources, _loss_delay
+from .optimization_tau import _optimization_tau, _create_sources, _loss_delay, _apply_delay_one_sub, create_sources_pierre
+from ._univiewica import univiewica
 
 __version__ = '0.1'

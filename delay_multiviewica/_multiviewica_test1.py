@@ -2,10 +2,10 @@
 
 import numpy as np
 import warnings
+from time import time
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
-from time import time
 from .optimization_tau import _optimization_tau, _apply_delay_one_sub, _apply_delay
 from ._multiviewica import _noisy_ica_step, _loss_total
 

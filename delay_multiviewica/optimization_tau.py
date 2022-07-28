@@ -30,6 +30,20 @@ def _create_sources(n_sub, p, n, sources_noise, random_state=None):
     return S_list, tau_list
 
 
+def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
+    rng = check_random_state(random_state)
+    delays = rng.randint(0, 1 + delay_max, m)
+    s1 = np.zeros(n)
+    s1[:n//2] = np.sin(np.linspace(0, np.pi, n//2))
+    s2 = rng.randn(n) / 10
+    S = np.c_[s1, s2].T
+    N = sigma * rng.randn(m, p, n)
+    A_list = rng.randn(m, p, p)
+    X_list = np.array([np.dot(A, _apply_delay_one_sub(S, delay) + noise)
+                      for A, noise, delay in zip(A_list, N, delays)])
+    return X_list, A_list
+
+
 def _plot_delayed_sources(S_list, when):
     n_sub, p, n = S_list.shape
     fig, _ = plt.subplots(n_sub//2, 2)
