@@ -11,7 +11,7 @@ from joblib import Parallel, delayed
 
 
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list = create_sources_pierre(
+    X_list, A_list, _ = create_sources_pierre(
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
@@ -57,6 +57,6 @@ if __name__ == '__main__':
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Amari distance wrt the delay", fontsize=18, fontweight="bold")
-    plt.savefig("new_figures/amari_delaymvica_mvica.pdf",
+    plt.savefig("new_figures/amari_by_delay.pdf",
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
     plt.show()

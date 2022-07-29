@@ -3,13 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import product
 from joblib import Parallel, delayed
-from delay_multiviewica import _optimization_tau, _create_sources, _loss_delay
+from delay_multiviewica import _optimization_tau, _create_sources, create_sources_pierre, _loss_delay
 
 
 def run_experiment(n_sub, p, n, sources_noise, n_iter, random_state, init):
     # Generate data
-    S_list, true_tau_list = _create_sources(
-        n_sub, p, n, sources_noise, random_state)
+    X_list, A_list, true_tau_list = create_sources_pierre(n_sub, p, n, delay_max=0.2*n, sigma=sources_noise, random_state=random_state)
+    W_list = np.array([np.linalg.inv(A) for A in A_list])
+    S_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
+    true_tau_list = -true_tau_list % n
+    # S_list, true_tau_list = _create_sources(
+    #     n_sub, p, n, sources_noise, random_state)
     loss_true = _loss_delay(S_list, true_tau_list)
 
     # Optimization
@@ -67,5 +71,5 @@ if __name__ == '__main__':
     plt.title("Partial loss optimization for 2 different initializations")
     plt.xlabel("Number of iterations")
     plt.ylabel("Partial loss")
-    plt.savefig("new_figures/partial_loss_by_init.pdf")
+    plt.savefig("new_figures/partial_loss_by_iter.pdf")
     plt.show()
