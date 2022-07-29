@@ -1,4 +1,4 @@
-# First test: stop calling _optimization_tau.py APCR
+# Third test: call _optimization_tau.py on the scaling loop (of mvica) too
 
 import numpy as np
 import pandas as pd
@@ -14,14 +14,15 @@ from joblib import Parallel, delayed
 
 
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list = create_sources_pierre(
+    X_list, A_list, _ = create_sources_pierre(
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica_withoptimscale':
-        _, W_list, _, _ = delay_multiviewica_test3(X_list, random_state=random_state)
+        _, W_list, _, _ = delay_multiviewica_test3(
+            X_list, random_state=random_state)
     else:
         W_list = univiewica(X_list, random_state=random_state)
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
@@ -37,14 +38,14 @@ if __name__ == '__main__':
     n = 400
     delays = np.linspace(0, n // 1.5, 6, dtype=int)
     algos = ['delay_mvica', 'delay_mvica_withoptimscale']
-    n_expe = 10
-    N_JOBS = 4
+    n_expe = 20
+    N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(m, p, n, algo, delay_max, random_state)
         for algo, delay_max, random_state
-        in product(algos, delays, range(n_expe))
+        in product(algos, delays, np.arange(40, 40 + n_expe))
     )
     results = pd.DataFrame(results).drop(columns='random_state')
 
@@ -62,6 +63,6 @@ if __name__ == '__main__':
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Amari distance wrt the delay", fontsize=18, fontweight="bold")
-    plt.savefig("new_figures/test1.pdf",
+    plt.savefig("new_figures/test3.pdf",
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
     plt.show()

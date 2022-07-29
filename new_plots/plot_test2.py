@@ -14,18 +14,21 @@ from joblib import Parallel, delayed
 
 
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list = create_sources_pierre(
+    X_list, A_list, _ = create_sources_pierre(
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica_every5':
-        _, W_list, _, _ = delay_multiviewica_test2(X_list, delay_every_iteration=5, random_state=random_state)
+        _, W_list, _, _ = delay_multiviewica_test2(
+            X_list, delay_every_iteration=5, random_state=random_state)
     elif algo == 'delay_mvica_every10':
-        _, W_list, _, _ = delay_multiviewica_test2(X_list, delay_every_iteration=10, random_state=random_state)
+        _, W_list, _, _ = delay_multiviewica_test2(
+            X_list, delay_every_iteration=10, random_state=random_state)
     elif algo == 'delay_mvica_every20':
-        _, W_list, _, _ = delay_multiviewica_test2(X_list, delay_every_iteration=20, random_state=random_state)
+        _, W_list, _, _ = delay_multiviewica_test2(
+            X_list, delay_every_iteration=20, random_state=random_state)
     else:
         W_list = univiewica(X_list, random_state=random_state)
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
@@ -40,9 +43,10 @@ if __name__ == '__main__':
     p = 2
     n = 400
     delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['delay_mvica', 'delay_mvica_every5', 'delay_mvica_every10', 'delay_mvica_every20']
+    algos = ['delay_mvica', 'delay_mvica_every5',
+             'delay_mvica_every10', 'delay_mvica_every20']
     n_expe = 10
-    N_JOBS = 4
+    N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(

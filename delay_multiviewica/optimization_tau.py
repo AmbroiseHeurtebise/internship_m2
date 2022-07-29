@@ -41,7 +41,7 @@ def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
     A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, _apply_delay_one_sub(S, delay) + noise)
                       for A, noise, delay in zip(A_list, N, delays)])
-    return X_list, A_list
+    return X_list, A_list, delays
 
 
 def _plot_delayed_sources(S_list, when):
