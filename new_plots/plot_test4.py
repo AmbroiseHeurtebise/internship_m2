@@ -42,9 +42,9 @@ if __name__ == '__main__':
     p = 2
     n = 400
     delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['delay_mvica', 'delay_mvica_1iter',
+    algos = ['mvica', 'delay_mvica_1iter', 'delay_mvica',
              'delay_mvica_3iter', 'delay_mvica_4iter']
-    n_expe = 20
+    n_expe = 5
     N_JOBS = 8
 
     # Run ICA

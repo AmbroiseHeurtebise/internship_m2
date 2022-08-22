@@ -15,7 +15,7 @@ def run_experiment(m, p, n, algo, delay_max, random_state):
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
-    elif algo == 'delay_multiviewica':
+    elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
     else:
         W_list = univiewica(X_list, random_state=random_state)
@@ -30,10 +30,10 @@ if __name__ == '__main__':
     m = 6
     p = 2
     n = 400
-    delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['univiewICA', 'mvica', 'delay_multiviewica']
+    delays = np.linspace(0, n // 1.5, 20, dtype=int)
+    algos = ['mvica', 'univiewICA', 'delay_mvica']
     n_expe = 5
-    N_JOBS = 4
+    N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(

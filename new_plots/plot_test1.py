@@ -20,15 +20,15 @@ def run_experiment(m, p, n, algo, delay_max, random_state):
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
+    elif algo == 'delay_mvica_stopAPCR1':
+        _, W_list, _, _ = delay_multiviewica_test1(
+            X_list, stop_optim_delay=1, random_state=random_state)
+    elif algo == 'delay_mvica_stopAPCR2':
+        _, W_list, _, _ = delay_multiviewica_test1(
+            X_list, stop_optim_delay=2, random_state=random_state)
     elif algo == 'delay_mvica_stopAPCR10':
         _, W_list, _, _ = delay_multiviewica_test1(
             X_list, stop_optim_delay=10, random_state=random_state)
-    elif algo == 'delay_mvica_stopAPCR50':
-        _, W_list, _, _ = delay_multiviewica_test1(
-            X_list, stop_optim_delay=50, random_state=random_state)
-    elif algo == 'delay_mvica_stopAPCR100':
-        _, W_list, _, _ = delay_multiviewica_test1(
-            X_list, stop_optim_delay=100, random_state=random_state)
     else:
         W_list = univiewica(X_list, random_state=random_state)
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
@@ -43,9 +43,9 @@ if __name__ == '__main__':
     p = 2
     n = 400
     delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['delay_mvica', 'delay_mvica_stopAPCR10',
-             'delay_mvica_stopAPCR50', 'delay_mvica_stopAPCR100']
-    n_expe = 10
+    algos = ['mvica', 'delay_mvica_stopAPCR1',
+             'delay_mvica_stopAPCR2', 'delay_mvica_stopAPCR10', 'delay_mvica']
+    n_expe = 8
     N_JOBS = 8
 
     # Run ICA

@@ -24,7 +24,7 @@ def _total_loss_function(W_list, Y_list, Y_avg, noise=1):
 
 
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list, _ = create_sources_pierre(
+    X_list, _, _ = create_sources_pierre(
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
@@ -53,9 +53,9 @@ if __name__ == '__main__':
     m = 6
     p = 2
     n = 400
-    delays = np.linspace(0, n // 1.5, 6, dtype=int)
+    delays = np.linspace(0, n // 1.5, 20, dtype=int)
     algos = ['univiewICA', 'mvica', 'delay_multiviewica']
-    n_expe = 10
+    n_expe = 5
     N_JOBS = 8
 
     # Run ICA
