@@ -76,48 +76,74 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
     return _loss_function(Y_list, Y_avg)
 
 
-def _Y_avg_init(S_list, init):
-    if init == 'mean':
-        Y_avg = np.mean(S_list, axis=0)
-    elif init == 'first_subject':
-        Y_avg = S_list[0]
-    else:
-        raise NameError("Wrong initialization name \n")
-    return Y_avg
-
-
-def _new_delay_estimation(Y, Y_avg, n_sub):
+def _delay_estimation(Y, Y_avg):
     _, n = np.shape(Y)
-    new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y / n_sub)
     conv = np.array([convolve1d(y, y_avg[::-1], mode='wrap',
-                    origin=math.ceil(n/2)-1) for y, y_avg in zip(Y, new_Y_avg)])
+                    origin=math.ceil(n/2)-1) for y, y_avg in zip(Y, Y_avg)])
     conv_norm = np.sum(conv, axis=0)
     new_tau = np.argmax(conv_norm)
     return new_tau
 
 
-def _optimization_tau(S_list, n_iter, init):
+def _optimization_tau_approach1(S_list, n_iter):
     n_sub, _, n = S_list.shape
-    Y_avg = _Y_avg_init(S_list, init)
+    Y_avg = Y_avg = np.mean(S_list, axis=0)
     Y_list = np.copy(S_list)
     tau_list = np.zeros(n_sub, dtype=int)
     loss = []
-    for iter in range(n_iter):
+    for _ in range(n_iter):
         loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
         new_tau_list = np.zeros(n_sub, dtype=int)
         for i in range(n_sub):
-            new_tau_list[i] = _new_delay_estimation(Y_list[i], Y_avg, n_sub)
+            new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
+            new_tau_list[i] = _delay_estimation(Y_list[i], new_Y_avg)
             old_Y = Y_list[i].copy()
             Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
-            # Y_avg = np.mean(Y_list, axis=0)  
-            # it doesn't make sense to initialize Y_avg at the sources of the first subject 
-            # because the formula of Y_avg changes at the second iteration
-            # if we use Y_avg = np.mean(Y_list, axis=0) 
-            if init == "first_subject" and iter == 0 and i > 0:
-                Y_avg += Y_list[i] / i
-                Y_avg *= i / (i+1)
-            if init == "mean" or iter > 0:
-                Y_avg += (Y_list[i] - old_Y) / n_sub
+            Y_avg += (Y_list[i] - old_Y) / n_sub
+        tau_list += new_tau_list
+        tau_list %= n
+    return loss, tau_list, Y_avg
+
+
+def _optimization_tau_approach2(S_list, n_iter):
+    n_sub, _, n = S_list.shape
+    Y_avg = S_list[0]
+    Y_list = np.copy(S_list)
+    tau_list = np.zeros(n_sub, dtype=int)
+    loss = []
+    for _ in range(n_iter):
+        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+        new_tau_list = np.zeros(n_sub, dtype=int)
+        for i in range(n_sub):
+            new_tau_list[i] = _delay_estimation(Y_list[i], Y_avg)
+            Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
+        Y_avg = np.mean(Y_list, axis=0)
+        tau_list += new_tau_list
+        tau_list %= n
+    return loss, tau_list, Y_avg
+
+
+def _optimization_tau(S_list, n_iter):
+    n_sub, _, n = S_list.shape
+    Y_avg = S_list[0]
+    Y_list = np.copy(S_list)
+    tau_list = np.zeros(n_sub, dtype=int)
+    loss = []
+    loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+    for i in range(n_sub):
+        tau_list[i] = _delay_estimation(Y_list[i], Y_avg)
+        Y_list[i] = _apply_delay([Y_list[i]], [tau_list[i]])
+    Y_avg = np.mean(Y_list, axis=0)
+    tau_list %= n
+    for _ in range(n_iter-1):
+        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+        new_tau_list = np.zeros(n_sub, dtype=int)
+        for i in range(n_sub):
+            new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
+            new_tau_list[i] = _delay_estimation(Y_list[i], new_Y_avg)
+            old_Y = Y_list[i].copy()
+            Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
+            Y_avg += (Y_list[i] - old_Y) / n_sub
         tau_list += new_tau_list
         tau_list %= n
     return loss, tau_list, Y_avg

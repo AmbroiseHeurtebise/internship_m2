@@ -18,7 +18,6 @@ def multiviewica_test3(
     max_iter=1000,
     init="permica",
     n_iter_delay=2,
-    init_delay="first_subject",
     random_state=None,
     tol=1e-3,
     verbose=False,
@@ -101,7 +100,7 @@ def multiviewica_test3(
     # Performs multiview ica
     W, S, tau_list = _multiview_ica_main(
         X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay,
-        init_delay=init_delay, verbose=verbose,
+        verbose=verbose,
     )
     return P, W, S, tau_list
 
@@ -114,7 +113,6 @@ def _multiview_ica_main(
     verbose=False,
     init=None,
     n_iter_delay=2,
-    init_delay="first_subject",
     ortho=False,
     return_gradients=False,
     timing=False,
@@ -141,7 +139,7 @@ def _multiview_ica_main(
     for i in range(n_iter):
         # Delay estimation
         _, tau_list, Y_avg = _optimization_tau(
-            S_list, n_iter_delay, init_delay)
+            S_list, n_iter_delay)
         Y_list = _apply_delay(S_list, tau_list)
         g_norms = 0
         # Start inner loop: decrease the loss w.r.t to each W_j
@@ -187,8 +185,7 @@ def _multiview_ica_main(
     S_list = np.array([W.dot(X) for W, X in zip(basis_list, X_list)])
     for i in range(n_iter):
         # Delay estimation
-        _, tau_list, Y_avg = _optimization_tau(
-            S_list, n_iter_delay, init_delay)
+        _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
         Y_list = _apply_delay(S_list, tau_list)
         g_norms = 0
         convergence = False

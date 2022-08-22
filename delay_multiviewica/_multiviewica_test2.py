@@ -18,7 +18,6 @@ def multiviewica_test2(
     max_iter=1000,
     init="permica",
     n_iter_delay=2,
-    init_delay="first_subject",
     delay_every_iteration=1,
     random_state=None,
     tol=1e-3,
@@ -102,7 +101,7 @@ def multiviewica_test2(
     # Performs multiview ica
     W, S, tau_list = _multiview_ica_main(
         X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay,
-        init_delay=init_delay, delay_every_iteration=delay_every_iteration, verbose=verbose,
+        delay_every_iteration=delay_every_iteration, verbose=verbose,
     )
     return P, W, S, tau_list
 
@@ -115,7 +114,6 @@ def _multiview_ica_main(
     verbose=False,
     init=None,
     n_iter_delay=2,
-    init_delay="first_subject",
     delay_every_iteration=1,
     ortho=False,
     return_gradients=False,
@@ -181,8 +179,7 @@ def _multiview_ica_main(
     for i in range(n_iter):
         if i % delay_every_iteration == 0:
             # Delay estimation
-            _, tau_list, Y_avg = _optimization_tau(
-                S_list, n_iter_delay, init_delay)
+            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
             Y_list = _apply_delay(S_list, tau_list)
         g_norms = 0
         convergence = False

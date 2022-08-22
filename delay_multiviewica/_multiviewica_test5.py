@@ -1,5 +1,4 @@
-# Authors: Hugo Richard, Pierre Ablin
-# License: BSD 3 clause
+# Fifth test: now multiviewica can take in argument the delays
 
 import numpy as np
 from scipy.linalg import expm
@@ -11,13 +10,14 @@ from ._groupica import groupica
 from .optimization_tau import _optimization_tau, _apply_delay_one_sub, _apply_delay
 
 
-def multiviewica(
+def multiviewica_test5(
     X,
     n_components=None,
     dimension_reduction="pca",
     noise=1.0,
     max_iter=1000,
     init="permica",
+    tau_list=None,
     n_iter_delay=2,
     random_state=None,
     tol=1e-3,
@@ -100,7 +100,8 @@ def multiviewica(
         W = init
     # Performs multiview ica
     W, S, tau_list = _multiview_ica_main(
-        X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay, verbose=verbose,
+        X, noise=noise, n_iter=max_iter, tol=tol, init=W, tau_list=tau_list, n_iter_delay=n_iter_delay,
+        verbose=verbose,
     )
     return P, W, S, tau_list
 
@@ -117,6 +118,7 @@ def _multiview_ica_main(
     tol=1e-6,
     verbose=False,
     init=None,
+    tau_list=None,
     n_iter_delay=2,
     ortho=False,
     return_gradients=False,
@@ -181,7 +183,8 @@ def _multiview_ica_main(
     S_list = np.array([W.dot(X) for W, X in zip(basis_list, X_list)])
     for i in range(n_iter):
         # Delay estimation
-        _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
+        if (i == 0 and tau_list is None) or i > 0:
+            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
         Y_list = _apply_delay(S_list, tau_list)
         g_norms = 0
         convergence = False
