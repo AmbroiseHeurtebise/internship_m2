@@ -13,21 +13,25 @@ def _apply_delay(Y_list, tau_list):
     return np.array([_apply_delay_one_sub(Y, tau) for Y, tau in zip(Y_list, tau_list)])
 
 
-def _create_sources(n_sub, p, n, sources_noise, random_state=None):
+def _create_sources(n_sub, p, n, delay_max=None, noise_sources=0.05, random_state=None):
     rng = check_random_state(random_state)
-    n_inner = int(0.8 * n)
+    if delay_max is None:
+        delay_max = int(0.2 * n)
+    n_inner = n - delay_max
     window = np.hamming(n_inner)
     S = window * np.outer(np.ones(p),
                           np.sin(np.linspace(0, 4 * math.pi, n_inner)))
     flip = np.outer(rng.randint(0, 2, p), np.ones(n_inner)) * 2 - 1
     S *= flip
-    noise_list = sources_noise * rng.randn(n_sub, p, n_inner)
+    noise_list = noise_sources * rng.randn(n_sub, p, n_inner)
     S_list = np.array([S + n for n in noise_list])
     S_list = np.concatenate(
         (S_list, np.zeros((n_sub, p, n - n_inner))), axis=2)
-    tau_list = rng.randint(0, 0.2 * n, size=n_sub)
+    tau_list = rng.randint(0, delay_max, size=n_sub)
     S_list = _apply_delay(S_list, -tau_list)
-    return S_list, tau_list
+    A_list = rng.randn(n_sub, p, p)
+    X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
+    return X_list, A_list, tau_list, S_list
 
 
 def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
@@ -42,9 +46,10 @@ def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
     X_list = np.array([np.dot(A, _apply_delay_one_sub(S, delay) + noise)
                       for A, noise, delay in zip(A_list, N, delays)])
     return X_list, A_list, delays
+# Only works for p=2
 
 
-def _plot_delayed_sources(S_list, when):
+def _plot_delayed_sources(S_list):
     n_sub, p, n = S_list.shape
     fig, _ = plt.subplots(n_sub//2, 2)
     fig.suptitle("Delayed sources of the {} subjects".format(n_sub))
@@ -56,7 +61,6 @@ def _plot_delayed_sources(S_list, when):
             plt.grid()
             plt.yticks([])
             plt.title("Sources of subject {}".format(i+1))
-    plt.savefig("figures/delayed_sources_" + when + ".pdf")
     plt.show()
 
 
@@ -85,65 +89,95 @@ def _delay_estimation(Y, Y_avg):
     return new_tau
 
 
-def _optimization_tau_approach1(S_list, n_iter):
+def distance_between_delays(tau1, tau2, n):
+    assert len(tau1) == len(tau2)
+    n_sub = len(tau1)
+    error_total = []
+    for i in range(n):
+        error = 0
+        tau3 = (tau2 + i) % n
+        for j in range(n_sub):
+            error += np.min(np.abs([tau1[j] - tau3[j] - n, tau1[j] - tau3[j], tau1[j] - tau3[j] + n]))
+        error_total.append(error)
+    return np.min(np.array(error_total))
+
+
+def _optimization_tau_approach1(S_list, n_iter, error_tau=False, true_tau_list=None):
     n_sub, _, n = S_list.shape
-    Y_avg = Y_avg = np.mean(S_list, axis=0)
+    Y_avg = np.mean(S_list, axis=0)
     Y_list = np.copy(S_list)
     tau_list = np.zeros(n_sub, dtype=int)
     loss = []
+    gap_tau = []
     for _ in range(n_iter):
-        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
-        new_tau_list = np.zeros(n_sub, dtype=int)
         for i in range(n_sub):
+            loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+            if error_tau == True and true_tau_list is not None:
+                gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
             new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
-            new_tau_list[i] = _delay_estimation(Y_list[i], new_Y_avg)
+            tau_list[i] += _delay_estimation(Y_list[i], new_Y_avg)
             old_Y = Y_list[i].copy()
-            Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
+            Y_list[i] = _apply_delay([S_list[i]], [tau_list[i]])
             Y_avg += (Y_list[i] - old_Y) / n_sub
-        tau_list += new_tau_list
         tau_list %= n
-    return loss, tau_list, Y_avg
-
-
-def _optimization_tau_approach2(S_list, n_iter):
-    n_sub, _, n = S_list.shape
-    Y_avg = S_list[0]
-    Y_list = np.copy(S_list)
-    tau_list = np.zeros(n_sub, dtype=int)
-    loss = []
-    for _ in range(n_iter):
-        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
-        new_tau_list = np.zeros(n_sub, dtype=int)
-        for i in range(n_sub):
-            new_tau_list[i] = _delay_estimation(Y_list[i], Y_avg)
-            Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
-        Y_avg = np.mean(Y_list, axis=0)
-        tau_list += new_tau_list
-        tau_list %= n
-    return loss, tau_list, Y_avg
-
-
-def _optimization_tau(S_list, n_iter):
-    n_sub, _, n = S_list.shape
-    Y_avg = S_list[0]
-    Y_list = np.copy(S_list)
-    tau_list = np.zeros(n_sub, dtype=int)
-    loss = []
     loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+    if error_tau == True and true_tau_list is not None:
+        gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
+        return loss, tau_list, Y_avg, gap_tau
+    return loss, tau_list, Y_avg
+
+
+def _optimization_tau_approach2(S_list, n_iter, error_tau=False, true_tau_list=None):
+    n_sub, _, n = S_list.shape
+    Y_avg = S_list[0]
+    Y_list = np.copy(S_list)
+    tau_list = np.zeros(n_sub, dtype=int)
+    loss = []
+    gap_tau = []
+    for _ in range(n_iter):
+        for i in range(n_sub):
+            loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+            if error_tau == True and true_tau_list is not None:
+                gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
+            tau_list[i] += _delay_estimation(Y_list[i], Y_avg)
+            Y_list[i] = _apply_delay([S_list[i]], [tau_list[i]])
+        Y_avg = np.mean(Y_list, axis=0)
+        tau_list %= n
+    loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+    if error_tau == True and true_tau_list is not None:
+        gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
+        return loss, tau_list, Y_avg, gap_tau
+    return loss, tau_list, Y_avg
+
+
+def _optimization_tau(S_list, n_iter, error_tau=False, true_tau_list=None):
+    n_sub, _, n = S_list.shape
+    Y_avg = S_list[0]
+    Y_list = np.copy(S_list)
+    tau_list = np.zeros(n_sub, dtype=int)
+    loss = []
+    gap_tau = []
     for i in range(n_sub):
-        tau_list[i] = _delay_estimation(Y_list[i], Y_avg)
-        Y_list[i] = _apply_delay([Y_list[i]], [tau_list[i]])
+        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+        if error_tau == True and true_tau_list is not None:
+            gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
+        tau_list[i] = _delay_estimation(S_list[i], Y_avg)
+        Y_list[i] = _apply_delay([Y_list[i]], [tau_list[i]])  # XXX
     Y_avg = np.mean(Y_list, axis=0)
     tau_list %= n
     for _ in range(n_iter-1):
-        loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
-        new_tau_list = np.zeros(n_sub, dtype=int)
         for i in range(n_sub):
+            loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+            if error_tau == True and true_tau_list is not None:
+                gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
             new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
-            new_tau_list[i] = _delay_estimation(Y_list[i], new_Y_avg)
+            tau_list[i] += _delay_estimation(Y_list[i], new_Y_avg)
             old_Y = Y_list[i].copy()
-            Y_list[i] = _apply_delay([Y_list[i]], [new_tau_list[i]])
+            Y_list[i] = _apply_delay([S_list[i]], [tau_list[i]])
             Y_avg += (Y_list[i] - old_Y) / n_sub
-        tau_list += new_tau_list
         tau_list %= n
+    loss.append(_loss_delay_ref(S_list, tau_list, Y_avg))
+    if error_tau == True and true_tau_list is not None:
+        gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
+        return loss, tau_list, Y_avg, gap_tau
     return loss, tau_list, Y_avg

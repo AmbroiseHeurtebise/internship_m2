@@ -1,27 +1,32 @@
-# First test: stop calling _optimization_tau.py APCR
+# Authors: Hugo Richard, Pierre Ablin
+# License: BSD 3 clause
 
 import numpy as np
-import warnings
+from scipy.linalg import expm
 from time import time
+import warnings
+from picard import amari_distance
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
 from .optimization_tau import _optimization_tau, _apply_delay_one_sub, _apply_delay
-from ._multiviewica import _noisy_ica_step, _loss_total
 
 
-def multiviewica_test1(
+def delay_multiviewica(
     X,
     n_components=None,
     dimension_reduction="pca",
     noise=1.0,
     max_iter=1000,
     init="permica",
-    n_iter_delay=2,
-    stop_optim_delay=100,
+    n_iter_delay=3,
+    early_stopping_delay=None,
     random_state=None,
     tol=1e-3,
     verbose=False,
+    return_loss=False,
+    return_amari=False,
+    A_list=None,  # needed if return_amari==True
 ):
     """
     Performs MultiViewICA.
@@ -98,12 +103,22 @@ def multiviewica_test1(
         if type(init) is not np.ndarray:
             raise TypeError("init should be a numpy array")
         W = init
+    if return_amari and A_list is None:
+        raise TypeError("A_list shouldn't be None when return_amari is True")
     # Performs multiview ica
-    W, S, tau_list = _multiview_ica_main(
-        X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay,
-        stop_optim_delay=stop_optim_delay, verbose=verbose,
+    W, S, tau_list, loss_total = _multiview_ica_main(
+        X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay, 
+        early_stopping_delay=early_stopping_delay, verbose=verbose, return_loss=return_loss,
+        return_amari=return_amari, A_list=A_list,
     )
+    if return_loss or return_amari:
+        return P, W, S, tau_list, loss_total
     return P, W, S, tau_list
+
+
+def _logcosh(X):
+    Y = np.abs(X)
+    return Y + np.log1p(np.exp(-2 * Y))
 
 
 def _multiview_ica_main(
@@ -113,11 +128,14 @@ def _multiview_ica_main(
     tol=1e-6,
     verbose=False,
     init=None,
-    n_iter_delay=2,
-    stop_optim_delay=100,
+    n_iter_delay=3,
+    early_stopping_delay=None,
     ortho=False,
     return_gradients=False,
     timing=False,
+    return_loss=False,
+    return_amari=False,
+    A_list=None,
 ):
     tol_init = None
     if tol > 0 and tol_init is None:
@@ -125,6 +143,9 @@ def _multiview_ica_main(
 
     if tol == 0 and tol_init is None:
         tol_init = 1e-6
+    
+    if early_stopping_delay is None:
+        early_stopping_delay = n_iter
 
     # Turn list into an array to make it compatible with the rest of the code
     if type(X_list) == list:
@@ -176,12 +197,20 @@ def _multiview_ica_main(
         timings = []
     g_norms = 0
     S_list = np.array([W.dot(X) for W, X in zip(basis_list, X_list)])
+    loss_total = []
+    amari = []
+    if return_loss:
+        loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
     for i in range(n_iter):
-        if i < stop_optim_delay:
+        if i < early_stopping_delay:
             # Delay estimation
-            _, tau_list, Y_avg = _optimization_tau(
-                S_list, n_iter_delay)
+            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
             Y_list = _apply_delay(S_list, tau_list)
+        if return_loss:
+            new_X_list = _apply_delay(X_list, tau_list)
+            loss_total.append(_loss_total(basis_list, new_X_list, Y_avg, noise))
+        if return_amari:
+            amari.append(np.sum([amari_distance(W, A) for W, A in zip(basis_list, A_list)]))
         g_norms = 0
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
@@ -196,10 +225,10 @@ def _multiview_ica_main(
             )
             # Update the average vector (estimate of the sources)
             Y_list[j] = np.dot(basis_list[j], X)
-            # Y_list[j] = _apply_delay_one_sub(np.dot(basis_list[j], X_list[j]), tau_list[j])
+            # Y_list[j] += _apply_delay_one_sub(np.dot(basis_list[j] - W_old, X_list[j]), tau_list[j])
             S_list[j] = _apply_delay_one_sub(Y_list[j], -tau_list[j])
-            # Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
-            Y_avg = np.mean(Y_list, axis=0)  # XXX
+            Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
+            # Y_avg = np.mean(Y_list, axis=0)
             g_norms = max(g_norm, g_norms)
             convergence = converged or convergence
         if convergence is False:
@@ -233,8 +262,104 @@ def _multiview_ica_main(
             "Multiview ICA has not converged - gradient norm: %e " % g_norms
         )
     if return_gradients:
-        return basis_list, Y_avg, g_list
+        return basis_list, Y_avg, tau_list, g_list
 
     if timing:
-        return basis_list, Y_avg, timings
-    return basis_list, Y_avg, tau_list
+        return basis_list, Y_avg, tau_list, timings
+    
+    if return_amari:
+        return basis_list, Y_avg, tau_list, amari
+    return basis_list, Y_avg, tau_list, loss_total
+
+
+def _loss_total(basis_list, X_list, Y_avg, noise):
+    n_pb, p, _ = basis_list.shape
+    loss = np.mean(_logcosh(Y_avg)) * p
+    for i, (W, X) in enumerate(zip(basis_list, X_list)):
+        Y = W.dot(X)
+        loss -= np.linalg.slogdet(W)[1]
+        loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
+    return loss
+
+
+def _loss_partial(W, X, Y_denoise, noise, n_pb):
+    p, _ = W.shape
+    Y = np.dot(W, X)
+    loss = -np.linalg.slogdet(W)[1]
+    loss += np.mean(_logcosh(Y / n_pb + Y_denoise)) * p
+    fact = (1 - 1 / n_pb) / (2 * noise)
+    loss += fact * np.mean((Y - n_pb * Y_denoise / (n_pb - 1)) ** 2) * p
+    return loss
+
+
+def _noisy_ica_step(
+    W,
+    X,
+    Y_denoise,
+    noise,
+    n_pb,
+    ortho,
+    lambda_min=0.001,
+    n_ls_tries=50,
+    scale=False,
+):
+    """
+    ICA minimization using quasi Newton method. Used in the inner loop.
+    Returns
+    -------
+    converged: bool
+        True if line search has converged
+    new_W: np array of shape (m, p, p)
+        New values for the basis
+    g_norm: float
+    """
+    p, n = X.shape
+    loss0 = _loss_partial(W, X, Y_denoise, noise, n_pb)
+    Y = W.dot(X)
+    Y_avg = Y / n_pb + Y_denoise
+
+    # Compute relative gradient and Hessian
+    thM = np.tanh(Y_avg)
+    G = np.dot(thM, Y.T) / n / n_pb
+    # print(G)
+    const = 1 - 1 / n_pb
+    res = Y - Y_denoise / const
+    G += np.dot(res, Y.T) * const / noise / n
+    G -= np.eye(p)
+    if scale:
+        G = np.diag(np.diag(G))
+    # print(G)
+    if ortho:
+        G = 0.5 * (G - G.T)
+    g_norm = np.max(np.abs(G))
+
+    # These are the terms H_{ijij} of the approximated hessian
+    # (approximation H2 in Pierre's thesis)
+    h = np.dot((1 - thM ** 2) / n_pb ** 2 + const / noise, (Y ** 2).T,) / n
+
+    # Regularize
+    discr = np.sqrt((h - h.T) ** 2 + 4.0)
+    eigenvalues = 0.5 * (h + h.T - discr)
+    problematic_locs = eigenvalues < lambda_min
+    np.fill_diagonal(problematic_locs, False)
+    i_pb, j_pb = np.where(problematic_locs)
+    h[i_pb, j_pb] += lambda_min - eigenvalues[i_pb, j_pb]
+    # Compute Newton's direction
+    det = h * h.T - 1
+    direction = (h.T * G - G.T) / det
+    if ortho:
+        direction = 0.5 * (direction - direction.T)
+    # print(direction)
+    # Line search
+    step = 1
+    for j in range(n_ls_tries):
+        if ortho:
+            new_W = expm(-step * direction).dot(W)
+        else:
+            new_W = W - step * direction.dot(W)
+        new_loss = _loss_partial(new_W, X, Y_denoise, noise, n_pb)
+        if new_loss < loss0:
+            return True, new_W, g_norm
+        else:
+            step /= 2.0
+    return False, W, g_norm
