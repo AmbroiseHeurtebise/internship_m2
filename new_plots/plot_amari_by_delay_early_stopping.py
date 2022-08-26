@@ -1,16 +1,12 @@
-# Third test: call _optimization_tau.py on the scaling loop (of mvica) too
-
 import numpy as np
 import pandas as pd
-from multiviewica import multiviewica
-from delay_multiviewica import multiviewica as delay_multiviewica
-from delay_multiviewica import multiviewica_test3 as delay_multiviewica_test3
-from delay_multiviewica import create_sources_pierre, univiewica
-from picard import amari_distance
 import matplotlib.pyplot as plt
 import seaborn as sns
 from itertools import product
 from joblib import Parallel, delayed
+from picard import amari_distance
+from multiviewica import multiviewica
+from delay_multiviewica import delay_multiviewica, create_sources_pierre, univiewica
 
 
 def run_experiment(m, p, n, algo, delay_max, random_state):
@@ -20,11 +16,13 @@ def run_experiment(m, p, n, algo, delay_max, random_state):
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
-    elif algo == 'delay_mvica_withoptimscale':
-        _, W_list, _, _ = delay_multiviewica_test3(
-            X_list, random_state=random_state)
-    else:
+    elif algo == 'delay_mvica_earl_stop_3':
+        _, W_list, _, _ = delay_multiviewica(
+            X_list, early_stopping_delay=3, random_state=random_state)
+    elif algo == 'univiewICA':
         W_list = univiewica(X_list, random_state=random_state)
+    else:
+        raise ValueError("Wrong algo name")
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
     output = {"Algo": algo, "Delay": delay_max,
               "random_state": random_state, "Amari_distance": amari}
@@ -36,16 +34,16 @@ if __name__ == '__main__':
     m = 6
     p = 2
     n = 400
-    delays = np.linspace(0, n // 1.5, 6, dtype=int)
-    algos = ['delay_mvica', 'delay_mvica_withoptimscale']
-    n_expe = 5
+    delays = np.linspace(0, n * 0.65, 9, dtype=int)
+    algos = ['mvica', 'delay_mvica_earl_stop_3', 'delay_mvica']
+    n_expe = 20
     N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(m, p, n, algo, delay_max, random_state)
         for algo, delay_max, random_state
-        in product(algos, delays, np.arange(40, 40 + n_expe))
+        in product(algos, delays, range(n_expe))
     )
     results = pd.DataFrame(results).drop(columns='random_state')
 
@@ -62,7 +60,8 @@ if __name__ == '__main__':
     for line in leg.get_lines():
         line.set_linewidth(2.5)
     plt.grid()
-    plt.title("Amari distance wrt the delay", fontsize=18, fontweight="bold")
-    plt.savefig("new_figures/test3.pdf",
+    plt.title("The effect of early stopping on the Amari distance", 
+                fontsize=18, fontweight="bold")
+    plt.savefig("new_figures/amari_by_delay_early_stopping.pdf",
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
     plt.show()

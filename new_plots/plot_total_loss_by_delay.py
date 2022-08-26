@@ -1,12 +1,11 @@
 import numpy as np
 import pandas as pd
-from multiviewica import multiviewica
-from delay_multiviewica import multiviewica as delay_multiviewica
-from delay_multiviewica import create_sources_pierre, univiewica, _apply_delay
 import matplotlib.pyplot as plt
 import seaborn as sns
 from itertools import product
 from joblib import Parallel, delayed
+from multiviewica import multiviewica
+from delay_multiviewica import delay_multiviewica, create_sources_pierre, univiewica, _apply_delay
 
 
 def _logcosh(X):
@@ -29,20 +28,20 @@ def run_experiment(m, p, n, algo, delay_max, random_state):
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
         Y_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
-        Y_avg = np.mean(Y_list, axis=0)
-        total_loss = _total_loss_function(W_list, Y_list, Y_avg)
-    elif algo == 'delay_multiviewica':
-        _, W_list, _, tau_list = delay_multiviewica(X_list, random_state=random_state)
+    elif algo == 'delay_mvica':
+        _, W_list, _, tau_list = delay_multiviewica(
+            X_list, random_state=random_state)
         S_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
         Y_list = _apply_delay(S_list, tau_list)
-        Y_avg = np.mean(Y_list, axis=0)
-        total_loss = _total_loss_function(W_list, Y_list, Y_avg)
-    else:
+    elif algo == 'univiewICA':
         W_list = univiewica(X_list, random_state=random_state)
         W_list = np.array(W_list)
         Y_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
-        Y_avg = np.mean(Y_list, axis=0)
-        total_loss = _total_loss_function(W_list, Y_list, Y_avg)
+    else:
+        raise ValueError("Wrong algo name")
+    Y_avg = np.mean(Y_list, axis=0)
+    total_loss = _total_loss_function(W_list, Y_list, Y_avg)
+
     output = {"Algo": algo, "Delay": delay_max,
               "random_state": random_state, "Total loss": total_loss}
     return output
@@ -53,9 +52,9 @@ if __name__ == '__main__':
     m = 6
     p = 2
     n = 400
-    delays = np.linspace(0, n // 1.5, 20, dtype=int)
-    algos = ['univiewICA', 'mvica', 'delay_multiviewica']
-    n_expe = 5
+    delays = np.linspace(0, n * 0.65, 9, dtype=int)
+    algos = ['univiewICA', 'mvica', 'delay_mvica']
+    n_expe = 15
     N_JOBS = 8
 
     # Run ICA
