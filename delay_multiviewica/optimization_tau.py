@@ -49,6 +49,23 @@ def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
 # Only works for p=2
 
 
+def create_model(m, p, n, delay=None, noise=0.05, random_state=None):
+    rng = check_random_state(random_state)
+    if delay is None:
+        delay = int(0.2 * n)
+    s = np.zeros(n)
+    s[:n//4] = np.sin(np.linspace(0, np.pi, n//4))
+    delay_sources = rng.randint(0, n, p)
+    S = np.array([np.roll(s, -delay_sources[i]) for i in range(p)])
+    noise_list = noise * rng.randn(m, p, n)
+    S_list = np.array([S + N for N in noise_list])
+    tau_list = rng.randint(0, delay + 1, size=m)
+    S_list = _apply_delay(S_list, -tau_list)
+    A_list = rng.randn(m, p, p)
+    X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
+    return X_list, A_list, tau_list, S_list, S
+
+
 def _plot_delayed_sources(S_list):
     n_sub, p, n = S_list.shape
     fig, _ = plt.subplots(n_sub//2, 2)
