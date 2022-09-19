@@ -57,6 +57,59 @@ def create_model(m, p, n, delay=None, noise=0.05, random_state=None):
     return X_list, A_list, tau_list, S_list, S
 
 
+def soft_treshold(S, treshold=1):
+    return np.sign(S) * np.maximum(0, np.abs(S) - treshold)
+
+
+def generate_source_one_interval(interval_length, freqs):
+    t = np.linspace(0, 10 * np.pi, interval_length)
+    s = np.sum([np.sin(f * t) for f in freqs], axis=0)
+    return s
+
+
+def generate_one_source(interval_length, freqs, power):
+    s = np.array([p * generate_source_one_interval(interval_length, freqs[i, :]) for p, i in zip(power, range(len(power)))]).reshape(-1)
+    return s
+
+
+def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
+    rng = check_random_state(random_state)
+    interval_length = n // nb_intervals
+    freqs = rng.randn(p, nb_intervals, nb_freqs)
+    power = rng.exponential(size=(p, nb_intervals))
+    S = np.array([generate_one_source(interval_length, freqs[i], power[i]) for i in range(p)])
+    return S
+
+
+def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, delay=None, noise=0.05, random_state=None):
+    rng = check_random_state(random_state)
+    if delay is None:
+        delay = n // 5
+    S = generate_sources(p, n, nb_intervals, nb_freqs, random_state)
+    S = soft_treshold(S)
+    noise_list = noise * rng.randn(m, p, n)
+    S_list = np.array([S + N for N in noise_list])
+    tau_list = rng.randint(0, delay + 1, size=m)
+    S_list = _apply_delay(S_list, -tau_list)
+    A_list = rng.randn(m, p, p)
+    X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
+    return X_list, A_list, tau_list, S_list, S
+
+
+def plot_sources(S, nb_intervals):
+    p, n = S.shape
+    height = 20
+    for i in range(p):
+        plt.plot(S[i] + height * i)
+        plt.hlines(y=height*i, xmin=0, xmax=n, linestyles='--', colors='grey')
+        plt.yticks([])
+    for i in range(nb_intervals+1):
+        plt.vlines(x=n//nb_intervals*i, ymin=-height, ymax=p*height, linestyles='--', colors='grey')
+    plt.xlabel("Samples")
+    plt.title("Sources")
+    plt.show()
+
+
 def _plot_delayed_sources(S_list):
     n_sub, p, n = S_list.shape
     fig, _ = plt.subplots(n_sub//2, 2)
