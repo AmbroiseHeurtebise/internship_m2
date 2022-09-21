@@ -36,7 +36,7 @@ def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
     A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, _apply_delay_one_sub(S, delay) + noise)
                       for A, noise, delay in zip(A_list, N, delays)])
-    return X_list, A_list, delays
+    return X_list, A_list, delays, S
 # Only works for p=2
 
 
@@ -62,7 +62,7 @@ def soft_treshold(S, treshold=1):
 
 
 def generate_source_one_interval(interval_length, freqs):
-    t = np.linspace(0, 10 * np.pi, interval_length)
+    t = np.linspace(0, 16 * np.pi, interval_length)
     s = np.sum([np.sin(f * t) for f in freqs], axis=0)
     return s
 
@@ -81,12 +81,12 @@ def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
     return S
 
 
-def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, delay=None, noise=0.05, random_state=None):
+def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, treshold=1, delay=None, noise=0.05, random_state=None):
     rng = check_random_state(random_state)
     if delay is None:
         delay = n // 5
     S = generate_sources(p, n, nb_intervals, nb_freqs, random_state)
-    S = soft_treshold(S)
+    S = soft_treshold(S, treshold=treshold)
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
     tau_list = rng.randint(0, delay + 1, size=m)
