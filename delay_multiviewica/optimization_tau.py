@@ -27,10 +27,19 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
     return _loss_function(Y_list, Y_avg)
 
 
+# def _delay_estimation(Y, Y_avg):
+#     _, n = np.shape(Y)
+#     conv = np.array([convolve1d(y, y_avg[::-1], mode='wrap',
+#                     origin=math.ceil(n/2)-1) for y, y_avg in zip(Y, Y_avg)])
+#     conv_norm = np.sum(conv, axis=0)
+#     new_tau = np.argmax(conv_norm)
+#     return new_tau
+
+
 def _delay_estimation(Y, Y_avg):
-    _, n = np.shape(Y)
-    conv = np.array([convolve1d(y, y_avg[::-1], mode='wrap',
-                    origin=math.ceil(n/2)-1) for y, y_avg in zip(Y, Y_avg)])
+    conv = np.array([np.convolve(
+        np.concatenate((y, y[:-1])), y_avg[::-1], mode='valid')
+        for y, y_avg in zip(Y, Y_avg)])
     conv_norm = np.sum(conv, axis=0)
     new_tau = np.argmax(conv_norm)
     return new_tau
