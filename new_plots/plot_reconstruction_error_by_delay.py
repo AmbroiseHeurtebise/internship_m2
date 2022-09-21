@@ -3,26 +3,42 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from itertools import product
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, Memory
 from picard import amari_distance
 from multiviewica import multiviewica
-from delay_multiviewica import delay_multiviewica, _delay_estimation, _apply_delay_one_sub, create_model
+from delay_multiviewica import delay_multiviewica, _delay_estimation, _apply_delay_one_sub, create_model, create_sources_pierre
+
+
+# def reconstruction_error(Y_avg, S):
+#     assert Y_avg.shape == S.shape
+#     p, _ = Y_avg.shape
+#     tau = _delay_estimation(Y_avg, S)
+#     Y_avg = _apply_delay_one_sub(Y_avg, tau)
+#     M = np.dot(Y_avg, S.T)
+#     error = amari_distance(M, np.eye(p))
+#     return error
 
 
 def reconstruction_error(Y_avg, S):
     assert Y_avg.shape == S.shape
-    p, _ = Y_avg.shape
-    tau = _delay_estimation(Y_avg, S)
-    Y_avg = _apply_delay_one_sub(Y_avg, tau)
-    M = np.dot(Y_avg, S.T)
-    error = amari_distance(M, np.eye(p))
+    p, n = Y_avg.shape
+    Y_avg_list = np.array(
+        [_apply_delay_one_sub(Y_avg, tau) for tau in range(n)])
+    M_list = np.array([np.dot(Y, S.T) for Y in Y_avg_list])
+    error_list = [amari_distance(M, np.eye(p)) for M in M_list]
+    error = np.min(error_list)
     return error
 
 
+mem = Memory(".")
+
+
+@mem.cache
 def run_experiment(m, p, n, algo, delay_max, noise, random_state):
-    X_list, _, _, _, S = create_model(
-        m, p, n, delay_max, noise, random_state=random_state
-    )
+    # X_list, _, _, _, S = create_model(
+    #     m, p, n, delay_max, noise, random_state=random_state
+    # )
+    X_list, _, _, S = create_sources_pierre(m, p, n, delay_max, noise, random_state)
     if algo == 'mvica':
         _, _, Y_avg = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
@@ -38,7 +54,7 @@ def run_experiment(m, p, n, algo, delay_max, noise, random_state):
 if __name__ == '__main__':
     # Parameters
     m = 6
-    p = 4
+    p = 2
     n = 400
     delays = np.linspace(0, n * 0.65, 9, dtype=int)
     noise = 0.05
