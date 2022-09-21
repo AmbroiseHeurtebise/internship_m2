@@ -4,7 +4,6 @@
 import numpy as np
 import warnings
 from scipy.linalg import expm
-from picard import amari_distance
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
@@ -22,8 +21,7 @@ def multiviewica(
     tol=1e-3,
     verbose=False,
     return_loss=False,
-    return_amari=False,
-    A_list=None,  # needed if return_amari==True
+    return_basis_list=False,
 ):
     """
     Performs MultiViewICA.
@@ -100,15 +98,13 @@ def multiviewica(
         if type(init) is not np.ndarray:
             raise TypeError("init should be a numpy array")
         W = init
-    if return_amari and A_list is None:
-        raise TypeError("A_list shouldn't be None when return_amari is True")
     # Performs multiview ica
     W, S, loss_total = _multiview_ica_main(
         X, noise=noise, n_iter=max_iter, tol=tol, init=W, 
         verbose=verbose, return_loss=return_loss, 
-        return_amari=return_amari, A_list=A_list,
+        return_basis_list=return_basis_list,
     )
-    if return_loss or return_amari:
+    if return_loss or return_basis_list:
         return P, W, S, loss_total
     return P, W, S
 
@@ -129,8 +125,7 @@ def _multiview_ica_main(
     return_gradients=False,
     timing=False,
     return_loss=False,
-    return_amari=False,
-    A_list=None,
+    return_basis_list=False,
 ):
     tol_init = None
     if tol > 0 and tol_init is None:
@@ -189,12 +184,12 @@ def _multiview_ica_main(
         timings = []
     g_norms = 0
     loss_total = []
-    amari = []
+    W_total = []
     for i in range(n_iter):
         if return_loss:
             loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
-        if return_amari:
-            amari.append(np.sum([amari_distance(W, A) for W, A in zip(basis_list, A_list)]))
+        if return_basis_list:
+            W_total.append(basis_list.copy())
         g_norms = 0
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
@@ -246,9 +241,9 @@ def _multiview_ica_main(
 
     if timing:
         return basis_list, Y_avg, timings
-    
-    if return_amari:
-        return basis_list, Y_avg, amari
+
+    if return_basis_list:
+        return basis_list, Y_avg, W_total
     return basis_list, Y_avg, loss_total
 
 

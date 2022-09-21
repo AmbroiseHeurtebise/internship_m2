@@ -21,12 +21,12 @@ def delay_multiviewica(
     init="permica",
     n_iter_delay=3,
     early_stopping_delay=None,
+    every_N_iter_delay=1,
     random_state=None,
     tol=1e-3,
     verbose=False,
     return_loss=False,
-    return_amari=False,
-    A_list=None,  # needed if return_amari==True
+    return_basis_list=False,
 ):
     """
     Performs MultiViewICA.
@@ -103,15 +103,14 @@ def delay_multiviewica(
         if type(init) is not np.ndarray:
             raise TypeError("init should be a numpy array")
         W = init
-    if return_amari and A_list is None:
-        raise TypeError("A_list shouldn't be None when return_amari is True")
     # Performs multiview ica
     W, S, tau_list, loss_total = _multiview_ica_main(
-        X, noise=noise, n_iter=max_iter, tol=tol, init=W, n_iter_delay=n_iter_delay, 
-        early_stopping_delay=early_stopping_delay, verbose=verbose, return_loss=return_loss,
-        return_amari=return_amari, A_list=A_list,
+        X, noise=noise, n_iter=max_iter, tol=tol, init=W,
+        n_iter_delay=n_iter_delay, early_stopping_delay=early_stopping_delay,
+        every_N_iter_delay=every_N_iter_delay, verbose=verbose,
+        return_loss=return_loss, return_basis_list=return_basis_list,
     )
-    if return_loss or return_amari:
+    if return_loss or return_basis_list:
         return P, W, S, tau_list, loss_total
     return P, W, S, tau_list
 
@@ -130,12 +129,12 @@ def _multiview_ica_main(
     init=None,
     n_iter_delay=3,
     early_stopping_delay=None,
+    every_N_iter_delay=1,
     ortho=False,
     return_gradients=False,
     timing=False,
     return_loss=False,
-    return_amari=False,
-    A_list=None,
+    return_basis_list=False,
 ):
     tol_init = None
     if tol > 0 and tol_init is None:
@@ -143,7 +142,7 @@ def _multiview_ica_main(
 
     if tol == 0 and tol_init is None:
         tol_init = 1e-6
-    
+
     if early_stopping_delay is None:
         early_stopping_delay = n_iter
 
@@ -198,19 +197,19 @@ def _multiview_ica_main(
     g_norms = 0
     S_list = np.array([W.dot(X) for W, X in zip(basis_list, X_list)])
     loss_total = []
-    amari = []
+    W_total = []
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
     for i in range(n_iter):
-        if i < early_stopping_delay:
+        if i < early_stopping_delay and i % every_N_iter_delay == 0:
             # Delay estimation
             _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
             Y_list = _apply_delay(S_list, tau_list)
         if return_loss:
             new_X_list = _apply_delay(X_list, tau_list)
             loss_total.append(_loss_total(basis_list, new_X_list, Y_avg, noise))
-        if return_amari:
-            amari.append(np.sum([amari_distance(W, A) for W, A in zip(basis_list, A_list)]))
+        if return_basis_list:
+            W_total.append(basis_list.copy())
         g_norms = 0
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
@@ -266,9 +265,9 @@ def _multiview_ica_main(
 
     if timing:
         return basis_list, Y_avg, tau_list, timings
-    
-    if return_amari:
-        return basis_list, Y_avg, tau_list, amari
+
+    if return_basis_list:
+        return basis_list, Y_avg, tau_list, W_total
     return basis_list, Y_avg, tau_list, loss_total
 
 
