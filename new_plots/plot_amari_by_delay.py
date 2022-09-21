@@ -6,16 +6,19 @@ from itertools import product
 from joblib import Parallel, delayed, Memory
 from picard import amari_distance
 from multiviewica import multiviewica
-from delay_multiviewica import delay_multiviewica, create_sources_pierre, univiewica
+from delay_multiviewica import delay_multiviewica, create_sources_pierre, univiewica, generate_data
 
 
-mem = Memory(".")
+# mem = Memory(".")
 
 
-@mem.cache
+# @mem.cache
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list, _, _ = create_sources_pierre(
-        m, p, n, delay_max, sigma=0.05, random_state=random_state)
+    # X_list, A_list, _, _ = create_sources_pierre(
+    #     m, p, n, delay_max, sigma=0.05, random_state=random_state)
+    X_list, A_list, _, _, S = generate_data(
+        m, p, n, nb_intervals=5, nb_freqs=20,
+        treshold=3, delay=delay_max, noise=0.1, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
