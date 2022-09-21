@@ -3,13 +3,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from itertools import product
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, Memory
 from delay_multiviewica import _optimization_tau, _create_sources, _loss_delay, _optimization_tau_approach1, _optimization_tau_approach2
 
-def create_sources_dummy(n_sub, p, n, delay_max, noise_sources, random_state=None):
-    S_list = np.random.randn
+
+mem = Memory(".")
 
 
+@mem.cache
 def run_experiment(n_sub, p, n, sources_noise, n_iter, random_state, init):
     # Generate data
     _, _, true_tau_list, S_list = _create_sources(

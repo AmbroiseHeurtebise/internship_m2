@@ -3,20 +3,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from itertools import product
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, Memory
 from picard import amari_distance
 from multiviewica import multiviewica
 from delay_multiviewica import delay_multiviewica, create_sources_pierre, univiewica
 
 
+mem = Memory(".")
+
+
+@mem.cache
 def run_experiment(m, p, n, algo, delay_max, random_state):
-    X_list, A_list, _ = create_sources_pierre(
+    X_list, A_list, _, _ = create_sources_pierre(
         m, p, n, delay_max, sigma=0.05, random_state=random_state)
     if algo == 'mvica':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
     elif algo == 'delay_mvica':
         _, W_list, _, _ = delay_multiviewica(X_list, random_state=random_state)
-    elif algo == 'univiewICA':
+    elif algo == 'univiewica':
         W_list = univiewica(X_list, random_state=random_state)
     else:
         raise ValueError("Wrong algo name")
@@ -32,7 +36,7 @@ if __name__ == '__main__':
     p = 2
     n = 400
     delays = np.linspace(0, n * 0.65, 9, dtype=int)
-    algos = ['mvica', 'univiewICA', 'delay_mvica']
+    algos = ['mvica', 'univiewica', 'delay_mvica']
     n_expe = 17
     N_JOBS = 8
 

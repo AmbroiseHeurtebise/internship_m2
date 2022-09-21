@@ -12,7 +12,7 @@ if __name__ == '__main__':
     random_state = 20
 
     # Generate data
-    X_list, _, _ = create_sources_pierre(
+    X_list, _, _, _ = create_sources_pierre(
         m, p, n, delay, sigma=noise, random_state=random_state)
 
     # Run ICA
