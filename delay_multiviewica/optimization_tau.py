@@ -1,5 +1,6 @@
 import numpy as np
-import math
+# import math
+import scipy
 from scipy.ndimage import convolve1d
 
 
@@ -137,3 +138,27 @@ def _optimization_tau(S_list, n_iter, error_tau=False, true_tau_list=None):
         gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
         return loss, tau_list, Y_avg, gap_tau
     return loss, tau_list, Y_avg
+
+
+def _hungarian(M):
+    u, order = scipy.optimize.linear_sum_assignment(-abs(M))
+    vals = M[u, order]
+    cost = np.sum(np.abs(vals))
+    return cost
+
+
+def delay_estimation_with_scale_perm(S_list):
+    m, _, n = S_list.shape
+    # for i in range(len(S_list)):  # useful if permica was not called before
+    #     S_list[i] /= np.linalg.norm(S_list[i], axis=1, keepdims=1)
+    S = S_list[0].copy()
+    tau_list = np.zeros(m, dtype=int)
+    for i, s in enumerate(S_list[1:]):
+        objective = []
+        for delay in range(n):
+            s_delayed = _apply_delay_one_sub(s, -delay)
+            M = np.dot(S, s_delayed.T)
+            cost = _hungarian(M)
+            objective.append(cost)
+        tau_list[i + 1] = np.argmax(objective)
+    return tau_list
