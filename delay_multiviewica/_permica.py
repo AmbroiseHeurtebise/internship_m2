@@ -5,6 +5,7 @@ import numpy as np
 import scipy
 from picard import picard
 from multiviewica.reduce_data import reduce_data
+from .optimization_tau import delay_estimation_with_scale_perm, _apply_delay
 
 
 def permica(
@@ -76,6 +77,8 @@ def permica(
         scale = np.linalg.norm(Si, axis=1)
         S[i] = Si / scale[:, None]
         W[i] = np.dot(Wi, Ki) / scale[:, None]
+    tau_list = delay_estimation_with_scale_perm(S)
+    S = _apply_delay(S, -tau_list)
     orders, signs, S = _find_ordering(S)
     for i, (order, sign) in enumerate(zip(orders, signs)):
         W[i] = sign[:, None] * W[i][order, :]
