@@ -1,7 +1,5 @@
-This repo contains the main results of the internship. 
-
 Files in the folder ```run``` need to be processed on drago. 
 
-Files in the folder ```plots``` give the figures shown in the report. These figures are also in the folder ```figures```. 
+Files in the folder ```plots``` give the figures shown in the internship report. These figures are also in the folder ```figures```. 
 
 The folder ```multiviewica_delay``` contains the function that performs MultiView ICA with Delay. 
