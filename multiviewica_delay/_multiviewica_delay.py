@@ -20,6 +20,7 @@ def multiviewica_delay(
     init="permica",
     optim_delays_permica=True,
     optim_delays_ica=True,
+    delay_max=10,
     n_iter_delay=3,
     early_stopping_delay=None,
     every_N_iter_delay=1,
@@ -28,6 +29,8 @@ def multiviewica_delay(
     verbose=False,
     return_loss=False,
     return_basis_list=False,
+    return_delays_every_iter=False,  # XXX to be removed
+    return_unmixing_delays_both_phases=False,  # XXX to be removed
 ):
     """
     Performs MultiViewICA.
@@ -89,13 +92,15 @@ def multiviewica_delay(
         X, n_components=n_components, dimension_reduction=dimension_reduction
     )
     # Initialization
+    n_pb, _, n = X.shape
+    tau_list_init = np.zeros(n_pb, dtype=int)
     if type(init) is str:
         if init not in ["permica", "groupica"]:
             raise ValueError("init should either be permica or groupica")
         if init == "permica":
-            _, W, S, tau_list = permica(
+            _, W, S, tau_list_init = permica(
                 X, max_iter=max_iter, random_state=random_state, tol=tol,
-                optim_delays=optim_delays_permica
+                optim_delays=optim_delays_permica, delay_max=delay_max
             )
         else:
             _, W, S = groupica(
@@ -105,19 +110,38 @@ def multiviewica_delay(
         if type(init) is not np.ndarray:
             raise TypeError("init should be a numpy array")
         W = init
-    X_delayed = _apply_delay(X, -tau_list)
+    X_rescaled = _apply_delay(X, -tau_list_init)
+
+    if return_delays_every_iter:  # XXX needs to be removed
+        tau_list_main = _multiview_ica_main(
+            X_rescaled, noise=noise, n_iter=max_iter, tol=tol, init=W,
+            optim_delays_ica=optim_delays_ica, delay_max=delay_max, n_iter_delay=n_iter_delay,
+            early_stopping_delay=early_stopping_delay,
+            every_N_iter_delay=every_N_iter_delay, verbose=verbose,
+            return_loss=return_loss, return_basis_list=return_basis_list,
+            return_delays_every_iter=return_delays_every_iter,
+        )
+        return tau_list_init, tau_list_main
+
+    W_init = W.copy()  # XXX to be removed
+
     # Performs multiview ica
-    W, S, new_tau_list, loss_total = _multiview_ica_main(
-        X_delayed, noise=noise, n_iter=max_iter, tol=tol, init=W,
-        optim_delays_ica=optim_delays_ica, n_iter_delay=n_iter_delay,
+    W, S, tau_list_main, loss_total = _multiview_ica_main(
+        X_rescaled, noise=noise, n_iter=max_iter, tol=tol, init=W,
+        optim_delays_ica=optim_delays_ica, delay_max=delay_max, n_iter_delay=n_iter_delay,
         early_stopping_delay=early_stopping_delay,
         every_N_iter_delay=every_N_iter_delay, verbose=verbose,
         return_loss=return_loss, return_basis_list=return_basis_list,
     )
-    tau_list += new_tau_list
+
+    if return_unmixing_delays_both_phases:  # XXX to be removed
+        return W_init, tau_list_init, W, tau_list_main
+
+    tau_list = tau_list_init + tau_list_main
+    tau_list %= n
     if return_loss or return_basis_list:
         return P, W, S, tau_list, loss_total
-    return P, W, S, tau_list
+    return P, W, S, tau_list, tau_list_init  # XXX
 
 
 def _logcosh(X):
@@ -133,6 +157,7 @@ def _multiview_ica_main(
     verbose=False,
     init=None,
     optim_delays_ica=True,
+    delay_max=10,
     n_iter_delay=3,
     early_stopping_delay=None,
     every_N_iter_delay=1,
@@ -141,6 +166,7 @@ def _multiview_ica_main(
     timing=False,
     return_loss=False,
     return_basis_list=False,
+    return_delays_every_iter=False,  # XXX to be removed
 ):
     tol_init = None
     if tol > 0 and tol_init is None:
@@ -204,27 +230,36 @@ def _multiview_ica_main(
     S_list = np.array([W.dot(X) for W, X in zip(basis_list, X_list)])
     Y_list = S_list.copy()
     loss_total = []
+    loss_partial = []  # XXX
     W_total = []
+    # tau_list_total = np.zeros(n_pb, dtype=int)
+    tau_list_every_iter = []  # XXX to be removed
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
+        loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
     for i in range(n_iter):
         # sign_list = np.ones(n_pb, p)
         tau_list = np.zeros(n_pb, dtype=int)
         if optim_delays_ica and i < early_stopping_delay and i % every_N_iter_delay == 0:
             # Delay estimation
-            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay)
-            Y_list = _apply_delay(S_list, tau_list)
+            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay, delay_max=2*delay_max)
+            Y_list = _apply_delay(S_list, -tau_list)
+            # tau_list_total += tau_list
+            # tau_list_total %= n
+            tau_list_every_iter.append(tau_list)  # XXX to be removed
         # basis_list = ...
         if return_loss:
-            new_X_list = _apply_delay(X_list, tau_list)
+            new_X_list = _apply_delay(X_list, -tau_list)
             loss_total.append(_loss_total(basis_list, new_X_list, Y_avg, noise))
+            y_avg = np.mean(Y_list, axis=0)
+            loss_partial.append(np.mean((Y_list - y_avg) ** 2))
         if return_basis_list:
             W_total.append(basis_list.copy())
         g_norms = 0
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
         for j in range(n_pb):
-            X = _apply_delay_one_sub(X_list[j], tau_list[j])
+            X = _apply_delay_one_sub(X_list[j], -tau_list[j])
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
             Y_denoise = Y_avg - Y_list[j] / n_pb
@@ -234,8 +269,8 @@ def _multiview_ica_main(
             )
             # Update the average vector (estimate of the sources)
             Y_list[j] = np.dot(basis_list[j], X)
-            # Y_list[j] += _apply_delay_one_sub(np.dot(basis_list[j] - W_old, X_list[j]), tau_list[j])
-            S_list[j] = _apply_delay_one_sub(Y_list[j], -tau_list[j])
+            # Y_list[j] += _apply_delay_one_sub(np.dot(basis_list[j] - W_old, X_list[j]), -tau_list[j])
+            S_list[j] = _apply_delay_one_sub(Y_list[j], tau_list[j])
             Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
             # Y_avg = np.mean(Y_list, axis=0)
             g_norms = max(g_norm, g_norms)
@@ -278,6 +313,12 @@ def _multiview_ica_main(
 
     if return_basis_list:
         return basis_list, Y_avg, tau_list, W_total
+
+    if return_delays_every_iter:
+        return np.asarray(tau_list_every_iter)
+
+    if return_loss:
+        return basis_list, Y_avg, tau_list, [loss_total, loss_partial]
     return basis_list, Y_avg, tau_list, loss_total
 
 
