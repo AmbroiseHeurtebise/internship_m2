@@ -7,6 +7,20 @@ from joblib import Parallel, delayed, Memory
 from multiviewica_delay import generate_data, multiviewica_delay
 
 
+def estimation_signal_power(
+    m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds=100
+):
+    power = []
+    seeds = np.random.randint(0, 10000, n_seeds)
+    for random_state in seeds:
+        _, _, _, _, S = generate_data(
+            m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
+            treshold=3, delay=delay_max, noise=0.1,
+            random_state=random_state)
+        power.append(np.mean(S ** 2))
+    return np.mean(power)
+
+
 def distance_between_delays(tau1, tau2, n):
     assert len(tau1) == len(tau2)
     n_sub = len(tau1)
@@ -23,13 +37,20 @@ mem = Memory(".")
 
 @mem.cache
 def run_experiment(
-    m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state
+    m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state,
+    signal_power=10
 ):
     # Generate data
     X_list, _, true_tau_list, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise,
         random_state=random_state)
+
+    # SNR
+    if noise == 0:
+        snr = 0
+    else:
+        snr = signal_power / (noise ** 2)
 
     # Estimate delays
     _, _, _, tau_list, tau_list_init = multiviewica_delay(
@@ -42,7 +63,7 @@ def run_experiment(
         tau_list, true_tau_list - true_tau_list[0], n)
 
     # Output
-    output = {"Noise": noise, "Random state": random_state,
+    output = {"Noise": noise, "SNR": snr, "Random state": random_state,
               "Error init": error_init, "Error final": error_final}
     return output
 
@@ -61,10 +82,16 @@ if __name__ == '__main__':
     random_states = np.arange(nb_expe)
     N_JOBS = 4
 
+    # Estimate signal power
+    n_seeds = 1000
+    signal_power = estimation_signal_power(
+        m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds)
+
     # Results
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
-            m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state)
+            m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state,
+            signal_power)
         for noise, random_state
         in product(noise_list, random_states)
     )
@@ -74,18 +101,18 @@ if __name__ == '__main__':
     sns.set(font_scale=1.8)
     sns.set_style("white")
     sns.set_style('ticks')
-    fig = sns.lineplot(data=results, x="Noise",
+    fig = sns.lineplot(data=results, x="SNR",
                        y="Error init", linewidth=2.5, label="Phase 1")
-    fig = sns.lineplot(data=results, x="Noise",
+    fig = sns.lineplot(data=results, x="SNR",
                        y="Error final", linewidth=2.5, label="Phases 1 and 2")
     fig.set(xscale='log')
-    fig.set(yscale='log')
-    x_ = plt.xlabel("Noise")
+    # fig.set(yscale='log')
+    x_ = plt.xlabel("SNR")
     y_ = plt.ylabel("Error")
     leg = plt.legend(prop={'size': 15})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Delay estimation error for various noise levels")
-    plt.savefig("tests_figures/importance_optim_phase_2.pdf")
+    plt.savefig("tests_figures/importance_optim_phase_2.pdf", bbox_inches="tight")
     plt.show()
