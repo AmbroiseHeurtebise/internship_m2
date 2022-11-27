@@ -82,6 +82,7 @@ def multiviewica_delay(
         Estimated un-mixing matrices
     S : np array of shape (n_components, n_samples)
         Estimated source
+    XXX to update
 
     See also
     --------
