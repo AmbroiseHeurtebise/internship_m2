@@ -62,6 +62,19 @@ def multiviewica_delay(
     init : str or np array of shape (n_groups, n_components, n_components)
         If permica: initialize with perm ICA, if groupica, initialize with
         group ica. Else, use the provided array to initialize.
+    optim_delays_permica : bool, optional
+        Decides if we estimate delays during phase 1 or not
+    optim_delays_ica : bool, optional
+        Decides if we estimate delays during phase 2 or not
+    delay_max : int, optional
+        The maximum delay between two subjects
+    n_iter_delay : int, optional
+        The number of loops used in phase 2 to estimate delays
+    early_stopping_delay : int, optional
+        If None: estimate delays in phase 2 until convergence. Else, stop
+        estimating delays from iteration number early_stopping_delay.
+    every_N_iter_delay : int, optional
+        Estimate delays in phase 2 every every_N_iter_delay iterations.
     random_state : int, RandomState instance or None, optional (default=None)
         Used to perform a random initialization. If int, random_state is
         the seed used by the random number generator; If RandomState
@@ -82,7 +95,8 @@ def multiviewica_delay(
         Estimated un-mixing matrices
     S : np array of shape (n_components, n_samples)
         Estimated source
-    XXX to update
+    tau_list : np array of shape(n_groups, )
+        Estimated delays
 
     See also
     --------
