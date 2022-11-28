@@ -1,7 +1,4 @@
 import numpy as np
-# import math
-# import scipy
-# from scipy.ndimage import convolve1d
 
 
 def _apply_delay_one_sub(Y, tau):
@@ -28,27 +25,35 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
     return _loss_function(Y_list, Y_avg)
 
 
-# def _delay_estimation(Y, Y_avg):
-#     _, n = np.shape(Y)
-#     conv = np.array([convolve1d(y, y_avg[::-1], mode='wrap',
-#                     origin=math.ceil(n/2)-1) for y, y_avg in zip(Y, Y_avg)])
+# def _delay_estimation(Y, Y_avg, delay_max=10):
+#     p, n = Y.shape
+#     conv = np.array([np.convolve(
+#         np.concatenate((y, y[:-1])), y_avg[::-1], mode='valid')
+#         for y, y_avg in zip(Y, Y_avg)])
 #     conv_norm = np.sum(conv, axis=0)
-#     new_tau = np.argmax(conv_norm)
-#     return new_tau
+#     # optimal_delay = np.argmax(conv_norm)
+#     conv_norm_small_delays = np.concatenate(
+#         (conv_norm[:delay_max+1], conv_norm[n - delay_max: n]))
+#     optimal_delay = np.argmax(conv_norm_small_delays)
+#     if optimal_delay >= delay_max:
+#         optimal_delay += n - 2 * delay_max - 1
+#     return optimal_delay
 
 
 def _delay_estimation(Y, Y_avg, delay_max=10):
-    p, n = Y.shape
-    conv = np.array([np.convolve(
-        np.concatenate((y, y[:-1])), y_avg[::-1], mode='valid')
+    _, n = Y.shape
+    conv1 = np.array([np.convolve(
+        np.concatenate((y, y[:delay_max])), y_avg[::-1], mode='valid')
         for y, y_avg in zip(Y, Y_avg)])
-    conv_norm = np.sum(conv, axis=0)
-    # optimal_delay = np.argmax(conv_norm)
-    conv_norm_small_delays = np.concatenate(
-        (conv_norm[:delay_max], conv_norm[n - delay_max: n]))
-    optimal_delay = np.argmax(conv_norm_small_delays)
-    if optimal_delay >= delay_max:
-        optimal_delay += n - 2 * delay_max
+    conv1_norm = np.sum(conv1, axis=0)
+    conv2 = np.array([np.convolve(
+        np.concatenate((y[n-delay_max:], y[:-1])), y_avg[::-1], mode='valid')
+        for y, y_avg in zip(Y, Y_avg)])
+    conv2_norm = np.sum(conv2, axis=0)
+    conv_norm = np.concatenate((conv1_norm, conv2_norm))
+    optimal_delay = np.argmax(conv_norm)
+    if optimal_delay > delay_max:
+        optimal_delay += n - 2 * delay_max - 1
     return optimal_delay
 
 
