@@ -15,7 +15,8 @@ def permica(
     max_iter=1000,
     random_state=None,
     tol=1e-7,
-    optim_delays=False,
+    optim_delays=True,
+    delay_max=10,
 ):
     """
     Performs one ICA per group (ex: subject) and align sources
@@ -80,7 +81,7 @@ def permica(
         W[i] = np.dot(Wi, Ki) / scale[:, None]
     tau_list = np.zeros(n_pb, dtype=int)
     if optim_delays:
-        tau_list = delay_estimation_with_scale_perm(S)
+        tau_list = delay_estimation_with_scale_perm(S, delay_max=delay_max)
         S = _apply_delay(S, -tau_list)
     orders, signs, S = _find_ordering(S)
     for i, (order, sign) in enumerate(zip(orders, signs)):
@@ -95,18 +96,23 @@ def _hungarian(M):
     return order, np.sign(vals), cost
 
 
-def delay_estimation_with_scale_perm(S_list):
+def delay_estimation_with_scale_perm(S_list, delay_max=10):
+    # delay_max has to be <= n/2
     m, _, n = S_list.shape
     S = S_list[0].copy()
     tau_list = np.zeros(m, dtype=int)
     for i, s in enumerate(S_list[1:]):
         objective = []
-        for delay in range(n):
+        # for delay in range(n):
+        for delay in np.concatenate((np.arange(delay_max), np.arange(n-delay_max, n))):
             s_delayed = _apply_delay_one_sub(s, -delay)
             M = np.dot(S, s_delayed.T)
             _, _, cost = _hungarian(M)
             objective.append(cost)
-        tau_list[i + 1] = np.argmax(objective)
+        optimal_delay = np.argmax(objective)
+        if optimal_delay >= delay_max:
+            optimal_delay += n - 2 * delay_max
+        tau_list[i + 1] = optimal_delay
     return tau_list
 
 

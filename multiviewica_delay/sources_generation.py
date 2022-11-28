@@ -19,7 +19,7 @@ def _create_sources(n_sub, p, n, delay_max=None, noise_sources=0.05, random_stat
     S_list = np.concatenate(
         (S_list, np.zeros((n_sub, p, n - n_inner))), axis=2)
     tau_list = rng.randint(0, delay_max, size=n_sub)
-    S_list = _apply_delay(S_list, -tau_list)
+    S_list = _apply_delay(S_list, tau_list)
     A_list = rng.randn(n_sub, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list
@@ -34,7 +34,7 @@ def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
     S = np.c_[s1, s2].T
     N = sigma * rng.randn(m, p, n)
     A_list = rng.randn(m, p, p)
-    X_list = np.array([np.dot(A, _apply_delay_one_sub(S, delay) + noise)
+    X_list = np.array([np.dot(A, _apply_delay_one_sub(S, -delay) + noise)
                       for A, noise, delay in zip(A_list, N, delays)])
     return X_list, A_list, delays, S
 # Only works for p=2
@@ -51,7 +51,7 @@ def create_model(m, p, n, delay=None, noise=0.05, random_state=None):
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
     tau_list = rng.randint(0, delay + 1, size=m)
-    S_list = _apply_delay(S_list, -tau_list)
+    S_list = _apply_delay(S_list, tau_list)
     A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
@@ -90,7 +90,7 @@ def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, treshold=1, delay=None, 
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
     tau_list = rng.randint(0, delay + 1, size=m)
-    S_list = _apply_delay(S_list, -tau_list)
+    S_list = _apply_delay(S_list, tau_list)
     A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
@@ -134,6 +134,6 @@ def _plot_delayed_sources(S_list, height=20, nb_intervals=None):
         else:
             plt.xticks([])
 
-    plt.savefig("figures/sources_wrong_sign_and_order.pdf")
-    # plt.savefig("figures/sources_multiple_subjects.pdf")
+    # plt.savefig("figures/sources_wrong_sign_and_order.pdf")
+    plt.savefig("figures/sources_multiple_subjects.pdf")
     plt.show()
