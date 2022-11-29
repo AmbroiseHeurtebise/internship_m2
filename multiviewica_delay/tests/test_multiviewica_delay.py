@@ -25,9 +25,11 @@ def test_multiviewica_delay():
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise,
         random_state=random_state)
+    true_tau_list -= true_tau_list[0]
+    true_tau_list %= n
 
     # Estimate delays
-    _, _, _, tau_list, tau_list_init = multiviewica_delay(
+    _, _, _, tau_list, _ = multiviewica_delay(
         X_list, n_iter_delay=1, random_state=random_state)
 
     np.testing.assert_array_equal(tau_list, true_tau_list)
