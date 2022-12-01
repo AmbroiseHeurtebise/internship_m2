@@ -56,15 +56,22 @@ def run_experiment(
     _, _, _, tau_list, tau_list_init = multiviewica_delay(
         X_list, n_iter_delay=1, random_state=random_state)
 
+    _, _, _, tau_list_with_f, _ = multiviewica_delay(
+        X_list, n_iter_delay=1, optim_delays_with_f=True,
+        random_state=random_state)
+
     # Errors
     error_init = distance_between_delays(
         tau_list_init, true_tau_list - true_tau_list[0], n)
     error_final = distance_between_delays(
         tau_list, true_tau_list - true_tau_list[0], n)
+    error_with_f = distance_between_delays(
+        tau_list_with_f - tau_list_with_f[0], true_tau_list - true_tau_list[0], n)
 
     # Output
     output = {"Noise": noise, "SNR": snr, "Random state": random_state,
-              "Error init": error_init, "Error final": error_final}
+              "Error init": error_init, "Error final": error_final,
+              "Error with f": error_with_f}
     return output
 
 
@@ -76,11 +83,12 @@ if __name__ == '__main__':
     nb_intervals = 5
     nb_freqs = 20
     delay_max = 10
-    noise_list = np.logspace(-0.6, 0.5, 12)
+    # noise_list = np.logspace(-1, 0, 5)
+    noise_list = np.logspace(-0.6, 0.5, 5)
     # noise_list = np.logspace(-0.6, 1, 17)
-    nb_expe = 25
+    nb_expe = 10
     random_states = np.arange(nb_expe)
-    N_JOBS = 4
+    N_JOBS = 8
 
     # Estimate signal power
     n_seeds = 1000
@@ -105,6 +113,8 @@ if __name__ == '__main__':
                        y="Error init", linewidth=2.5, label="Phase 1")
     fig = sns.lineplot(data=results, x="SNR",
                        y="Error final", linewidth=2.5, label="Phases 1 and 2")
+    fig = sns.lineplot(data=results, x="SNR",
+                       y="Error with f", linewidth=2.5, label="Phases 1 and 2 with f")
     fig.set(xscale='log')
     # fig.set(yscale='log')
     x_ = plt.xlabel("SNR")

@@ -57,6 +57,33 @@ def _delay_estimation(Y, Y_avg, delay_max=10):
     return optimal_delay
 
 
+def _logcosh(X):
+    Y = np.abs(X)
+    return Y + np.log1p(np.exp(-2 * Y))
+
+
+def _loss_mvica(Y_list, noise=1):
+    _, p, _ = Y_list.shape
+    Y_avg = np.mean(Y_list, axis=0)
+    loss = np.mean(_logcosh(Y_avg)) * p
+    for Y in Y_list:
+        loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
+    return loss
+
+
+def _delay_estimation_with_f(Y_list, index, noise=1):
+    _, _, n = Y_list.shape
+    Y = Y_list[index].copy()
+    Y_list_copy = Y_list.copy()
+    loss = []
+    for delay in range(n):
+        Y_delayed = _apply_delay_one_sub(Y, -delay)
+        Y_list_copy[index] = Y_delayed
+        loss.append(_loss_mvica(Y_list_copy, noise))
+    optimal_delay = np.argmin(loss)
+    return optimal_delay
+
+
 def distance_between_delays(tau1, tau2, n):
     assert len(tau1) == len(tau2)
     n_sub = len(tau1)
@@ -149,3 +176,15 @@ def _optimization_tau(S_list, n_iter, delay_max=10, error_tau=False, true_tau_li
         gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
         return loss, tau_list, Y_avg, gap_tau
     return loss, tau_list, Y_avg
+
+
+def _optimization_tau_with_f(S_list, n_iter, noise=1):
+    n_sub, _, n = S_list.shape
+    Y_list = np.copy(S_list)
+    tau_list = np.zeros(n_sub, dtype=int)
+    for _ in range(n_iter):
+        for i in range(n_sub):
+            tau_list[i] += _delay_estimation_with_f(Y_list, i, noise)
+            tau_list[i] %= n
+            Y_list[i] = _apply_delay_one_sub(S_list[i], -tau_list[i])
+    return tau_list
