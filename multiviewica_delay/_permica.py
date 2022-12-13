@@ -104,14 +104,14 @@ def delay_estimation_with_scale_perm(S_list, delay_max=10):
     for i, s in enumerate(S_list[1:]):
         objective = []
         # for delay in range(n):
-        for delay in np.concatenate((np.arange(delay_max), np.arange(n-delay_max, n))):
+        for delay in np.concatenate((np.arange(delay_max+1), np.arange(n-delay_max, n))):
             s_delayed = _apply_delay_one_sub(s, -delay)
             M = np.dot(S, s_delayed.T)
             _, _, cost = _hungarian(M)
             objective.append(cost)
         optimal_delay = np.argmax(objective)
-        if optimal_delay >= delay_max:
-            optimal_delay += n - 2 * delay_max
+        if optimal_delay > delay_max:
+            optimal_delay += n - 2 * delay_max - 1
         tau_list[i + 1] = optimal_delay
     return tau_list
 
