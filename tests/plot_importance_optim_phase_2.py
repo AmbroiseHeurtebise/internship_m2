@@ -54,24 +54,30 @@ def run_experiment(
 
     # Estimate delays
     _, _, _, tau_list, tau_list_init = multiviewica_delay(
-        X_list, n_iter_delay=1, random_state=random_state)
+        X_list, n_iter_delay=2, optim_approach=1, random_state=random_state)
+
+    _, _, _, tau_list_without_f, _ = multiviewica_delay(
+        X_list, n_iter_f=2, optim_delays_with_f=True, use_f=False,
+        random_state=random_state)
 
     _, _, _, tau_list_with_f, _ = multiviewica_delay(
-        X_list, n_iter_delay=1, optim_delays_with_f=True,
+        X_list, n_iter_f=2, optim_delays_with_f=True, use_f=True,
         random_state=random_state)
 
     # Errors
-    error_init = distance_between_delays(
-        tau_list_init, true_tau_list - true_tau_list[0], n)
+    # error_init = distance_between_delays(
+    #     tau_list_init, true_tau_list - true_tau_list[0], n)
     error_final = distance_between_delays(
         tau_list, true_tau_list - true_tau_list[0], n)
-    error_with_f = distance_between_delays(
-        tau_list_with_f - tau_list_with_f[0], true_tau_list - true_tau_list[0], n)
+    error_without_f = distance_between_delays(
+        tau_list_without_f - tau_list_without_f[0], true_tau_list - true_tau_list[0], n)
+    # error_with_f = distance_between_delays(
+    #     tau_list_with_f - tau_list_with_f[0], true_tau_list - true_tau_list[0], n)
 
     # Output
     output = {"Noise": noise, "SNR": snr, "Random state": random_state,
               "Error init": error_init, "Error final": error_final,
-              "Error with f": error_with_f}
+              "Error without f": error_without_f, "Error with f": error_with_f}
     return output
 
 
@@ -86,7 +92,7 @@ if __name__ == '__main__':
     # noise_list = np.logspace(-1, 0, 5)
     noise_list = np.logspace(-0.6, 0.5, 5)
     # noise_list = np.logspace(-0.6, 1, 17)
-    nb_expe = 10
+    nb_expe = 2
     random_states = np.arange(nb_expe)
     N_JOBS = 8
 
@@ -105,16 +111,21 @@ if __name__ == '__main__':
     )
     results = pd.DataFrame(results)
 
+    # Save in csv file
+    results.to_csv("results_importance_phase_2.csv")
+
     # Plot
     sns.set(font_scale=1.8)
     sns.set_style("white")
     sns.set_style('ticks')
     fig = sns.lineplot(data=results, x="SNR",
                        y="Error init", linewidth=2.5, label="Phase 1")
-    fig = sns.lineplot(data=results, x="SNR",
-                       y="Error final", linewidth=2.5, label="Phases 1 and 2")
-    fig = sns.lineplot(data=results, x="SNR",
-                       y="Error with f", linewidth=2.5, label="Phases 1 and 2 with f")
+    # fig = sns.lineplot(data=results, x="SNR",
+    #                    y="Error final", linewidth=2.5, label="Phases 1 and 2")
+    # fig = sns.lineplot(data=results, x="SNR",
+    #                    y="Error without f", linewidth=2.5, label="Phases 1 and 2 without f")
+    # fig = sns.lineplot(data=results, x="SNR",
+    #                    y="Error with f", linewidth=2.5, label="Phases 1 and 2 with f")
     fig.set(xscale='log')
     # fig.set(yscale='log')
     x_ = plt.xlabel("SNR")
