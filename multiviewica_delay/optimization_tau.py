@@ -62,25 +62,29 @@ def _logcosh(X):
     return Y + np.log1p(np.exp(-2 * Y))
 
 
-def _loss_mvica(Y_list, noise=1):
+def _loss_mvica(Y_list, noise=1, use_f=True):
     _, p, _ = Y_list.shape
     Y_avg = np.mean(Y_list, axis=0)
-    loss = np.mean(_logcosh(Y_avg)) * p
+    loss = 0
+    if use_f:
+        loss += np.mean(_logcosh(Y_avg)) * p
     for Y in Y_list:
         loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
     return loss
 
 
-def _delay_estimation_with_f(Y_list, index, noise=1):
+def _delay_estimation_with_f(Y_list, index, noise=1, use_f=True, delay_max=10):
     _, _, n = Y_list.shape
     Y = Y_list[index].copy()
     Y_list_copy = Y_list.copy()
     loss = []
-    for delay in range(n):
+    for delay in np.concatenate((np.arange(delay_max+1), np.arange(n-delay_max, n))):
         Y_delayed = _apply_delay_one_sub(Y, -delay)
         Y_list_copy[index] = Y_delayed
-        loss.append(_loss_mvica(Y_list_copy, noise))
+        loss.append(_loss_mvica(Y_list_copy, noise, use_f))
     optimal_delay = np.argmin(loss)
+    if optimal_delay > delay_max:
+        optimal_delay += n - 2 * delay_max - 1
     return optimal_delay
 
 
@@ -178,13 +182,19 @@ def _optimization_tau(S_list, n_iter, delay_max=10, error_tau=False, true_tau_li
     return loss, tau_list, Y_avg
 
 
-def _optimization_tau_with_f(S_list, n_iter, noise=1):
+def _optimization_tau_with_f(S_list, n_iter, noise=1, use_f=True, delay_max=10):
     n_sub, _, n = S_list.shape
     Y_list = np.copy(S_list)
     tau_list = np.zeros(n_sub, dtype=int)
     for _ in range(n_iter):
         for i in range(n_sub):
-            tau_list[i] += _delay_estimation_with_f(Y_list, i, noise)
+            sanity_check = 0  # XXX to be removed
+            if sanity_check:
+                Y_avg = np.mean(Y_list, axis=0)
+                new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
+                tau_list[i] += _delay_estimation(Y_list[i], new_Y_avg, delay_max=delay_max)
+            else:
+                tau_list[i] += _delay_estimation_with_f(Y_list, i, noise, use_f, delay_max=delay_max)
             tau_list[i] %= n
             Y_list[i] = _apply_delay_one_sub(S_list[i], -tau_list[i])
     return tau_list
