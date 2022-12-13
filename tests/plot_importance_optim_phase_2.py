@@ -66,9 +66,9 @@ def run_experiment(
 
     # Errors
     error_init = distance_between_delays(
-        tau_list_init, true_tau_list - true_tau_list[0], n)
+        tau_list_init - tau_list_init[0], true_tau_list - true_tau_list[0], n)
     error_final = distance_between_delays(
-        tau_list, true_tau_list - true_tau_list[0], n)
+        tau_list - tau_list[0], true_tau_list - true_tau_list[0], n)
     # error_without_f = distance_between_delays(
     #     tau_list_without_f - tau_list_without_f[0], true_tau_list - true_tau_list[0], n)
     error_with_f = distance_between_delays(
@@ -77,7 +77,7 @@ def run_experiment(
     # Output
     output = {"Noise": noise, "SNR": snr, "Random state": random_state,
               "Error init": error_init, "Error final": error_final,
-              "Error with f": error_with_f}  # "Error without f": error_without_f, 
+              "Error with f": error_with_f}  # "Error without f": error_without_f,
     return output
 
 
