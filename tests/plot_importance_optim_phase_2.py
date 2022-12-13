@@ -2,16 +2,18 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.utils import check_random_state
 from itertools import product
 from joblib import Parallel, delayed, Memory
 from multiviewica_delay import generate_data, multiviewica_delay
 
 
 def estimation_signal_power(
-    m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds=100
+    m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds=100, rng=None
 ):
+    rng = check_random_state(rng)
     power = []
-    seeds = np.random.randint(0, 10000, n_seeds)
+    seeds = rng.randint(0, 10000, n_seeds)
     for random_state in seeds:
         _, _, _, _, S = generate_data(
             m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
@@ -99,7 +101,7 @@ if __name__ == '__main__':
     # Estimate signal power
     n_seeds = 1000
     signal_power = estimation_signal_power(
-        m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds)
+        m, p, n, nb_intervals, nb_freqs, delay_max, n_seeds, rng=0)
 
     # Results
     results = Parallel(n_jobs=N_JOBS)(
