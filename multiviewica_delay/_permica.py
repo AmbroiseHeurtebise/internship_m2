@@ -97,20 +97,41 @@ def _hungarian(M):
 
 
 def delay_estimation_with_scale_perm(S_list, delay_max=10):
-    # delay_max has to be <= n/2
+    """
+    Finds a list of delays from a list of sources
+    which are potentially permuted and have different scales.
+
+    Parameters
+    ----------
+    S_list : np array of shape (n_groups, n_features, n_samples)
+        The list of sources found after calling Picard algorithm.
+    delay_max : int, optional (defaults to 10)
+        Delays between subjects' sources will be searched
+        in the segment [-delay_max, delay_max], so delay_max should be
+        in the segment [0, n//2].
+        If None, delays will be searched in [0, n].
+
+    Returns
+    -------
+    tau_list : np array of shape(n_groups, )
+        Estimated delays
+    """
     m, _, n = S_list.shape
     S = S_list[0].copy()
     tau_list = np.zeros(m, dtype=int)
+    if delay_max is not None:
+        delays = np.concatenate((np.arange(delay_max+1), np.arange(n-delay_max, n)))
+    else:
+        delays = np.arange(n)
     for i, s in enumerate(S_list[1:]):
         objective = []
-        # for delay in range(n):
-        for delay in np.concatenate((np.arange(delay_max+1), np.arange(n-delay_max, n))):
+        for delay in delays:
             s_delayed = _apply_delay_one_sub(s, -delay)
             M = np.dot(S, s_delayed.T)
             _, _, cost = _hungarian(M)
             objective.append(cost)
         optimal_delay = np.argmax(objective)
-        if optimal_delay > delay_max:
+        if delay_max is not None and optimal_delay > delay_max:
             optimal_delay += n - 2 * delay_max - 1
         tau_list[i + 1] = optimal_delay
     return tau_list
