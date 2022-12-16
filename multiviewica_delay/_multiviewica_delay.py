@@ -309,13 +309,13 @@ def _multiview_ica_main(
             else:  # XXX
                 if optim_approach is None:
                     _, tau_list, Y_avg = _optimization_tau(
-                        S_list, n_iter_delay, delay_max=2*delay_max)
+                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
                 elif optim_approach == 1:
                     _, tau_list, Y_avg = _optimization_tau_approach1(
                         S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
                 elif optim_approach == 2:
                     _, tau_list, Y_avg = _optimization_tau_approach2(
-                        S_list, n_iter_delay, delay_max=2*delay_max)
+                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
                 else:
                     raise ValueError("optim_approach should be either None, 1 or 2")
             Y_list = _apply_delay(S_list, -tau_list)
