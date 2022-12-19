@@ -25,21 +25,6 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
     return _loss_function(Y_list, Y_avg)
 
 
-# def _delay_estimation(Y, Y_avg, delay_max=10):
-#     p, n = Y.shape
-#     conv = np.array([np.convolve(
-#         np.concatenate((y, y[:-1])), y_avg[::-1], mode='valid')
-#         for y, y_avg in zip(Y, Y_avg)])
-#     conv_norm = np.sum(conv, axis=0)
-#     # optimal_delay = np.argmax(conv_norm)
-#     conv_norm_small_delays = np.concatenate(
-#         (conv_norm[:delay_max+1], conv_norm[n - delay_max: n]))
-#     optimal_delay = np.argmax(conv_norm_small_delays)
-#     if optimal_delay >= delay_max:
-#         optimal_delay += n - 2 * delay_max - 1
-#     return optimal_delay
-
-
 def _delay_estimation(Y, Y_avg, tau_i=0, delay_max=10):
     _, n = Y.shape
     if delay_max is not None:
