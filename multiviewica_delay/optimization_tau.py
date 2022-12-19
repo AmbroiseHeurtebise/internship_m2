@@ -42,22 +42,28 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
 
 def _delay_estimation(Y, Y_avg, tau_i=0, delay_max=10):
     _, n = Y.shape
-    if tau_i > n // 2:
-        tau_i -= n
-    conv1 = np.array([np.convolve(
-        np.concatenate((y, y[:delay_max-tau_i])), y_avg[::-1], mode='valid')
-        for y, y_avg in zip(Y, Y_avg)])
-    conv1_norm = np.sum(conv1, axis=0)
-    if tau_i != -delay_max:
-        conv2 = np.array([np.convolve(
-            np.concatenate((y[n-delay_max-tau_i:], y[:-1])), y_avg[::-1], mode='valid')
+    if delay_max is not None:
+        if tau_i > n // 2:
+            tau_i -= n
+        conv1 = np.array([np.convolve(
+            np.concatenate((y, y[:delay_max-tau_i])), y_avg[::-1], mode='valid')
             for y, y_avg in zip(Y, Y_avg)])
-        conv2_norm = np.sum(conv2, axis=0)
+        conv1_norm = np.sum(conv1, axis=0)
+        if tau_i != -delay_max:
+            conv2 = np.array([np.convolve(
+                np.concatenate((y[n-delay_max-tau_i:], y[:-1])), y_avg[::-1], mode='valid')
+                for y, y_avg in zip(Y, Y_avg)])
+            conv2_norm = np.sum(conv2, axis=0)
+        else:
+            conv2_norm = np.array([])
+        conv_norm = np.concatenate((conv1_norm, conv2_norm))
     else:
-        conv2_norm = np.array([])
-    conv_norm = np.concatenate((conv1_norm, conv2_norm))
+        conv = np.array([np.convolve(
+            np.concatenate((y, y[:-1])), y_avg[::-1], mode='valid')
+            for y, y_avg in zip(Y, Y_avg)])
+        conv_norm = np.sum(conv, axis=0)
     optimal_delay = np.argmax(conv_norm)
-    if optimal_delay > delay_max - tau_i:
+    if delay_max is not None and optimal_delay > delay_max - tau_i:
         optimal_delay += n - 2 * delay_max - 1
     return optimal_delay
 
@@ -82,15 +88,19 @@ def _delay_estimation_with_f(Y_list, index, tau_i=0, noise=1, use_f=True, delay_
     _, _, n = Y_list.shape
     Y = Y_list[index].copy()
     Y_list_copy = Y_list.copy()
-    if tau_i > n // 2:
-        tau_i -= n
     loss = []
-    for delay in np.concatenate((np.arange(delay_max-tau_i+1), np.arange(n-delay_max-tau_i, n))):
+    if delay_max is not None:
+        if tau_i > n // 2:
+            tau_i -= n
+        delays = np.concatenate((np.arange(delay_max-tau_i+1), np.arange(n-delay_max-tau_i, n)))
+    else:
+        delays = np.arange(n)
+    for delay in delays:
         Y_delayed = _apply_delay_one_sub(Y, -delay)
         Y_list_copy[index] = Y_delayed
         loss.append(_loss_mvica(Y_list_copy, noise, use_f))
     optimal_delay = np.argmin(loss)
-    if optimal_delay > delay_max - tau_i:
+    if delay_max is not None and optimal_delay > delay_max - tau_i:
         optimal_delay += n - 2 * delay_max - 1
     return optimal_delay
 
