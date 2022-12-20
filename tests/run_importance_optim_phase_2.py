@@ -43,13 +43,13 @@ mem = Memory(".")
 
 @mem.cache
 def run_experiment(
-    m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state,
+    m, p, n, nb_intervals, nb_freqs, treshold, delay_max, noise, random_state,
     signal_power=10
 ):
     # Generate data
     X_list, A_list, true_tau_list, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=3, delay=delay_max, noise=noise,
+        treshold=treshold, delay=delay_max, noise=noise,
         random_state=random_state)
     true_tau_list = normalize_delays(true_tau_list, n)
 
@@ -95,14 +95,16 @@ def run_experiment(
 
 if __name__ == '__main__':
     # Parameters
-    m = 10
+    m = 5
     p = 5
     n = 400
-    nb_intervals = 5
+    nb_intervals = 20
     nb_freqs = 20
+    treshold = 0.5
     delay_max = 10
-    noise_list = np.logspace(-0.6, 1, 17)
-    nb_expe = 10
+    # noise_list = np.logspace(-0.6, 1, 17)
+    noise_list = np.logspace(-0.6, 1.4, 11)
+    nb_expe = 5
     random_states = np.arange(nb_expe)
     N_JOBS = 4
 
@@ -113,8 +115,8 @@ if __name__ == '__main__':
     # Results
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
-            m, p, n, nb_intervals, nb_freqs, delay_max, noise, random_state,
-            signal_power)
+            m, p, n, nb_intervals, nb_freqs, treshold, delay_max, noise,
+            random_state, signal_power)
         for noise, random_state
         in product(noise_list, random_states)
     )
