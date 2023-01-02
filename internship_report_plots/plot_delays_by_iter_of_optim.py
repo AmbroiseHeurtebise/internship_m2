@@ -82,6 +82,5 @@ if __name__ == '__main__':
     plt.grid()
     plt.title("Distance between estimated delays and true delays",
               fontsize=18, fontweight="bold")
-    plt.savefig("figures/delays_by_iter_of_optim.pdf",
+    plt.savefig("internship_report_figures/delays_by_iter_of_optim.pdf",
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()

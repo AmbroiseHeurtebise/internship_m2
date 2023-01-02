@@ -7,11 +7,11 @@ if __name__ == '__main__':
     m = 4
     p = 3
     n = 400  # must be divisible by the number of intervals
-    nb_intervals = 5
+    nb_intervals = 20
     nb_freqs = 20
-    treshold = 2
-    delay = 100
-    noise = 0.5
+    treshold = 0.5
+    delay = 10
+    noise = 5
     random_state = np.random.randint(1000)
     print(random_state)
 
@@ -22,5 +22,6 @@ if __name__ == '__main__':
 
     # Plot
     plot_sources(S, nb_intervals)
-    _plot_delayed_sources(S_list, nb_intervals)
+    plot_sources(S_list[0], nb_intervals)
+    # _plot_delayed_sources(S_list, nb_intervals)
     # _plot_delayed_sources(X_list)

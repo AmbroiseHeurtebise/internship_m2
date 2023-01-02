@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Load results
     file_name = "m" + str(m) + "_p" + str(p) + "_nbintervals" + str(nb_intervals) + "_nbfreqs" + str(nb_freqs) + "_delaymax" + str(delay_max)
-    results = pd.read_csv("tests_results/" + file_name + ".csv")
+    results = pd.read_csv("data/" + file_name + ".csv")
 
     # Plot delay error
     plt.figure(1)
@@ -35,7 +35,9 @@ if __name__ == '__main__':
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Delay estimation error for various noise levels")
-    plt.savefig("tests_figures/delay_error_" + file_name + ".pdf", bbox_inches="tight")
+    plt.savefig(
+        "figures/delay_error_" + file_name + ".pdf", bbox_extra_artists=[x_, y_],
+        bbox_inches="tight")
 
     # Plot Amari distance
     plt.figure(2)
@@ -49,6 +51,7 @@ if __name__ == '__main__':
     fig = sns.lineplot(data=results, x="Noise",
                        y="Amari with f", linewidth=2.5, label="Phases 1 and 2 with f")
     fig.set(xscale='log')
+    fig.set(yscale='log')
     x_ = plt.xlabel("Noise")
     y_ = plt.ylabel("Amari distance")
     leg = plt.legend(prop={'size': 15})
@@ -56,4 +59,6 @@ if __name__ == '__main__':
         line.set_linewidth(2.5)
     plt.grid()
     plt.title("Amari distance for various noise levels")
-    plt.savefig("tests_figures/amari_" + file_name + ".pdf", bbox_inches="tight")
+    plt.savefig(
+        "figures/amari_" + file_name + ".pdf", bbox_extra_artists=[x_, y_],
+        bbox_inches="tight")

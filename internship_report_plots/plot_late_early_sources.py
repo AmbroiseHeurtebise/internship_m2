@@ -31,4 +31,4 @@ for i in range(6):
     x_ = plt.xlabel("Time (s.)")
     y_ = plt.ylabel("Amplitude")
 plt.subplots_adjust(wspace=0.4, hspace=0.4)
-plt.savefig("figures/late_early_sources.pdf")
+plt.savefig("internship_report_figures/late_early_sources.pdf")

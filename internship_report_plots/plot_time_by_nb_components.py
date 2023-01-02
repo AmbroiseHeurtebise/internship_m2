@@ -5,13 +5,13 @@ import seaborn as sns
 import time
 from itertools import product
 from joblib import Parallel, delayed, Memory
-from multiviewica_delay import multiviewica_delay, generate_data
+from multiviewica_delay import multiviewica, multiviewica_delay, generate_data
 
 
-mem = Memory(".")
+# mem = Memory(".")
 
 
-@mem.cache
+# @mem.cache
 def run_experiment(
     m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise, random_state
 ):
@@ -19,11 +19,11 @@ def run_experiment(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise, random_state=random_state)
     start_time = time.time()
-    if algo == 'Algorithm 4 alone':
+    if algo == 'MVICA':
+        multiviewica(X_list, random_state=random_state)
+    elif algo == 'MVICAD':
         multiviewica_delay(
             X_list, optim_delays_ica=False, random_state=random_state)
-    elif algo == 'Algorithms 3 and 4 together':
-        multiviewica_delay(X_list, random_state=random_state)
     else:
         raise ValueError("Wrong algo name")
     total_time = time.time() - start_time
@@ -39,10 +39,10 @@ if __name__ == '__main__':
     n = 50
     nb_intervals = 5
     nb_freqs = 20
-    algos = ['Algorithm 4 alone', 'Algorithms 3 and 4 together']
+    algos = ['MVICA', 'MVICAD']
     delay_max = 50
     noise = 0.5
-    n_expe = 15
+    n_expe = 5
     N_JOBS = 8
 
     # Run ICA
@@ -72,6 +72,5 @@ if __name__ == '__main__':
         "Time execution wrt number of components", fontsize=18,
         fontweight="bold")
     plt.savefig(
-        "figures/solution_1_or_2_time_nb_components.pdf",
+        "internship_report_figures/time_by_nb_components.pdf",
         bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()

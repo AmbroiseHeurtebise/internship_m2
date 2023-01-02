@@ -95,10 +95,10 @@ def run_experiment(
 
 if __name__ == '__main__':
     # Parameters
-    m = 5
+    m = 10
     p = 5
     n = 400
-    nb_intervals = 20
+    nb_intervals = 5
     nb_freqs = 20
     treshold = 0.5
     delay_max = 10
@@ -124,4 +124,4 @@ if __name__ == '__main__':
 
     # Save in csv file
     file_name = "m" + str(m) + "_p" + str(p) + "_nbintervals" + str(nb_intervals) + "_nbfreqs" + str(nb_freqs) + "_delaymax" + str(delay_max)
-    results.to_csv("tests_results/" + file_name + ".csv")
+    results.to_csv("data/" + file_name + ".csv")

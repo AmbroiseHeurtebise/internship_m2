@@ -18,29 +18,15 @@ def run_experiment(
     X_list, A_list, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise, random_state=random_state)
-    if algo == 'MVICA':
-        _, W_list, _ = multiviewica(X_list, random_state=random_state)
-    elif algo == 'mvica_with_optim_permica':
-        _, W_list, _ = multiviewica(
-            X_list, optim_delays_permica=True, random_state=random_state)
-    elif algo == 'delay_mvica_without_optim_permica':
-        _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_permica=False, random_state=random_state)
-    elif algo == 'MVICAD':
+    if algo == 'Algorithm 4 alone':
         _, W_list, _, _ = multiviewica_delay(
             X_list, optim_delays_ica=False, random_state=random_state)
-    elif algo == 'delay_mvica_without_optim_permica_and_ica':
-        _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_permica=False, optim_delays_ica=False,
-            random_state=random_state)
-    elif algo == 'mvicad':
+    elif algo == 'Algorithms 3 and 4 together':
         _, W_list, _, _ = multiviewica_delay(X_list, random_state=random_state)
-    elif algo == 'UniviewICA':
-        W_list = univiewica(X_list, random_state=random_state)
     else:
         raise ValueError("Wrong algo name")
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
-    output = {"Algo": algo, "Delay": delay_max,
+    output = {"Algo": algo, "Noise": noise,
               "random_state": random_state, "Amari_distance": amari}
     return output
 
@@ -52,14 +38,10 @@ if __name__ == '__main__':
     n = 400
     nb_intervals = 5
     nb_freqs = 20
-    # algos = [
-    #     'mvica', 'delay_mvica_without_optim_permica',
-    #     'delay_mvica_without_optim_ica', 'delay_mvica']
-    # algos = ['mvica', 'univiewica', 'delay_mvica']
-    algos = ['MVICA', 'MVICAD', 'UniviewICA']
-    delays = np.linspace(0, n * 0.5, 10, dtype=int)
-    noise = 0.5
-    n_expe = 2
+    algos = ['Algorithm 4 alone', 'Algorithms 3 and 4 together']
+    delay_max = 50
+    noise_list = np.logspace(-1, 1, 9)
+    n_expe = 15
     N_JOBS = 8
 
     # Run ICA
@@ -67,8 +49,8 @@ if __name__ == '__main__':
         delayed(run_experiment)(
             m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise,
             random_state)
-        for algo, delay_max, random_state
-        in product(algos, delays, range(n_expe))
+        for noise, algo, random_state
+        in product(noise_list, algos, range(n_expe))
     )
     results = pd.DataFrame(results).drop(columns='random_state')
 
@@ -76,19 +58,19 @@ if __name__ == '__main__':
     sns.set(font_scale=1.8)
     sns.set_style("white")
     sns.set_style('ticks')
-    fig = sns.lineplot(data=results, x="Delay",
+    fig = sns.lineplot(data=results, x="Noise",
                        y="Amari_distance", hue="Algo", linewidth=2.5)
+    fig.set(xscale='log')
     fig.set(yscale='log')
-    x_ = plt.xlabel("Delay")
+    x_ = plt.xlabel("Noise")
     y_ = plt.ylabel("Amari distance")
     leg = plt.legend(prop={'size': 15})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
-    # for i, l in enumerate(leg.get_texts()):
-    #     if i == 1:
-    #         l.set_weight('bold')
     plt.grid()
-    plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
-    plt.savefig("figures/amari_by_delay.pdf",
-                bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()
+    plt.title(
+        "Amari distance wrt noise", fontsize=18,
+        fontweight="bold")
+    plt.savefig(
+        "internship_report_figures/solution_1_or_2_amari_noise.pdf",
+        bbox_extra_artists=[x_, y_], bbox_inches="tight")

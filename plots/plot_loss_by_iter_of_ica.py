@@ -44,5 +44,3 @@ if __name__ == '__main__':
     plt.ylabel('Partial loss')
     plt.grid()
     plt.savefig("tests_figures/partial_loss_by_iter_of_ica.pdf")
-
-    plt.show()

@@ -2,47 +2,46 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time
 from itertools import product
 from joblib import Parallel, delayed, Memory
-from multiviewica_delay import multiviewica, multiviewica_delay, generate_data
+from picard import amari_distance
+from multiviewica_delay import multiviewica, multiviewica_delay, univiewica, generate_data
 
 
-# mem = Memory(".")
+mem = Memory(".")
 
 
-# @mem.cache
+@mem.cache
 def run_experiment(
     m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise, random_state
 ):
-    X_list, _, _, _, _ = generate_data(
+    X_list, A_list, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise, random_state=random_state)
-    start_time = time.time()
-    if algo == 'MVICA':
-        multiviewica(X_list, random_state=random_state)
-    elif algo == 'MVICAD':
-        multiviewica_delay(
+    if algo == 'Algorithm 4 alone':
+        _, W_list, _, _ = multiviewica_delay(
             X_list, optim_delays_ica=False, random_state=random_state)
+    elif algo == 'Algorithms 3 and 4 together':
+        _, W_list, _, _ = multiviewica_delay(X_list, random_state=random_state)
     else:
         raise ValueError("Wrong algo name")
-    total_time = time.time() - start_time
+    amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
     output = {"Algo": algo, "Number of components": p,
-              "random_state": random_state, "Time": total_time}
+              "random_state": random_state, "Amari_distance": amari}
     return output
 
 
 if __name__ == '__main__':
     # Parameters
     m = 6
-    nb_components = np.arange(1, 20, 2)
+    nb_components = np.arange(3, 20, 2)
     n = 50
     nb_intervals = 5
     nb_freqs = 20
-    algos = ['MVICA', 'MVICAD']
+    algos = ['Algorithm 4 alone', 'Algorithms 3 and 4 together']
     delay_max = 50
     noise = 0.5
-    n_expe = 5
+    n_expe = 10
     N_JOBS = 8
 
     # Run ICA
@@ -60,18 +59,17 @@ if __name__ == '__main__':
     sns.set_style("white")
     sns.set_style('ticks')
     fig = sns.lineplot(data=results, x="Number of components",
-                       y="Time", hue="Algo", linewidth=2.5)
+                       y="Amari_distance", hue="Algo", linewidth=2.5)
     fig.set(yscale='log')
     x_ = plt.xlabel("Number of components")
-    y_ = plt.ylabel("Time execution (s)")
+    y_ = plt.ylabel("Amari distance")
     leg = plt.legend(prop={'size': 15})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
     plt.grid()
     plt.title(
-        "Time execution wrt number of components", fontsize=18,
+        "Amari distance wrt number of components", fontsize=18,
         fontweight="bold")
     plt.savefig(
-        "figures/time_by_nb_components.pdf",
+        "internship_report_figures/solution_1_or_2_amari_nb_components.pdf",
         bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()

@@ -99,6 +99,5 @@ if __name__ == '__main__':
     leg = plt.legend(prop={'size': 15})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
-    plt.savefig("figures/reconstruction_error_by_delay.pdf",
+    plt.savefig("internship_report_figures/reconstruction_error_by_delay.pdf",
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()

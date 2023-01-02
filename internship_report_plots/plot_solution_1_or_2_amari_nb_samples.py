@@ -18,15 +18,15 @@ def run_experiment(
     X_list, A_list, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=3, delay=delay_max, noise=noise, random_state=random_state)
-    if algo == 'Algorithm 3 alone':
+    if algo == 'Algorithm 4 alone':
         _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_permica=False, random_state=random_state)
+            X_list, optim_delays_ica=False, random_state=random_state)
     elif algo == 'Algorithms 3 and 4 together':
         _, W_list, _, _ = multiviewica_delay(X_list, random_state=random_state)
     else:
         raise ValueError("Wrong algo name")
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
-    output = {"Algo": algo, "Delay": delay_max,
+    output = {"Algo": algo, "Number of samples": n,
               "random_state": random_state, "Amari_distance": amari}
     return output
 
@@ -34,12 +34,12 @@ def run_experiment(
 if __name__ == '__main__':
     # Parameters
     m = 6
-    p = 5
-    n = 400
+    p = 10
+    nb_samples = np.linspace(50, 700, 14, dtype=int)
     nb_intervals = 5
     nb_freqs = 20
-    algos = ['Algorithm 3 alone', 'Algorithms 3 and 4 together']
-    delays = np.linspace(0, n * 0.5, 11, dtype=int)
+    algos = ['Algorithm 4 alone', 'Algorithms 3 and 4 together']
+    delay_max = 50
     noise = 0.5
     n_expe = 10
     N_JOBS = 8
@@ -49,8 +49,8 @@ if __name__ == '__main__':
         delayed(run_experiment)(
             m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise,
             random_state)
-        for algo, delay_max, random_state
-        in product(algos, delays, range(n_expe))
+        for n, algo, random_state
+        in product(nb_samples, algos, range(n_expe))
     )
     results = pd.DataFrame(results).drop(columns='random_state')
 
@@ -58,16 +58,18 @@ if __name__ == '__main__':
     sns.set(font_scale=1.8)
     sns.set_style("white")
     sns.set_style('ticks')
-    fig = sns.lineplot(data=results, x="Delay",
+    fig = sns.lineplot(data=results, x="Number of samples",
                        y="Amari_distance", hue="Algo", linewidth=2.5)
     fig.set(yscale='log')
-    x_ = plt.xlabel("Delay")
+    x_ = plt.xlabel("Number of samples")
     y_ = plt.ylabel("Amari distance")
     leg = plt.legend(prop={'size': 15})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
     plt.grid()
-    plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
-    plt.savefig("figures/solution_1_or_2_amari_delay.pdf",
-                bbox_extra_artists=[x_, y_], bbox_inches="tight")
-    plt.show()
+    plt.title(
+        "Amari distance wrt number of samples", fontsize=18,
+        fontweight="bold")
+    plt.savefig(
+        "internship_report_figures/solution_1_or_2_amari_nb_samples.pdf",
+        bbox_extra_artists=[x_, y_], bbox_inches="tight")

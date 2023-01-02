@@ -14,5 +14,4 @@ if __name__ == '__main__':
     plt.xlabel("Time (s)")
     plt.ylabel("Amplitude")
     plt.legend()
-    plt.savefig("figures/time_shift_example.pdf")
-    plt.show()
+    plt.savefig("internship_report_figures/time_shift_example.pdf")
