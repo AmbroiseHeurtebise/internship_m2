@@ -5,7 +5,12 @@ import seaborn as sns
 from itertools import product
 from joblib import Parallel, delayed, Memory
 from picard import amari_distance
-from multiviewica_delay import multiviewica, multiviewica_delay, univiewica, generate_data
+from multiviewica_delay import (
+    multiviewica,
+    multiviewica_delay,
+    univiewica,
+    generate_data
+)
 
 
 mem = Memory(".")
@@ -13,28 +18,28 @@ mem = Memory(".")
 
 @mem.cache
 def run_experiment(
-    m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise, random_state
+    m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise, random_state
 ):
     X_list, A_list, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=3, delay=delay_max, noise=noise, random_state=random_state)
+        treshold=treshold, delay=delay_max, noise=noise, random_state=random_state)
     if algo == 'MVICA':
         _, W_list, _ = multiviewica(X_list, random_state=random_state)
-    elif algo == 'mvica_with_optim_permica':
-        _, W_list, _ = multiviewica(
-            X_list, optim_delays_permica=True, random_state=random_state)
-    elif algo == 'delay_mvica_without_optim_permica':
-        _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_permica=False, random_state=random_state)
+    # elif algo == 'mvica_with_optim_permica':
+    #     _, W_list, _ = multiviewica(
+    #         X_list, optim_delays_permica=True, random_state=random_state)
+    # elif algo == 'delay_mvica_without_optim_permica':
+    #     _, W_list, _, _, _ = multiviewica_delay(
+    #         X_list, optim_delays_permica=False, delay_max=None, random_state=random_state)
+    # elif algo == 'delay_mvica_without_optim_ica':
+    #     _, W_list, _, _, _ = multiviewica_delay(
+    #         X_list, optim_delays_ica=False, delay_max=None, random_state=random_state)
+    # elif algo == 'delay_mvica_without_optim_permica_and_ica':
+    #     _, W_list, _, _, _ = multiviewica_delay(
+    #         X_list, optim_delays_permica=False, optim_delays_ica=False,
+    #         random_state=random_state)
     elif algo == 'MVICAD':
-        _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_ica=False, random_state=random_state)
-    elif algo == 'delay_mvica_without_optim_permica_and_ica':
-        _, W_list, _, _ = multiviewica_delay(
-            X_list, optim_delays_permica=False, optim_delays_ica=False,
-            random_state=random_state)
-    elif algo == 'mvicad':
-        _, W_list, _, _ = multiviewica_delay(X_list, random_state=random_state)
+        _, W_list, _, _, _ = multiviewica_delay(X_list, delay_max=None, random_state=random_state)
     elif algo == 'UniviewICA':
         W_list = univiewica(X_list, random_state=random_state)
     else:
@@ -52,20 +57,17 @@ if __name__ == '__main__':
     n = 400
     nb_intervals = 5
     nb_freqs = 20
-    # algos = [
-    #     'mvica', 'delay_mvica_without_optim_permica',
-    #     'delay_mvica_without_optim_ica', 'delay_mvica']
-    # algos = ['mvica', 'univiewica', 'delay_mvica']
+    treshold = 1
     algos = ['MVICA', 'MVICAD', 'UniviewICA']
-    delays = np.linspace(0, n * 0.5, 10, dtype=int)
-    noise = 0.5
+    delays = np.linspace(0, n * 0.5, 11, dtype=int)
+    noise = 1
     n_expe = 2
     N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
-            m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise,
+            m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise,
             random_state)
         for algo, delay_max, random_state
         in product(algos, delays, range(n_expe))

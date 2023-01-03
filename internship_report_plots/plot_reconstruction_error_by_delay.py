@@ -5,17 +5,13 @@ import seaborn as sns
 from itertools import product
 from joblib import Parallel, delayed, Memory
 from picard import amari_distance
-from multiviewica_delay import multiviewica, multiviewica_delay, univiewica, _apply_delay_one_sub, generate_data
-
-
-# def reconstruction_error(Y_avg, S):
-#     assert Y_avg.shape == S.shape
-#     p, _ = Y_avg.shape
-#     tau = _delay_estimation(Y_avg, S)
-#     Y_avg = _apply_delay_one_sub(Y_avg, tau)
-#     M = np.dot(Y_avg, S.T)
-#     error = amari_distance(M, np.eye(p))
-#     return error
+from multiviewica_delay import (
+    multiviewica,
+    multiviewica_delay,
+    univiewica,
+    _apply_delay_one_sub,
+    generate_data
+)
 
 
 def reconstruction_error(Y_avg, S):
@@ -34,21 +30,16 @@ mem = Memory(".")
 
 @mem.cache
 def run_experiment(
-    m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise, random_state
+    m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise, random_state
 ):
-    # X_list, _, _, _, S = create_model(
-    #     m, p, n, delay_max, noise, random_state=random_state
-    # )
-    # X_list, _, _, S = create_sources_pierre(
-    #     m, p, n, delay_max, noise, random_state)
     X_list, _, _, _, S = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=3, delay=delay_max, noise=noise, random_state=random_state)
+        treshold=treshold, delay=delay_max, noise=noise, random_state=random_state)
     if algo == 'MVICA':
         _, _, Y_avg = multiviewica(X_list, random_state=random_state)
     elif algo == 'MVICAD':
-        _, _, Y_avg, _ = multiviewica_delay(
-            X_list, optim_delays_ica=False, random_state=random_state)
+        _, _, Y_avg, _, _ = multiviewica_delay(
+            X_list, optim_delays_ica=False, delay_max=None, random_state=random_state)
     elif algo == 'UniviewICA':
         W_list = univiewica(X_list, random_state=random_state)
         Y_list = np.array([np.dot(W, X) for W, X in zip(W_list, X_list)])
@@ -68,16 +59,17 @@ if __name__ == '__main__':
     n = 400
     nb_intervals = 5
     nb_freqs = 20
+    treshold = 1
     algos = ['MVICA', 'MVICAD', 'UniviewICA']
     delays = np.linspace(0, n * 0.5, 11, dtype=int)
-    noise = 0.05
-    n_expe = 25
+    noise = 1
+    n_expe = 2
     N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
-            m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise,
+            m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise,
             random_state)
         for algo, delay_max, random_state
         in product(algos, delays, range(n_expe))

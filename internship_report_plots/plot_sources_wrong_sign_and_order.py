@@ -9,6 +9,7 @@ if __name__ == '__main__':
     n = 400
     nb_intervals = 5
     nb_freqs = 20
+    treshold = 1
     delay_max = 100
     noise = 0.5
     random_state = np.random.randint(1000)
@@ -17,10 +18,10 @@ if __name__ == '__main__':
     # Generate data
     X_list, _, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=3, delay=delay_max, noise=noise, random_state=random_state)
+        treshold=treshold, delay=delay_max, noise=noise, random_state=random_state)
 
     # PermICA
-    _, W_list, _, _ = permica(X_list)
+    _, W_list, _, _ = permica(X_list, delay_max=None)
     Y_list = np.array([np.dot(W, X) for W, X in zip(W_list, X_list)])
 
     # Print

@@ -13,11 +13,11 @@ mem = Memory(".")
 
 @mem.cache
 def run_experiment(
-    m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise, random_state
+    m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise, random_state
 ):
     X_list, _, _, _, _ = generate_data(
         m, p, n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=3, delay=delay_max, noise=noise, random_state=random_state)
+        treshold=treshold, delay=delay_max, noise=noise, random_state=random_state)
     start_time = time.time()
     if algo == 'Algorithm 4 alone':
         multiviewica_delay(
@@ -39,16 +39,17 @@ if __name__ == '__main__':
     n = 50
     nb_intervals = 5
     nb_freqs = 20
+    treshold = 1
     algos = ['Algorithm 4 alone', 'Algorithms 3 and 4 together']
-    delay_max = 50
-    noise = 0.5
-    n_expe = 15
+    delay_max = 10
+    noise = 1
+    n_expe = 2
     N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
-            m, p, n, nb_intervals, nb_freqs, algo, delay_max, noise,
+            m, p, n, nb_intervals, nb_freqs, treshold, algo, delay_max, noise,
             random_state)
         for p, algo, random_state
         in product(nb_components, algos, range(n_expe))
