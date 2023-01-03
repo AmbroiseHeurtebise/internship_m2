@@ -107,7 +107,9 @@ def multiviewica_delay(
     S : np array of shape (n_components, n_samples)
         Estimated source
     tau_list : np array of shape(n_groups, )
-        Estimated delays
+        Estimated delays at the end of the algorithm
+    tau_list_init : np array of shape(n_groups, )
+        Estimated delays after the initialization
 
     See also
     --------
