@@ -14,6 +14,7 @@ from .optimization_tau import (
     _optimization_tau_approach1,
     _optimization_tau_approach2,
     _delay_estimation,
+    _optimization_tau_with_f,
 )
 from .sources_generation import (
     _create_sources,

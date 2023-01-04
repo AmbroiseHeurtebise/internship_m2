@@ -109,8 +109,7 @@ def plot_sources(S, nb_intervals=None):
             linestyles='--', colors='grey')
     plt.xlabel("Samples")
     # plt.title("Sources", fontsize=18, fontweight="bold")
-    plt.savefig("figures/sources.pdf")
-    plt.show()
+    plt.savefig("internship_report_figures/sources.pdf")
 
 
 def _plot_delayed_sources(S_list, height=20, nb_intervals=None):
@@ -135,5 +134,4 @@ def _plot_delayed_sources(S_list, height=20, nb_intervals=None):
             plt.xticks([])
 
     # plt.savefig("figures/sources_wrong_sign_and_order.pdf")
-    plt.savefig("figures/sources_multiple_subjects.pdf")
-    plt.show()
+    plt.savefig("internship_report_figures/sources_multiple_subjects.pdf")

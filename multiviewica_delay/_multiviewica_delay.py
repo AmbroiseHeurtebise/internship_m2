@@ -8,7 +8,14 @@ import warnings
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
-from .optimization_tau import _optimization_tau, _apply_delay_one_sub, _apply_delay
+from .optimization_tau import (
+    _optimization_tau,
+    _optimization_tau_approach1,  # XXX
+    _optimization_tau_approach2,  # XXX
+    _apply_delay_one_sub,
+    _apply_delay,
+    _optimization_tau_with_f
+)
 
 
 def multiviewica_delay(
@@ -24,6 +31,10 @@ def multiviewica_delay(
     n_iter_delay=3,
     early_stopping_delay=None,
     every_N_iter_delay=1,
+    optim_approach=None,  # XXX to be removed
+    optim_delays_with_f=False,  # XXX to be removed
+    n_iter_f=2,  # XXX to be removed
+    use_f=True,  # XXX to be removed
     random_state=None,
     tol=1e-3,
     verbose=False,
@@ -96,7 +107,9 @@ def multiviewica_delay(
     S : np array of shape (n_components, n_samples)
         Estimated source
     tau_list : np array of shape(n_groups, )
-        Estimated delays
+        Estimated delays at the end of the algorithm
+    tau_list_init : np array of shape(n_groups, )
+        Estimated delays after the initialization
 
     See also
     --------
@@ -129,11 +142,24 @@ def multiviewica_delay(
 
     if return_delays_every_iter:  # XXX needs to be removed
         tau_list_main = _multiview_ica_main(
-            X_rescaled, noise=noise, n_iter=max_iter, tol=tol, init=W,
-            optim_delays_ica=optim_delays_ica, delay_max=delay_max, n_iter_delay=n_iter_delay,
+            X_rescaled,
+            noise=noise,
+            n_iter=max_iter,
+            tol=tol,
+            init=W,
+            optim_delays_ica=optim_delays_ica,
+            delay_max=delay_max,
+            tau_list_init=tau_list_init,
+            n_iter_delay=n_iter_delay,
             early_stopping_delay=early_stopping_delay,
-            every_N_iter_delay=every_N_iter_delay, verbose=verbose,
-            return_loss=return_loss, return_basis_list=return_basis_list,
+            every_N_iter_delay=every_N_iter_delay,
+            optim_delays_with_f=optim_delays_with_f,
+            optim_approach=optim_approach,
+            n_iter_f=n_iter_f,
+            use_f=use_f,
+            verbose=verbose,
+            return_loss=return_loss,
+            return_basis_list=return_basis_list,
             return_delays_every_iter=return_delays_every_iter,
         )
         return tau_list_init, tau_list_main
@@ -142,11 +168,24 @@ def multiviewica_delay(
 
     # Performs multiview ica
     W, S, tau_list_main, loss_total = _multiview_ica_main(
-        X_rescaled, noise=noise, n_iter=max_iter, tol=tol, init=W,
-        optim_delays_ica=optim_delays_ica, delay_max=delay_max, n_iter_delay=n_iter_delay,
+        X_rescaled,
+        noise=noise,
+        n_iter=max_iter,
+        tol=tol,
+        init=W,
+        optim_delays_ica=optim_delays_ica,
+        delay_max=delay_max,
+        tau_list_init=tau_list_init,
+        n_iter_delay=n_iter_delay,
         early_stopping_delay=early_stopping_delay,
-        every_N_iter_delay=every_N_iter_delay, verbose=verbose,
-        return_loss=return_loss, return_basis_list=return_basis_list,
+        every_N_iter_delay=every_N_iter_delay,
+        optim_delays_with_f=optim_delays_with_f,
+        optim_approach=optim_approach,
+        n_iter_f=n_iter_f,
+        use_f=use_f,
+        verbose=verbose,
+        return_loss=return_loss,
+        return_basis_list=return_basis_list,
     )
 
     if return_unmixing_delays_both_phases:  # XXX to be removed
@@ -173,9 +212,14 @@ def _multiview_ica_main(
     init=None,
     optim_delays_ica=True,
     delay_max=10,
+    tau_list_init=None,
     n_iter_delay=3,
     early_stopping_delay=None,
     every_N_iter_delay=1,
+    optim_approach=None,  # XXX to be removed
+    optim_delays_with_f=False,  # XXX to be removed
+    n_iter_f=2,  # XXX to be removed
+    use_f=True,  # XXX to be removed
     ortho=False,
     return_gradients=False,
     timing=False,
@@ -183,6 +227,7 @@ def _multiview_ica_main(
     return_basis_list=False,
     return_delays_every_iter=False,  # XXX to be removed
 ):
+    n_pb, p, n = X_list.shape
     tol_init = None
     if tol > 0 and tol_init is None:
         tol_init = tol
@@ -193,12 +238,14 @@ def _multiview_ica_main(
     if early_stopping_delay is None:
         early_stopping_delay = n_iter
 
+    if tau_list_init is None:
+        tau_list_init = np.zeros(n_pb, dtype=int)
+
     # Turn list into an array to make it compatible with the rest of the code
     if type(X_list) == list:
         X_list = np.array(X_list)
 
     # Init
-    n_pb, p, n = X_list.shape
     basis_list = init.copy()
     Y_avg = np.mean([np.dot(W, X) for W, X in zip(basis_list, X_list)], axis=0)
     # Start scaling
@@ -257,8 +304,25 @@ def _multiview_ica_main(
         tau_list = np.zeros(n_pb, dtype=int)
         if optim_delays_ica and i < early_stopping_delay and i % every_N_iter_delay == 0:
             # Delay estimation
-            _, tau_list, Y_avg = _optimization_tau(S_list, n_iter_delay, delay_max=2*delay_max)
+            if optim_delays_with_f:  # XXX to be removed
+                tau_list = _optimization_tau_with_f(
+                    S_list, n_iter=n_iter_f, noise=noise, use_f=use_f,
+                    delay_max=delay_max, tau_list_init=tau_list_init)
+            else:  # XXX
+                if optim_approach is None:
+                    _, tau_list, Y_avg = _optimization_tau(
+                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                elif optim_approach == 1:
+                    _, tau_list, Y_avg = _optimization_tau_approach1(
+                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                elif optim_approach == 2:
+                    _, tau_list, Y_avg = _optimization_tau_approach2(
+                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                else:
+                    raise ValueError("optim_approach should be either None, 1 or 2")
             Y_list = _apply_delay(S_list, -tau_list)
+            if optim_delays_with_f:  # XXX to be removed
+                Y_avg = np.mean(Y_list, axis=0)
             # tau_list_total += tau_list
             # tau_list_total %= n
             tau_list_every_iter.append(tau_list)  # XXX to be removed
