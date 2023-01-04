@@ -4,5 +4,5 @@ scikit-learn
 flake8 
 pytest 
 pytest-cov
-picard
+python-picard==0.7
 fastsrm
