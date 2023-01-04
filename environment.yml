@@ -1,8 +1,9 @@
 name: multiviewica_delay
-
 channels:
-- conda-forge
-- defaults
-
+  - conda-forge
+  - defaults
 dependencies:
 - numpy
+- scipy.linalg
+- time
+- warnings
