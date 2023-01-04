@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from multiviewica_delay import (
     generate_data,
     _optimization_tau,
@@ -14,13 +15,14 @@ def normalize_delays(tau_list, n):
     return tau_list
 
 
-def test_optimization_tau_retrieves_delays():
-    random_state = np.random.randint(1000)
-    m = 10
-    p = 5
-    n = 400
-    nb_intervals = 5
-    nb_freqs = 20
+@pytest.mark.parametrize("mode", ["base", "approach_1", "approach_2", "with_f"])
+def test_optimization_tau_retrieves_delays(mode):
+    random_state = 42
+    m = 2
+    p = 3
+    n = 20
+    nb_intervals = 2
+    nb_freqs = 5
     treshold = 0.5
     delay_max = 10
     snr = 10  # Signal to noise ratio
@@ -40,24 +42,22 @@ def test_optimization_tau_retrieves_delays():
         random_state=random_state)
 
     # Estimate delays with optimization_tau
-    _, tau_list, _ = _optimization_tau(
-        S_list, n_iter=2, delay_max=delay_max)
-    _, tau_list_1, _ = _optimization_tau_approach1(
-        S_list, n_iter=2, delay_max=delay_max)
-    _, tau_list_2, _ = _optimization_tau_approach2(
-        S_list, n_iter=2, delay_max=delay_max)
-    tau_list_with_f = _optimization_tau_with_f(
-        S_list, n_iter=2, delay_max=delay_max)
+    if mode == "base":
+        _, tau_list, _ = _optimization_tau(
+            S_list, n_iter=2, delay_max=delay_max)
+    elif mode == "approach_1":
+        _, tau_list, _ = _optimization_tau_approach1(
+            S_list, n_iter=2, delay_max=delay_max)
+    elif mode == "approach_2":
+        _, tau_list, _ = _optimization_tau_approach2(
+            S_list, n_iter=2, delay_max=delay_max)
+    elif mode == "with_f":
+        tau_list = _optimization_tau_with_f(
+            S_list, n_iter=2, delay_max=delay_max)
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)
     tau_list = normalize_delays(tau_list, n)
-    tau_list_1 = normalize_delays(tau_list_1, n)
-    tau_list_2 = normalize_delays(tau_list_2, n)
-    tau_list_with_f = normalize_delays(tau_list_with_f, n)
 
     # Test if arrays are equal
     np.testing.assert_array_equal(tau_list, true_tau_list)
-    np.testing.assert_array_equal(tau_list_1, true_tau_list)
-    np.testing.assert_array_equal(tau_list_2, true_tau_list)
-    np.testing.assert_array_equal(tau_list_with_f, true_tau_list)

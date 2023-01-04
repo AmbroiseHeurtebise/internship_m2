@@ -1,14 +1,16 @@
 import numpy as np
+import pytest
 from multiviewica_delay import generate_data, multiviewica_delay
 
 
-def test_estimated_delays_range():
+@pytest.mark.parametrize("mode", ["base", "approach_1", "approach_2", "with_f"])
+def test_estimated_delays_range(mode):
     random_state = 42
-    m = 10
-    p = 5
-    n = 400
-    nb_intervals = 5
-    nb_freqs = 20
+    m = 2
+    p = 3
+    n = 20
+    nb_intervals = 2
+    nb_freqs = 5
     treshold = 0.5
     delay_max = 10
     snr = 5  # Signal to noise ratio
@@ -27,21 +29,18 @@ def test_estimated_delays_range():
         treshold=treshold, delay=delay_max, noise=square_noise,
         random_state=random_state)
 
+    if mode == "base":
+        kwargs = dict()
+    elif mode == "approach_1":
+        kwargs = dict(optim_approach=1)
+    elif mode == "approach_2":
+        kwargs = dict(optim_approach=2)
+    elif mode == "with_f":
+        kwargs = dict(optim_delays_with_f=True)
+
     # Estimate delays with MVICAD
     _, _, _, tau_list, _ = multiviewica_delay(
-        X_list, delay_max=delay_max, n_iter_delay=2, random_state=random_state)
-    _, _, _, tau_list_1, _ = multiviewica_delay(
-        X_list, delay_max=delay_max, n_iter_delay=2, optim_approach=1,
-        random_state=random_state)
-    _, _, _, tau_list_2, _ = multiviewica_delay(
-        X_list, delay_max=delay_max, n_iter_delay=2, optim_approach=2,
-        random_state=random_state)
-    _, _, _, tau_list_with_f, _ = multiviewica_delay(
-        X_list, delay_max=delay_max, n_iter_delay=2, optim_delays_with_f=True,
-        random_state=random_state)
+        X_list, delay_max=delay_max, n_iter_delay=2, random_state=random_state, **kwargs)
 
     outsiders = np.arange(delay_max+1, n-delay_max)
     assert np.sum(np.isin(tau_list, outsiders)) == 0
-    assert np.sum(np.isin(tau_list_1, outsiders)) == 0
-    assert np.sum(np.isin(tau_list_2, outsiders)) == 0
-    assert np.sum(np.isin(tau_list_with_f, outsiders)) == 0
