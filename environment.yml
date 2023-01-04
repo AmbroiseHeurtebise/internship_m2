@@ -4,6 +4,6 @@ channels:
   - defaults
 dependencies:
   - numpy
-  - scipy.linalg
+  - scipy
   - time
   - warnings
