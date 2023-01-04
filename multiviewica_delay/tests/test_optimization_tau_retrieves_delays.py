@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
-from multiviewica_delay import (
-    generate_data,
+from multiviewica_delay.optimization_tau import (
     _optimization_tau,
     _optimization_tau_approach1,
     _optimization_tau_approach2,
     _optimization_tau_with_f
 )
+from multiviewica_delay.sources_generation import generate_data
 
 
 def normalize_delays(tau_list, n):
@@ -15,7 +15,8 @@ def normalize_delays(tau_list, n):
     return tau_list
 
 
-@pytest.mark.parametrize("mode", ["base", "approach_1", "approach_2", "with_f"])
+@pytest.mark.parametrize(
+    "mode", ["base", "approach_1", "approach_2", "with_f"])
 def test_optimization_tau_retrieves_delays(mode):
     random_state = 42
     m = 2

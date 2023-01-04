@@ -1,0 +1,7 @@
+name: multiviewica_delay
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - scipy

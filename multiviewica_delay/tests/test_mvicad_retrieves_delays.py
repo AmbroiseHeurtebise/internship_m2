@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from multiviewica_delay import generate_data, multiviewica_delay
+from multiviewica_delay.sources_generation import generate_data
+from multiviewica_delay._multiviewica_delay import multiviewica_delay
 
 
 def normalize_delays(tau_list, n):
@@ -9,7 +10,8 @@ def normalize_delays(tau_list, n):
     return tau_list
 
 
-@pytest.mark.parametrize("mode", ["base", "approach_1", "approach_2", "with_f"])
+@pytest.mark.parametrize(
+    "mode", ["base", "approach_1", "approach_2", "with_f"])
 def test_mvicad_retrieves_delays(mode):
     random_state = 42
     m = 2
