@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-- numpy
-- scipy.linalg
-- time
-- warnings
+  - numpy
+  - scipy.linalg
+  - time
+  - warnings
