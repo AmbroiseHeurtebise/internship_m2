@@ -5,5 +5,3 @@ channels:
 dependencies:
   - numpy
   - scipy
-  - time
-  - warnings
