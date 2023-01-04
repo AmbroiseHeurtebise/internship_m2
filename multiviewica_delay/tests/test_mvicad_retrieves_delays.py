@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from multiviewica_delay import generate_data, multiviewica_delay
+from multiviewica_delay.sources_generation import generate_data
+from multiviewica_delay._multiviewica_delay import multiviewica_delay
 
 
 def normalize_delays(tau_list, n):

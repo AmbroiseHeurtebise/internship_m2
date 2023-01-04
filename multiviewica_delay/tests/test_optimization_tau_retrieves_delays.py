@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
-from multiviewica_delay import (
-    generate_data,
+from multiviewica_delay.optimization_tau import (
     _optimization_tau,
     _optimization_tau_approach1,
     _optimization_tau_approach2,
     _optimization_tau_with_f
 )
+from multiviewica_delay.sources_generation import generate_data
 
 
 def normalize_delays(tau_list, n):
