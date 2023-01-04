@@ -3,7 +3,8 @@ import pytest
 from multiviewica_delay import generate_data, multiviewica_delay
 
 
-@pytest.mark.parametrize("mode", ["base", "approach_1", "approach_2", "with_f"])
+@pytest.mark.parametrize(
+    "mode", ["base", "approach_1", "approach_2", "with_f"])
 def test_estimated_delays_range(mode):
     random_state = 42
     m = 2
@@ -40,7 +41,8 @@ def test_estimated_delays_range(mode):
 
     # Estimate delays with MVICAD
     _, _, _, tau_list, _ = multiviewica_delay(
-        X_list, delay_max=delay_max, n_iter_delay=2, random_state=random_state, **kwargs)
+        X_list, delay_max=delay_max, n_iter_delay=2, random_state=random_state,
+        **kwargs)
 
     outsiders = np.arange(delay_max+1, n-delay_max)
     assert np.sum(np.isin(tau_list, outsiders)) == 0
