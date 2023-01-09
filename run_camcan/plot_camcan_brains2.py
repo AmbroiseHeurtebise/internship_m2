@@ -53,7 +53,7 @@ else:
     print("S_m not found\n")
 # stc = mne.read_source_estimate("../results/canica/stc_avg_496_10_2_audio_task")
 
-cmap = plt.cm.tab10
+cmap = plt.cm.tab20
 
 print(S_m.shape)
 # Plot sources
@@ -62,6 +62,10 @@ p, n = S_m.shape
 n_times = n // 6
 S_m = S_m[:, :n_times]
 S_m /= np.sqrt(np.mean(S_m ** 2, axis=1, keepdims=True))
+# Fix source sign problem
+signs = 2 * ((np.max(S_m, axis=1) + np.min(S_m, axis=1) > 0) - 0.5)
+S_m *= signs[:, None]
+
 times = np.linspace(-0.2, 0.5, n_times)
 # I = np.argsort(np.argmax(np.abs(S_m), axis=1))
 # I_inv = np.zeros(len(I))
