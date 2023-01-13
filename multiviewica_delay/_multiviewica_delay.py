@@ -299,9 +299,9 @@ def _multiview_ica_main(
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
         loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
+    tau_list = np.zeros(n_pb, dtype=int)  # XXX to be verified
     for i in range(n_iter):
         # sign_list = np.ones(n_pb, p)
-        tau_list = np.zeros(n_pb, dtype=int)
         if optim_delays_ica and i < early_stopping_delay and i % every_N_iter_delay == 0:
             # Delay estimation
             if optim_delays_with_f:  # XXX to be removed
@@ -326,6 +326,7 @@ def _multiview_ica_main(
             # tau_list_total += tau_list
             # tau_list_total %= n
             tau_list_every_iter.append(tau_list)  # XXX to be removed
+        print("tau_list : {}".format(tau_list))
         # basis_list = ...
         if return_loss:
             new_X_list = _apply_delay(X_list, -tau_list)
