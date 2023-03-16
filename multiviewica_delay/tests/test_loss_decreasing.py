@@ -49,6 +49,7 @@ def test_loss_decreasing(mode):
     loss0 = _loss_total_by_source(W_list, S_list, S_avg)
     # print(f"loss0 : {loss0}")
     nb_iter = 20
+    loss2 = 0
     for i in range(nb_iter):
         # print(f"\nIteration {i}")
         # step 1: delay optimization
