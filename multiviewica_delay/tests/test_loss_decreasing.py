@@ -44,6 +44,7 @@ def test_loss_decreasing(mode):
     W_list = rng.randn(m, p, p)
     S_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
     S_avg = np.mean(S_list, axis=0)
+    tau_list = np.zeros(m, dtype="int")
 
     # loss over 20 iterations
     loss0 = _loss_total_by_source(W_list, S_list, S_avg)
@@ -56,7 +57,8 @@ def test_loss_decreasing(mode):
         tau_list = _optimization_tau_with_f(
             S_list,
             n_iter=3,
-            delay_max=delay_max
+            delay_max=delay_max,
+            previous_tau_list=tau_list
         )
         # print("tau_list : ", tau_list)
         Y_list = _apply_delay(S_list, -tau_list)

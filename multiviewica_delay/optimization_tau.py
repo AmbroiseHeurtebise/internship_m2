@@ -215,29 +215,33 @@ def _optimization_tau(
 
 
 def _optimization_tau_with_f(
-    S_list, n_iter, noise=1, use_f=True, delay_max=10, tau_list_init=None
+    S_list,
+    n_iter,
+    noise=1,
+    use_f=True,
+    delay_max=10,
+    tau_list_init=None,
+    previous_tau_list=None  # XXX
 ):
     n_sub, _, n = S_list.shape
+    if previous_tau_list is None:  # XXX
+        previous_tau_list = np.zeros(n_sub, dtype=int)
     if tau_list_init is None:
         tau_list_init = np.zeros(n_sub, dtype=int)
-    Y_list = np.copy(S_list)
+    # Y_list = np.copy(S_list)
+    Y_list = _apply_delay(S_list, -previous_tau_list)
+    Y_list_freeze = Y_list.copy()
     tau_list = np.zeros(n_sub, dtype=int)
-    tau_list_final = tau_list_init + tau_list
+    tau_list_final = tau_list_init + previous_tau_list + tau_list
     for _ in range(n_iter):
         for i in range(n_sub):
-            sanity_check = 0  # XXX to be removed
-            if sanity_check:
-                Y_avg = np.mean(Y_list, axis=0)
-                new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
-                tau_list[i] += _delay_estimation(Y_list[i], new_Y_avg, delay_max=delay_max)
-            else:
-                tau_list[i] += _delay_estimation_with_f(
-                    Y_list, i, tau_i=tau_list_final[i], noise=noise, use_f=use_f, delay_max=delay_max)
+            tau_list[i] += _delay_estimation_with_f(
+                Y_list, i, tau_i=tau_list_final[i], noise=noise, use_f=use_f, delay_max=delay_max)
             tau_list[i] %= n
-            Y_list[i] = _apply_delay_one_sub(S_list[i], -tau_list[i])
-        tau_list_final = tau_list_init + tau_list
+            Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
+        tau_list_final = tau_list_init + previous_tau_list + tau_list
         tau_list_final %= n
-    return tau_list
+    return (previous_tau_list + tau_list) % n
 
 
 def _apply_delay_one_source_or_sub(S, delays):
