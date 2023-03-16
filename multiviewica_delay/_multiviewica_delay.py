@@ -8,13 +8,17 @@ import warnings
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
+from ._sameica import sameica  # XXX
 from .optimization_tau import (
     _optimization_tau,
     _optimization_tau_approach1,  # XXX
     _optimization_tau_approach2,  # XXX
     _apply_delay_one_sub,
     _apply_delay,
-    _optimization_tau_with_f
+    _optimization_tau_with_f,
+    _apply_delay_by_source,
+    _apply_delay_one_source_or_sub,
+    _optimization_tau_by_source
 )
 
 
@@ -37,6 +41,7 @@ def multiviewica_delay(
     use_f=True,  # XXX to be removed
     random_state=None,
     tol=1e-3,
+    multiple_sources=False,
     verbose=False,
     return_loss=False,
     return_basis_list=False,
@@ -95,6 +100,8 @@ def multiviewica_delay(
     tol : float, optional
         A positive scalar giving the tolerance at which
         the un-mixing matrices are considered to have converged.
+    multiple_sources : bool, optional
+        Decide if there is only one delay per subject or multiple delays per subject.
     verbose : bool, optional
         Print information
 
@@ -119,26 +126,46 @@ def multiviewica_delay(
     P, X = reduce_data(
         X, n_components=n_components, dimension_reduction=dimension_reduction
     )
+    if optim_delays_permica and multiple_sources:  # XXX Need to find a solution
+        raise ValueError(
+            "Cannot optimize delays during initialization and during ICA loop with multiple delays")
     # Initialization
-    n_pb, _, n = X.shape
+    n_pb, p, n = X.shape
     tau_list_init = np.zeros(n_pb, dtype=int)
     if type(init) is str:
-        if init not in ["permica", "groupica"]:
-            raise ValueError("init should either be permica or groupica")
+        if init not in ["permica", "groupica", "sameica"]:  # XXX
+            raise ValueError("init should either be permica, groupica or sameica")  # XXX
         if init == "permica":
             _, W, S, tau_list_init = permica(
-                X, max_iter=max_iter, random_state=random_state, tol=tol,
-                optim_delays=optim_delays_permica, delay_max=delay_max
+                X,
+                max_iter=max_iter,
+                random_state=random_state,
+                tol=tol,
+                optim_delays=optim_delays_permica,
+                delay_max=delay_max,
             )
-        else:
+        elif init == "groupica":
             _, W, S = groupica(
-                X, max_iter=max_iter, random_state=random_state, tol=tol
+                X,
+                max_iter=max_iter,
+                random_state=random_state,
+                tol=tol,
+            )
+        else:  # XXX
+            W, S_list = sameica(
+                X,
+                max_iter=max_iter,
+                random_state=random_state,
+                tol=tol,
             )
     else:
         if type(init) is not np.ndarray:
             raise TypeError("init should be a numpy array")
         W = init
     X_rescaled = _apply_delay(X, -tau_list_init)
+
+    if multiple_sources:
+        tau_list_init = np.zeros((n_pb, p), dtype=int)
 
     if return_delays_every_iter:  # XXX needs to be removed
         tau_list_main = _multiview_ica_main(
@@ -157,6 +184,7 @@ def multiviewica_delay(
             optim_approach=optim_approach,
             n_iter_f=n_iter_f,
             use_f=use_f,
+            multiple_sources=multiple_sources,
             verbose=verbose,
             return_loss=return_loss,
             return_basis_list=return_basis_list,
@@ -183,6 +211,7 @@ def multiviewica_delay(
         optim_approach=optim_approach,
         n_iter_f=n_iter_f,
         use_f=use_f,
+        multiple_sources=multiple_sources,
         verbose=verbose,
         return_loss=return_loss,
         return_basis_list=return_basis_list,
@@ -221,6 +250,7 @@ def _multiview_ica_main(
     n_iter_f=2,  # XXX to be removed
     use_f=True,  # XXX to be removed
     ortho=False,
+    multiple_sources=False,
     return_gradients=False,
     timing=False,
     return_loss=False,
@@ -299,34 +329,46 @@ def _multiview_ica_main(
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
         loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
-    tau_list = np.zeros(n_pb, dtype=int)  # XXX to be verified
+    if multiple_sources:
+        tau_list = np.zeros((n_pb, p), dtype=int)
+    else:
+        tau_list = np.zeros(n_pb, dtype=int)
     for i in range(n_iter):
         # sign_list = np.ones(n_pb, p)
         if optim_delays_ica and i < early_stopping_delay and i % every_N_iter_delay == 0:
             # Delay estimation
-            if optim_delays_with_f:  # XXX to be removed
-                tau_list = _optimization_tau_with_f(
-                    S_list, n_iter=n_iter_f, noise=noise, use_f=use_f,
-                    delay_max=delay_max, tau_list_init=tau_list_init)
-            else:  # XXX
-                if optim_approach is None:
-                    _, tau_list, Y_avg = _optimization_tau(
-                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
-                elif optim_approach == 1:
-                    _, tau_list, Y_avg = _optimization_tau_approach1(
-                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
-                elif optim_approach == 2:
-                    _, tau_list, Y_avg = _optimization_tau_approach2(
-                        S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
-                else:
-                    raise ValueError("optim_approach should be either None, 1 or 2")
-            Y_list = _apply_delay(S_list, -tau_list)
-            if optim_delays_with_f:  # XXX to be removed
+            if multiple_sources:
+                tau_list = _optimization_tau_by_source(
+                    S_list,
+                    n_iter=n_iter_delay,
+                    delay_max=delay_max
+                )
+                Y_list = _apply_delay_by_source(S_list, -tau_list)
                 Y_avg = np.mean(Y_list, axis=0)
+            else:
+                if optim_delays_with_f:  # XXX to be removed
+                    tau_list = _optimization_tau_with_f(
+                        S_list, n_iter=n_iter_f, noise=noise, use_f=use_f,
+                        delay_max=delay_max, tau_list_init=tau_list_init)
+                else:  # XXX
+                    if optim_approach is None:
+                        _, tau_list, Y_avg = _optimization_tau(
+                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                    elif optim_approach == 1:
+                        _, tau_list, Y_avg = _optimization_tau_approach1(
+                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                    elif optim_approach == 2:
+                        _, tau_list, Y_avg = _optimization_tau_approach2(
+                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                    else:
+                        raise ValueError("optim_approach should be either None, 1 or 2")
+                Y_list = _apply_delay(S_list, -tau_list)
+                if optim_delays_with_f:  # XXX to be removed
+                    Y_avg = np.mean(Y_list, axis=0)
             # tau_list_total += tau_list
             # tau_list_total %= n
             tau_list_every_iter.append(tau_list)  # XXX to be removed
-        print("tau_list : {}".format(tau_list))
+        # print("tau_list : {}".format(tau_list))
         # basis_list = ...
         if return_loss:
             new_X_list = _apply_delay(X_list, -tau_list)
@@ -339,20 +381,30 @@ def _multiview_ica_main(
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
         for j in range(n_pb):
-            X = _apply_delay_one_sub(X_list[j], -tau_list[j])
+            # if multiple_sources:
+            #     X = _apply_delay_one_source_or_sub(X_list[j], -tau_list[j])
+            # else:
+            #     X = _apply_delay_one_sub(X_list[j], -tau_list[j])
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
             Y_denoise = Y_avg - Y_list[j] / n_pb
             # Perform one ICA quasi-Newton step
             converged, basis_list[j], g_norm = _noisy_ica_step(
-                W_old, X, Y_denoise, noise, n_pb, ortho
+                W_old, Y_list[j], Y_denoise, noise, n_pb, ortho, X_as_input=False,
             )
             # Update the average vector (estimate of the sources)
-            Y_list[j] = np.dot(basis_list[j], X)
+            S_list[j] = np.dot(basis_list[j], X_list[j])
+            if multiple_sources:
+                Y_list[j] = _apply_delay_one_source_or_sub(S_list[j], -tau_list[j])
+            else:
+                Y_list[j] = _apply_delay_one_sub(S_list[j], -tau_list[j])
             # Y_list[j] += _apply_delay_one_sub(np.dot(basis_list[j] - W_old, X_list[j]), -tau_list[j])
-            S_list[j] = _apply_delay_one_sub(Y_list[j], tau_list[j])
-            Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
-            # Y_avg = np.mean(Y_list, axis=0)
+            # if multiple_sources:
+            #     S_list[j] = _apply_delay_one_source_or_sub(Y_list[j], tau_list[j])
+            # else:
+            #     S_list[j] = _apply_delay_one_sub(Y_list[j], tau_list[j])
+            # Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
+            Y_avg = np.mean(Y_list, axis=0)
             g_norms = max(g_norm, g_norms)
             convergence = converged or convergence
         if convergence is False:
@@ -370,11 +422,16 @@ def _multiview_ica_main(
             )
 
         if verbose:
+            # if multiple_sources:
+            loss = _loss_total_by_source(basis_list, Y_list, Y_avg, noise)
+            # else:
+            #     new_X_list = _apply_delay(X_list, -tau_list)
+            #     loss = _loss_total(basis_list, new_X_list, Y_avg, noise)
             print(
                 "it %d, loss = %.4e, g=%.4e"
                 % (
                     i + 1,
-                    _loss_total(basis_list, X_list, Y_avg, noise),
+                    loss,
                     g_norms,
                 )
             )
@@ -412,6 +469,15 @@ def _loss_total(basis_list, X_list, Y_avg, noise):
     return loss
 
 
+def _loss_total_by_source(basis_list, Y_list, Y_avg, noise):
+    n_pb, p, _ = basis_list.shape
+    loss = np.mean(_logcosh(Y_avg)) * p
+    for i, (W, Y) in enumerate(zip(basis_list, Y_list)):
+        loss -= np.linalg.slogdet(W)[1]
+        loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
+    return loss
+
+
 def _loss_partial(W, X, Y_denoise, noise, n_pb):
     p, _ = W.shape
     Y = np.dot(W, X)
@@ -432,6 +498,7 @@ def _noisy_ica_step(
     lambda_min=0.001,
     n_ls_tries=50,
     scale=False,
+    X_as_input=True,
 ):
     """
     ICA minimization using quasi Newton method. Used in the inner loop.
@@ -444,8 +511,13 @@ def _noisy_ica_step(
     g_norm: float
     """
     p, n = X.shape
-    loss0 = _loss_partial(W, X, Y_denoise, noise, n_pb)
-    Y = W.dot(X)
+    if X_as_input:
+        loss0 = _loss_partial(W, X, Y_denoise, noise, n_pb)
+        Y = W.dot(X)
+    else:  # X is the current unmixed signals
+        Y = X
+        loss0 = _loss_partial(np.eye(p), Y, Y_denoise, noise, n_pb)
+
     Y_avg = Y / n_pb + Y_denoise
 
     # Compute relative gradient and Hessian
@@ -484,10 +556,14 @@ def _noisy_ica_step(
     step = 1
     for j in range(n_ls_tries):
         if ortho:
-            new_W = expm(-step * direction).dot(W)
+            new_transform = expm(-step * direction)
         else:
-            new_W = W - step * direction.dot(W)
-        new_loss = _loss_partial(new_W, X, Y_denoise, noise, n_pb)
+            new_transform = np.eye(p) - step * direction
+        new_W = np.dot(new_transform, W)
+        if X_as_input:
+            new_loss = _loss_partial(new_W, X, Y_denoise, noise, n_pb)
+        else:
+            new_loss = _loss_partial(new_transform, Y, Y_denoise, noise, n_pb)
         if new_loss < loss0:
             return True, new_W, g_norm
         else:

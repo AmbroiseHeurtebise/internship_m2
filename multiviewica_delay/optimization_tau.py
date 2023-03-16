@@ -238,3 +238,58 @@ def _optimization_tau_with_f(
         tau_list_final = tau_list_init + tau_list
         tau_list_final %= n
     return tau_list
+
+
+def _apply_delay_one_source_or_sub(S, delays):
+    return np.array([np.roll(S[i], delays[i]) for i in range(len(S))])
+
+
+def _apply_delay_by_source(S_list, delays_by_source):
+    Y_list = np.array([
+        _apply_delay_one_source_or_sub(
+            S_list[i], delays_by_source[i].astype('int'))
+        for i in range(len(S_list))])
+    return Y_list
+
+
+def delay_optimization_by_source(Y, Y_avg, delay_max=20):
+    _, n = Y.shape
+    conv1 = np.array([np.convolve(
+        np.concatenate((y, y[:delay_max])), y_avg[::-1], mode='valid')
+        for y, y_avg in zip(Y, Y_avg)])
+    conv2 = np.array([np.convolve(
+            np.concatenate((y[n-delay_max:], y[:-1])), y_avg[::-1], mode='valid')
+            for y, y_avg in zip(Y, Y_avg)])
+    conv = np.concatenate((conv1, conv2), axis=1)
+    optimal_delay = np.argmax(conv, axis=1)
+    optimal_delay[optimal_delay > delay_max] += n - 2 * delay_max - 1
+    return optimal_delay
+
+
+# def _optimization_tau_by_source(S_list, n_iter=3, delay_max=20):
+#     m, p, n = S_list.shape
+#     Y_avg = np.mean(S_list, axis=0)
+#     Y_list = np.copy(S_list)
+#     tau_list = np.zeros((m, p), dtype=int)
+#     for _ in range(n_iter):
+#         for i in range(m):
+#             new_Y_avg = m / (m - 1) * (Y_avg - Y_list[i] / m)
+#             tau_list[i] += delay_optimization_by_source(
+#                 Y_list[i], new_Y_avg, delay_max=delay_max)
+#             old_Y = Y_list[i].copy()
+#             Y_list[i] = _apply_delay_one_source_or_sub(S_list[i], -tau_list[i])
+#             Y_avg += (Y_list[i] - old_Y) / m
+#         tau_list %= n
+#     return tau_list
+
+
+def _optimization_tau_by_source(S_list, n_iter=3, delay_max=20):
+    m, p, n = S_list.shape
+    tau_list = np.zeros((m, p), dtype=int)
+    for i in range(p):
+        sources = S_list[:, i]
+        sources = sources[:, None, :]
+        _, estimated_delays, _ = _optimization_tau_approach1(
+            sources, n_iter=n_iter, delay_max=delay_max)
+        tau_list[:, i] = estimated_delays
+    return tau_list
