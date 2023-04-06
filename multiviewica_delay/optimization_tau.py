@@ -300,40 +300,40 @@ def delay_optimization_by_source(Y, Y_avg, delay_max=20):
     return optimal_delay
 
 
-# def _optimization_tau_by_source(S_list, n_iter=3, delay_max=20):
-#     m, p, n = S_list.shape
-#     Y_avg = np.mean(S_list, axis=0)
-#     Y_list = np.copy(S_list)
-#     tau_list = np.zeros((m, p), dtype=int)
-#     for _ in range(n_iter):
-#         for i in range(m):
-#             new_Y_avg = m / (m - 1) * (Y_avg - Y_list[i] / m)
-#             tau_list[i] += delay_optimization_by_source(
-#                 Y_list[i], new_Y_avg, delay_max=delay_max)
-#             old_Y = Y_list[i].copy()
-#             Y_list[i] = _apply_delay_one_source_or_sub(S_list[i], -tau_list[i])
-#             Y_avg += (Y_list[i] - old_Y) / m
-#         tau_list %= n
-#     return tau_list
-
-
 def _optimization_tau_by_source(
     S_list,
     n_iter=3,
     delay_max=20,
-    previous_tau_list=None
+    previous_tau_list=None,
+    use_loss_total=False,
+    noise=1,
 ):
     m, p, n = S_list.shape
-    if previous_tau_list is None:
-        previous_tau_list = np.zeros((m, p), dtype=int)
-    tau_list = np.zeros((m, p), dtype=int)
+    tau_list = previous_tau_list.copy()
     for i in range(p):
         sources = S_list[:, i]
         sources = sources[:, None, :]
-        _, estimated_delays, _ = _optimization_tau_approach1(
-            sources,
-            n_iter=n_iter,
-            delay_max=delay_max,
-            previous_tau_list=previous_tau_list[:, i])
+        if use_loss_total:
+            estimated_delays = _optimization_tau_with_f(
+                sources,
+                n_iter=n_iter,
+                noise=noise,
+                delay_max=delay_max,
+                previous_tau_list=previous_tau_list[:, i])
+        else:
+            _, estimated_delays, _ = _optimization_tau_approach1(
+                sources,
+                n_iter=n_iter,
+                delay_max=delay_max,
+                previous_tau_list=previous_tau_list[:, i])
         tau_list[:, i] = estimated_delays
     return tau_list
+
+
+# def _loss_total_by_source(basis_list, Y_list, Y_avg, noise):
+#     n_pb, p, _ = basis_list.shape
+#     loss = np.mean(_logcosh(Y_avg)) * p
+#     for i, (W, Y) in enumerate(zip(basis_list, Y_list)):
+#         loss -= np.linalg.slogdet(W)[1]
+#         loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
+#     return loss

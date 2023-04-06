@@ -15,7 +15,7 @@ def permica(
     max_iter=1000,
     random_state=None,
     tol=1e-7,
-    optim_delays=True,
+    optim_delays=False,
     delay_max=10,
 ):
     """
