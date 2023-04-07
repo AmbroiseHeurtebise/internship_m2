@@ -37,7 +37,7 @@ def test_mvicad_retrieves_delays():
     # Estimate delays with MVICAD
     _, _, _, tau_list, _ = multiviewica_delay(
         X_list, optim_delays_permica=False, max_delay=max_delay,
-        every_N_iter_delay=10, n_iter_delay=2, random_state=random_state)
+        every_n_iter_delay=10, n_iter_delay=2, random_state=random_state)
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)

@@ -8,11 +8,11 @@ import warnings
 from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
-from ._sameica import sameica  # XXX
+from ._sameica import sameica
 from .optimization_tau import (
     _optimization_tau,
-    _optimization_tau_approach1,  # XXX
-    _optimization_tau_approach2,  # XXX
+    _optimization_tau_approach1,
+    _optimization_tau_approach2,
     _apply_delay_one_sub,
     _apply_delay,
     _optimization_tau_with_f,
@@ -34,14 +34,14 @@ def multiviewica_delay(
     max_delay=10,
     n_iter_delay=3,
     early_stopping_delay=None,
-    every_N_iter_delay=1,
+    every_n_iter_delay=1,
     optim_approach=None,
     optim_delays_with_f=False,
     n_iter_f=2,  # XXX to be removed
     random_state=None,
     tol=1e-3,
     tol_init=None,
-    multiple_sources=False,
+    shared_delays=False,
     verbose=False,
     return_loss=False,
     return_basis_list=False,
@@ -89,16 +89,17 @@ def multiviewica_delay(
     early_stopping_delay : int, optional
         If None: estimate delays in phase 2 until convergence. Else, stop
         estimating delays from iteration number early_stopping_delay.
-    every_N_iter_delay : int, optional
-        Estimate delays in phase 2 every every_N_iter_delay iterations.
+    every_n_iter_delay : int, optional
+        Estimate delays in phase 2 every every_n_iter_delay iterations.
     optim_approach : int, optional
-        If None: estimate delays using the first subject as a reference for 
-        the first loop, and then using mean sources as reference for next loops.
+        If None: estimate delays using the first subject as a reference for
+        the first loop, and then using mean sources as reference for next
+        loops.
         If 1: use mean sources as reference.
         If 2: use sources of first subject as reference.
     optim_delays_with_f: bool, optional
         Decide if delay estimation is done using total loss (with function f)
-        or using partial loss (without function f). 
+        or using partial loss (without function f).
     n_iter_f : int, optional
         The number of iterations in the function that estimates delays with f.
     random_state : int, RandomState instance or None, optional (default=None)
@@ -112,8 +113,10 @@ def multiviewica_delay(
         the un-mixing matrices are considered to have converged.
     tol_init : float, optional
         Same as the parameter tol but during initialization part.
-    multiple_sources : bool, optional
-        Decide if there is only one delay per subject or multiple delays 
+        Having 2 different tolerance parameters allows to run experiments with
+        the same initialization but different core optimizations.
+    shared_delays : bool, optional
+        Decide if there is only one delay per subject or multiple delays
         per subject.
     verbose : bool, optional
         Print information
@@ -124,8 +127,8 @@ def multiviewica_delay(
     return_delays_every_iter : bool, optional
         Decide if it returns delays for every iteration.
     return_unmixing_delays_both_phases : bool, optional
-        Decide if it returns unmixing matrices and delays after initialization part
-        and at the end of the algorithm.
+        Decide if it returns unmixing matrices and delays after initialization
+        part and at the end of the algorithm.
 
     Returns
     -------
@@ -148,7 +151,7 @@ def multiviewica_delay(
     P, X = reduce_data(
         X, n_components=n_components, dimension_reduction=dimension_reduction
     )
-    if optim_delays_permica and multiple_sources:
+    if optim_delays_permica and shared_delays:
         raise ValueError(
             "Cannot optimize source-specific delays during initialization")
     # Initialization
@@ -188,7 +191,7 @@ def multiviewica_delay(
         W = init
     X_rescaled = _apply_delay(X, -tau_list_init)
 
-    if multiple_sources:
+    if shared_delays:
         tau_list_init = np.zeros((n_pb, p), dtype=int)
 
     if return_delays_every_iter:  # XXX needs to be removed
@@ -203,11 +206,11 @@ def multiviewica_delay(
             tau_list_init=tau_list_init,
             n_iter_delay=n_iter_delay,
             early_stopping_delay=early_stopping_delay,
-            every_N_iter_delay=every_N_iter_delay,
+            every_n_iter_delay=every_n_iter_delay,
             optim_delays_with_f=optim_delays_with_f,
             optim_approach=optim_approach,
             n_iter_f=n_iter_f,
-            multiple_sources=multiple_sources,
+            shared_delays=shared_delays,
             verbose=verbose,
             return_loss=return_loss,
             return_basis_list=return_basis_list,
@@ -229,11 +232,11 @@ def multiviewica_delay(
         tau_list_init=tau_list_init,
         n_iter_delay=n_iter_delay,
         early_stopping_delay=early_stopping_delay,
-        every_N_iter_delay=every_N_iter_delay,
+        every_n_iter_delay=every_n_iter_delay,
         optim_delays_with_f=optim_delays_with_f,
         optim_approach=optim_approach,
         n_iter_f=n_iter_f,
-        multiple_sources=multiple_sources,
+        shared_delays=shared_delays,
         verbose=verbose,
         return_loss=return_loss,
         return_basis_list=return_basis_list,
@@ -266,12 +269,12 @@ def _multiview_ica_main(
     tau_list_init=None,
     n_iter_delay=3,
     early_stopping_delay=None,
-    every_N_iter_delay=1,
+    every_n_iter_delay=1,
     optim_approach=None,  # XXX to be removed
     optim_delays_with_f=False,  # XXX to be removed
     n_iter_f=2,  # XXX to be removed
     ortho=False,
-    multiple_sources=False,
+    shared_delays=False,
     return_gradients=False,
     timing=False,
     return_loss=False,
@@ -350,15 +353,15 @@ def _multiview_ica_main(
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
         loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
-    if multiple_sources:
+    if shared_delays:
         tau_list = np.zeros((n_pb, p), dtype=int)
     else:
         tau_list = np.zeros(n_pb, dtype=int)
     for i in range(n_iter):
         # sign_list = np.ones(n_pb, p)
-        if optim_delays_ica and i < early_stopping_delay and i % every_N_iter_delay == 0:
+        if optim_delays_ica and i < early_stopping_delay and i % every_n_iter_delay == 0:
             # Delay estimation
-            if multiple_sources:
+            if shared_delays:
                 tau_list = _optimization_tau_by_source(
                     S_list,
                     n_iter=n_iter_delay,
@@ -404,7 +407,7 @@ def _multiview_ica_main(
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
             Y_denoise = Y_avg - Y_list[j] / n_pb
-            if multiple_sources:
+            if shared_delays:
                 Y_denoise = _apply_delay_one_source_or_sub(Y_denoise, tau_list[j])
             else:
                 Y_denoise = _apply_delay_one_sub(Y_denoise, tau_list[j])
@@ -414,7 +417,7 @@ def _multiview_ica_main(
             )
             # Update the average vector (estimate of the sources)
             S_list[j] = np.dot(basis_list[j], X_list[j])
-            if multiple_sources:
+            if shared_delays:
                 Y_list[j] = _apply_delay_one_source_or_sub(S_list[j], -tau_list[j])
             else:
                 Y_list[j] = _apply_delay_one_sub(S_list[j], -tau_list[j])

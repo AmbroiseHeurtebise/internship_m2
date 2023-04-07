@@ -4,13 +4,13 @@ from multiviewica_delay import multiviewica_delay
 
 
 @pytest.mark.parametrize(
-    "mode", ["one_source", "multiple_sources"])
+    "mode", ["one_source", "shared_delays"])
 def test_loss_decreasing(mode):
     # parameters
     if mode == "one_source":
-        multiple_sources = False
-    elif mode == "multiple_sources":
-        multiple_sources = True
+        shared_delays = False
+    elif mode == "shared_delays":
+        shared_delays = True
     m = 5
     p = 4
     n = 50
@@ -24,7 +24,7 @@ def test_loss_decreasing(mode):
         X_list,
         max_delay=max_delay,
         random_state=np.random.RandomState(seed),
-        multiple_sources=multiple_sources,
+        shared_delays=shared_delays,
         optim_delays_with_f=True,
         return_loss=True,
         verbose=True)

@@ -20,13 +20,13 @@ def loss_partial(basis_list, Y_list, Y_avg, noise=1.0):
 
 
 @pytest.mark.parametrize(
-    "mode", ["one_source", "multiple_sources"])
+    "mode", ["one_source", "shared_delays"])
 def test_loss_partial_decreasing(mode):
     # parameters
     if mode == "one_source":
-        multiple_sources = False
-    elif mode == "multiple_sources":
-        multiple_sources = True
+        shared_delays = False
+    elif mode == "shared_delays":
+        shared_delays = True
     m = 10
     p = 20
     n = 100
@@ -39,7 +39,7 @@ def test_loss_partial_decreasing(mode):
     W_list = rng.randn(m, p, p)
     S_list = np.array([W.dot(X) for W, X in zip(W_list, X_list)])
     S_avg = np.mean(S_list, axis=0)
-    if multiple_sources:
+    if shared_delays:
         tau_list = np.zeros((m, p), dtype="int")
     else:
         tau_list = np.zeros(m, dtype="int")
@@ -52,7 +52,7 @@ def test_loss_partial_decreasing(mode):
     for i in range(nb_iter):
         # print(f"\nIteration {i}")
         # step 1: delay optimization
-        if multiple_sources:
+        if shared_delays:
             tau_list = _optimization_tau_by_source(
                 S_list,
                 n_iter=3,
