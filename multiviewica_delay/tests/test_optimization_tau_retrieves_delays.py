@@ -44,13 +44,13 @@ def test_optimization_tau_retrieves_delays(mode):
 
     # Estimate delays with optimization_tau
     if mode == "base":
-        _, tau_list, _ = _optimization_tau(
+        tau_list = _optimization_tau(
             S_list, n_iter=2, max_delay=max_delay)
     elif mode == "approach_1":
-        _, tau_list, _ = _optimization_tau_approach1(
+        tau_list = _optimization_tau_approach1(
             S_list, n_iter=2, max_delay=max_delay)
     elif mode == "approach_2":
-        _, tau_list, _ = _optimization_tau_approach2(
+        tau_list = _optimization_tau_approach2(
             S_list, n_iter=2, max_delay=max_delay)
     elif mode == "with_f":
         tau_list = _optimization_tau_with_f(

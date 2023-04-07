@@ -368,7 +368,6 @@ def _multiview_ica_main(
                     previous_tau_list=tau_list,
                 )
                 Y_list = _apply_delay_by_source(S_list, -tau_list)
-                Y_avg = np.mean(Y_list, axis=0)
             else:
                 if optim_delays_with_f:
                     tau_list = _optimization_tau_with_f(
@@ -381,7 +380,7 @@ def _multiview_ica_main(
                     )
                 else:
                     if optim_approach is None:
-                        _, tau_list, Y_avg = _optimization_tau(
+                        tau_list = _optimization_tau(
                             S_list,
                             n_iter_delay,
                             max_delay=max_delay,
@@ -389,7 +388,7 @@ def _multiview_ica_main(
                             previous_tau_list=tau_list,
                         )
                     elif optim_approach == 1:
-                        _, tau_list, Y_avg = _optimization_tau_approach1(
+                        tau_list = _optimization_tau_approach1(
                             S_list,
                             n_iter_delay,
                             max_delay=max_delay,
@@ -397,7 +396,7 @@ def _multiview_ica_main(
                             previous_tau_list=tau_list,
                         )
                     elif optim_approach == 2:
-                        _, tau_list, Y_avg = _optimization_tau_approach2(
+                        tau_list = _optimization_tau_approach2(
                             S_list,
                             n_iter_delay,
                             max_delay=max_delay,
@@ -407,8 +406,7 @@ def _multiview_ica_main(
                     else:
                         raise ValueError("optim_approach should be either None, 1 or 2")
                 Y_list = _apply_delay(S_list, -tau_list)
-                if optim_delays_with_f:
-                    Y_avg = np.mean(Y_list, axis=0)
+            Y_avg = np.mean(Y_list, axis=0)
             tau_list_every_iter.append(tau_list)
         if return_basis_list:
             W_total.append(basis_list.copy())
