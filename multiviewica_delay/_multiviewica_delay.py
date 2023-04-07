@@ -348,7 +348,6 @@ def _multiview_ica_main(
     loss_total = []
     loss_partial = []  # XXX
     W_total = []
-    # tau_list_total = np.zeros(n_views, dtype=int)
     tau_list_every_iter = []  # XXX to be removed
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
@@ -373,18 +372,38 @@ def _multiview_ica_main(
             else:
                 if optim_delays_with_f:
                     tau_list = _optimization_tau_with_f(
-                        S_list, n_iter=n_iter_f, noise=noise,
-                        max_delay=max_delay, tau_list_init=tau_list_init)
+                        S_list,
+                        n_iter=n_iter_f,
+                        noise=noise,
+                        max_delay=max_delay,
+                        tau_list_init=tau_list_init,
+                        previous_tau_list=tau_list,
+                    )
                 else:
                     if optim_approach is None:
                         _, tau_list, Y_avg = _optimization_tau(
-                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
+                            S_list,
+                            n_iter_delay,
+                            max_delay=max_delay,
+                            tau_list_init=tau_list_init,
+                            previous_tau_list=tau_list,
+                        )
                     elif optim_approach == 1:
                         _, tau_list, Y_avg = _optimization_tau_approach1(
-                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
+                            S_list,
+                            n_iter_delay,
+                            max_delay=max_delay,
+                            tau_list_init=tau_list_init,
+                            previous_tau_list=tau_list,
+                        )
                     elif optim_approach == 2:
                         _, tau_list, Y_avg = _optimization_tau_approach2(
-                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
+                            S_list,
+                            n_iter_delay,
+                            max_delay=max_delay,
+                            tau_list_init=tau_list_init,
+                            previous_tau_list=tau_list,
+                        )
                     else:
                         raise ValueError("optim_approach should be either None, 1 or 2")
                 Y_list = _apply_delay(S_list, -tau_list)
