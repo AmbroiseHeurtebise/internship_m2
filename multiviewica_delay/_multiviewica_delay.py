@@ -134,8 +134,8 @@ def multiviewica_delay(
         tol_init = tol
     n_pb, p, n = X.shape
     tau_list_init = np.zeros(n_pb, dtype=int)
-    if type(init) is str:
-        if init not in ["permica", "groupica", "sameica"]:
+    if isinstance(init, str):
+        if init not in ("permica", "groupica", "sameica"):
             raise ValueError("init should either be permica, groupica or sameica")
         if init == "permica":
             _, W, S, tau_list_init = permica(
@@ -454,9 +454,9 @@ def _multiview_ica_main(
 
 
 def _loss_total(basis_list, X_list, Y_avg, noise):
-    n_pb, p, _ = basis_list.shape
+    _, p, _ = basis_list.shape
     loss = np.mean(_logcosh(Y_avg)) * p
-    for i, (W, X) in enumerate(zip(basis_list, X_list)):
+    for W, X in zip(basis_list, X_list):
         Y = W.dot(X)
         loss -= np.linalg.slogdet(W)[1]
         loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
@@ -464,9 +464,9 @@ def _loss_total(basis_list, X_list, Y_avg, noise):
 
 
 def _loss_total_by_source(basis_list, Y_list, Y_avg, noise):
-    n_pb, p, _ = basis_list.shape
+    _, p, _ = basis_list.shape
     loss = np.mean(_logcosh(Y_avg)) * p
-    for i, (W, Y) in enumerate(zip(basis_list, Y_list)):
+    for W, Y in zip(basis_list, Y_list):
         loss -= np.linalg.slogdet(W)[1]
         loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
     return loss
@@ -496,6 +496,7 @@ def _noisy_ica_step(
 ):
     """
     ICA minimization using quasi Newton method. Used in the inner loop.
+
     Returns
     -------
     converged: bool
@@ -548,7 +549,7 @@ def _noisy_ica_step(
     # print(direction)
     # Line search
     step = 1
-    for j in range(n_ls_tries):
+    for _ in range(n_ls_tries):
         if ortho:
             new_transform = expm(-step * direction)
         else:
