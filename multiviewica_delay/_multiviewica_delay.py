@@ -157,8 +157,8 @@ def multiviewica_delay(
     # Initialization
     if tol_init is None:
         tol_init = tol
-    n_pb, p, n = X.shape
-    tau_list_init = np.zeros(n_pb, dtype=int)
+    n_views, p, n = X.shape
+    tau_list_init = np.zeros(n_views, dtype=int)
     if isinstance(init, str):
         if init not in ("permica", "groupica", "sameica"):
             raise ValueError("init should either be permica, groupica or sameica")
@@ -179,7 +179,7 @@ def multiviewica_delay(
                 tol=tol_init,
             )
         else:  # XXX
-            W, S_list = sameica(
+            W, _ = sameica(
                 X,
                 max_iter=max_iter,
                 random_state=random_state,
@@ -192,7 +192,7 @@ def multiviewica_delay(
     X_rescaled = _apply_delay(X, -tau_list_init)
 
     if shared_delays:
-        tau_list_init = np.zeros((n_pb, p), dtype=int)
+        tau_list_init = np.zeros((n_views, p), dtype=int)
 
     if return_delays_every_iter:  # XXX needs to be removed
         tau_list_main = _multiview_ica_main(
@@ -281,7 +281,7 @@ def _multiview_ica_main(
     return_basis_list=False,
     return_delays_every_iter=False,  # XXX to be removed
 ):
-    n_pb, p, n = X_list.shape
+    n_views, p, n = X_list.shape
     tol_init = None
     if tol > 0 and tol_init is None:
         tol_init = tol
@@ -293,7 +293,7 @@ def _multiview_ica_main(
         early_stopping_delay = n_iter
 
     if tau_list_init is None:
-        tau_list_init = np.zeros(n_pb, dtype=int)
+        tau_list_init = np.zeros(n_views, dtype=int)
 
     # Turn list into an array to make it compatible with the rest of the code
     if type(X_list) == list:
@@ -309,18 +309,18 @@ def _multiview_ica_main(
         g_norms = 0
         # Start inner loop: decrease the loss w.r.t to each W_j
         convergence = False
-        for j in range(n_pb):
+        for j in range(n_views):
             X = X_list[j]
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
-            Y_denoise = Y_avg - W_old.dot(X) / n_pb
+            Y_denoise = Y_avg - W_old.dot(X) / n_views
             # Perform one ICA quasi-Newton step
             converged, basis_list[j], g_norm = _noisy_ica_step(
-                W_old, X, Y_denoise, noise, n_pb, ortho, scale=True
+                W_old, X, Y_denoise, noise, n_views, ortho, scale=True
             )
             convergence = convergence or converged
             # Update the average vector (estimate of the sources)
-            Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
+            Y_avg += np.dot(basis_list[j] - W_old, X) / n_views
             g_norms = max(g_norm, g_norms)
 
         # If line search does not converge for any subject we ll stop there
@@ -348,17 +348,16 @@ def _multiview_ica_main(
     loss_total = []
     loss_partial = []  # XXX
     W_total = []
-    # tau_list_total = np.zeros(n_pb, dtype=int)
+    # tau_list_total = np.zeros(n_views, dtype=int)
     tau_list_every_iter = []  # XXX to be removed
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
         loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
     if shared_delays:
-        tau_list = np.zeros((n_pb, p), dtype=int)
+        tau_list = np.zeros((n_views, p), dtype=int)
     else:
-        tau_list = np.zeros(n_pb, dtype=int)
+        tau_list = np.zeros(n_views, dtype=int)
     for i in range(n_iter):
-        # sign_list = np.ones(n_pb, p)
         if optim_delays_ica and i < early_stopping_delay and i % every_n_iter_delay == 0:
             # Delay estimation
             if shared_delays:
@@ -376,8 +375,6 @@ def _multiview_ica_main(
                     tau_list = _optimization_tau_with_f(
                         S_list, n_iter=n_iter_f, noise=noise,
                         max_delay=max_delay, tau_list_init=tau_list_init)
-                    # Y_list = _apply_delay(S_list, -tau_list)  # XXX to be removed
-                    # Y_avg = np.mean(Y_list, axis=0)
                 else:
                     if optim_approach is None:
                         _, tau_list, Y_avg = _optimization_tau(
@@ -393,27 +390,23 @@ def _multiview_ica_main(
                 Y_list = _apply_delay(S_list, -tau_list)
                 if optim_delays_with_f:
                     Y_avg = np.mean(Y_list, axis=0)
-            # tau_list_total += tau_list
-            # tau_list_total %= n
-            tau_list_every_iter.append(tau_list)  # XXX to be removed
-        # print("tau_list : {}".format(tau_list))
-        # basis_list = ...
+            tau_list_every_iter.append(tau_list)
         if return_basis_list:
             W_total.append(basis_list.copy())
         g_norms = 0
         convergence = False
         # Start inner loop: decrease the loss w.r.t to each W_j
-        for j in range(n_pb):
+        for j in range(n_views):
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
-            Y_denoise = Y_avg - Y_list[j] / n_pb
+            Y_denoise = Y_avg - Y_list[j] / n_views
             if shared_delays:
                 Y_denoise = _apply_delay_one_source_or_sub(Y_denoise, tau_list[j])
             else:
                 Y_denoise = _apply_delay_one_sub(Y_denoise, tau_list[j])
             # Perform one ICA quasi-Newton step
             converged, basis_list[j], g_norm = _noisy_ica_step(
-                W_old, X_list[j], Y_denoise, noise, n_pb, ortho,
+                W_old, X_list[j], Y_denoise, noise, n_views, ortho,
             )
             # Update the average vector (estimate of the sources)
             S_list[j] = np.dot(basis_list[j], X_list[j])
@@ -421,7 +414,6 @@ def _multiview_ica_main(
                 Y_list[j] = _apply_delay_one_source_or_sub(S_list[j], -tau_list[j])
             else:
                 Y_list[j] = _apply_delay_one_sub(S_list[j], -tau_list[j])
-            # Y_avg += np.dot(basis_list[j] - W_old, X) / n_pb
             Y_avg = np.mean(Y_list, axis=0)
             g_norms = max(g_norm, g_norms)
             convergence = converged or convergence
@@ -497,13 +489,13 @@ def _loss_total_by_source(basis_list, Y_list, Y_avg, noise):
     return loss
 
 
-def _loss_partial(W, X, Y_denoise, noise, n_pb):
+def _loss_partial(W, X, Y_denoise, noise, n_views):
     p, _ = W.shape
     Y = np.dot(W, X)
     loss = -np.linalg.slogdet(W)[1]
-    loss += np.mean(_logcosh(Y / n_pb + Y_denoise)) * p
-    fact = (1 - 1 / n_pb) / (2 * noise)
-    loss += fact * np.mean((Y - n_pb * Y_denoise / (n_pb - 1)) ** 2) * p
+    loss += np.mean(_logcosh(Y / n_views + Y_denoise)) * p
+    fact = (1 - 1 / n_views) / (2 * noise)
+    loss += fact * np.mean((Y - n_views * Y_denoise / (n_views - 1)) ** 2) * p
     return loss
 
 
@@ -512,7 +504,7 @@ def _noisy_ica_step(
     X,
     Y_denoise,
     noise,
-    n_pb,
+    n_views,
     ortho,
     lambda_min=0.001,
     n_ls_tries=50,
@@ -532,19 +524,19 @@ def _noisy_ica_step(
     """
     p, n = X.shape
     if X_as_input:
-        loss0 = _loss_partial(W, X, Y_denoise, noise, n_pb)
+        loss0 = _loss_partial(W, X, Y_denoise, noise, n_views)
         Y = W.dot(X)
     else:  # X is the current unmixed signals
         Y = X
-        loss0 = _loss_partial(np.eye(p), Y, Y_denoise, noise, n_pb)
+        loss0 = _loss_partial(np.eye(p), Y, Y_denoise, noise, n_views)
 
-    Y_avg = Y / n_pb + Y_denoise
+    Y_avg = Y / n_views + Y_denoise
 
     # Compute relative gradient and Hessian
     thM = np.tanh(Y_avg)
-    G = np.dot(thM, Y.T) / n / n_pb
+    G = np.dot(thM, Y.T) / n / n_views
     # print(G)
-    const = 1 - 1 / n_pb
+    const = 1 - 1 / n_views
     res = Y - Y_denoise / const
     G += np.dot(res, Y.T) * const / noise / n
     G -= np.eye(p)
@@ -557,7 +549,7 @@ def _noisy_ica_step(
 
     # These are the terms H_{ijij} of the approximated hessian
     # (approximation H2 in Pierre's thesis)
-    h = np.dot((1 - thM ** 2) / n_pb ** 2 + const / noise, (Y ** 2).T,) / n
+    h = np.dot((1 - thM ** 2) / n_views ** 2 + const / noise, (Y ** 2).T,) / n
 
     # Regularize
     discr = np.sqrt((h - h.T) ** 2 + 4.0)
@@ -581,9 +573,9 @@ def _noisy_ica_step(
             new_transform = np.eye(p) - step * direction
         new_W = np.dot(new_transform, W)
         if X_as_input:
-            new_loss = _loss_partial(new_W, X, Y_denoise, noise, n_pb)
+            new_loss = _loss_partial(new_W, X, Y_denoise, noise, n_views)
         else:
-            new_loss = _loss_partial(new_transform, Y, Y_denoise, noise, n_pb)
+            new_loss = _loss_partial(new_transform, Y, Y_denoise, noise, n_views)
         if new_loss < loss0:
             return True, new_W, g_norm
         else:

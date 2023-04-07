@@ -331,7 +331,7 @@ def _optimization_tau_by_source(
 
 
 # def _loss_total_by_source(basis_list, Y_list, Y_avg, noise):
-#     n_pb, p, _ = basis_list.shape
+#     n_views, p, _ = basis_list.shape
 #     loss = np.mean(_logcosh(Y_avg)) * p
 #     for i, (W, Y) in enumerate(zip(basis_list, Y_list)):
 #         loss -= np.linalg.slogdet(W)[1]
