@@ -8,10 +8,10 @@ from ._sameica import sameica
 from ._permica import permica, _hungarian
 from .optimization_tau import (
     _optimization_tau,
-    _loss_delay,
+    # _loss_delay,
     _apply_delay,
     _apply_delay_one_sub,
-    _loss_delay_ref,
+    # _loss_delay_ref,
     _optimization_tau_approach1,
     _optimization_tau_approach2,
     _delay_estimation,
