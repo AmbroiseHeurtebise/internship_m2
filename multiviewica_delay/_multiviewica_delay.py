@@ -31,7 +31,7 @@ def multiviewica_delay(
     init="permica",
     optim_delays_permica=False,
     optim_delays_ica=True,
-    delay_max=10,
+    max_delay=10,
     n_iter_delay=3,
     early_stopping_delay=None,
     every_N_iter_delay=1,
@@ -82,7 +82,7 @@ def multiviewica_delay(
         Decides if we estimate delays during phase 1 or not
     optim_delays_ica : bool, optional
         Decides if we estimate delays during phase 2 or not
-    delay_max : int, optional
+    max_delay : int, optional
         The maximum delay between two subjects
     n_iter_delay : int, optional
         The number of loops used in phase 2 to estimate delays
@@ -91,6 +91,16 @@ def multiviewica_delay(
         estimating delays from iteration number early_stopping_delay.
     every_N_iter_delay : int, optional
         Estimate delays in phase 2 every every_N_iter_delay iterations.
+    optim_approach : int, optional
+        If None: estimate delays using the first subject as a reference for 
+        the first loop, and then using mean sources as reference for next loops.
+        If 1: use mean sources as reference.
+        If 2: use sources of first subject as reference.
+    optim_delays_with_f: bool, optional
+        Decide if delay estimation is done using total loss (with function f)
+        or using partial loss (without function f). 
+    n_iter_f : int, optional
+        The number of iterations in the function that estimates delays with f.
     random_state : int, RandomState instance or None, optional (default=None)
         Used to perform a random initialization. If int, random_state is
         the seed used by the random number generator; If RandomState
@@ -100,10 +110,22 @@ def multiviewica_delay(
     tol : float, optional
         A positive scalar giving the tolerance at which
         the un-mixing matrices are considered to have converged.
+    tol_init : float, optional
+        Same as the parameter tol but during initialization part.
     multiple_sources : bool, optional
-        Decide if there is only one delay per subject or multiple delays per subject.
+        Decide if there is only one delay per subject or multiple delays 
+        per subject.
     verbose : bool, optional
         Print information
+    return_loss : bool, optional
+        Decide if it returns the loss for every iteration.
+    return_basis_list : bool, optional
+        Decide if it returns the unmixing matrices for every iteration.
+    return_delays_every_iter : bool, optional
+        Decide if it returns delays for every iteration.
+    return_unmixing_delays_both_phases : bool, optional
+        Decide if it returns unmixing matrices and delays after initialization part
+        and at the end of the algorithm.
 
     Returns
     -------
@@ -118,7 +140,7 @@ def multiviewica_delay(
     tau_list_init : np array of shape(n_groups, )
         Estimated delays after the initialization
 
-    See also
+    See Also
     --------
     groupica
     permica
@@ -144,7 +166,7 @@ def multiviewica_delay(
                 random_state=random_state,
                 tol=tol_init,
                 optim_delays=optim_delays_permica,
-                delay_max=delay_max,
+                max_delay=max_delay,
             )
         elif init == "groupica":
             _, W, S = groupica(
@@ -177,7 +199,7 @@ def multiviewica_delay(
             tol=tol,
             init=W,
             optim_delays_ica=optim_delays_ica,
-            delay_max=delay_max,
+            max_delay=max_delay,
             tau_list_init=tau_list_init,
             n_iter_delay=n_iter_delay,
             early_stopping_delay=early_stopping_delay,
@@ -203,7 +225,7 @@ def multiviewica_delay(
         tol=tol,
         init=W,
         optim_delays_ica=optim_delays_ica,
-        delay_max=delay_max,
+        max_delay=max_delay,
         tau_list_init=tau_list_init,
         n_iter_delay=n_iter_delay,
         early_stopping_delay=early_stopping_delay,
@@ -240,7 +262,7 @@ def _multiview_ica_main(
     verbose=False,
     init=None,
     optim_delays_ica=True,
-    delay_max=10,
+    max_delay=10,
     tau_list_init=None,
     n_iter_delay=3,
     early_stopping_delay=None,
@@ -340,7 +362,7 @@ def _multiview_ica_main(
                 tau_list = _optimization_tau_by_source(
                     S_list,
                     n_iter=n_iter_delay,
-                    delay_max=delay_max,
+                    max_delay=max_delay,
                     use_loss_total=optim_delays_with_f,
                     previous_tau_list=tau_list,
                 )
@@ -350,19 +372,19 @@ def _multiview_ica_main(
                 if optim_delays_with_f:
                     tau_list = _optimization_tau_with_f(
                         S_list, n_iter=n_iter_f, noise=noise,
-                        delay_max=delay_max, tau_list_init=tau_list_init)
+                        max_delay=max_delay, tau_list_init=tau_list_init)
                     # Y_list = _apply_delay(S_list, -tau_list)  # XXX to be removed
                     # Y_avg = np.mean(Y_list, axis=0)
                 else:
                     if optim_approach is None:
                         _, tau_list, Y_avg = _optimization_tau(
-                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
                     elif optim_approach == 1:
                         _, tau_list, Y_avg = _optimization_tau_approach1(
-                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
                     elif optim_approach == 2:
                         _, tau_list, Y_avg = _optimization_tau_approach2(
-                            S_list, n_iter_delay, delay_max=delay_max, tau_list_init=tau_list_init)
+                            S_list, n_iter_delay, max_delay=max_delay, tau_list_init=tau_list_init)
                     else:
                         raise ValueError("optim_approach should be either None, 1 or 2")
                 Y_list = _apply_delay(S_list, -tau_list)
@@ -563,4 +585,5 @@ def _noisy_ica_step(
             return True, new_W, g_norm
         else:
             step /= 2.0
+
     return False, W, g_norm

@@ -30,7 +30,7 @@ def test_loss_partial_decreasing(mode):
     m = 10
     p = 20
     n = 100
-    delay_max = 20
+    max_delay = 20
     seed = 0
     rng = np.random.RandomState(seed)
 
@@ -56,7 +56,7 @@ def test_loss_partial_decreasing(mode):
             tau_list = _optimization_tau_by_source(
                 S_list,
                 n_iter=3,
-                delay_max=delay_max,
+                max_delay=max_delay,
                 previous_tau_list=tau_list
             )
             Y_list = _apply_delay_by_source(S_list, -tau_list)
@@ -64,7 +64,7 @@ def test_loss_partial_decreasing(mode):
             _, tau_list, _ = _optimization_tau_approach1(
                 S_list,
                 n_iter=3,
-                delay_max=delay_max,
+                max_delay=max_delay,
                 previous_tau_list=tau_list
             )
             # print("tau_list : ", tau_list)

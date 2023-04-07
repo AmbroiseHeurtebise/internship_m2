@@ -16,7 +16,7 @@ def permica(
     random_state=None,
     tol=1e-7,
     optim_delays=False,
-    delay_max=10,
+    max_delay=10,
 ):
     """
     Performs one ICA per group (ex: subject) and align sources
@@ -81,7 +81,7 @@ def permica(
         W[i] = np.dot(Wi, Ki) / scale[:, None]
     tau_list = np.zeros(n_pb, dtype=int)
     if optim_delays:
-        tau_list = delay_estimation_with_scale_perm(S, delay_max=delay_max)
+        tau_list = delay_estimation_with_scale_perm(S, max_delay=max_delay)
         S = _apply_delay(S, -tau_list)
     orders, signs, S = _find_ordering(S)
     for i, (order, sign) in enumerate(zip(orders, signs)):
@@ -96,7 +96,7 @@ def _hungarian(M):
     return order, np.sign(vals), cost
 
 
-def delay_estimation_with_scale_perm(S_list, delay_max=10):
+def delay_estimation_with_scale_perm(S_list, max_delay=10):
     """
     Finds a list of delays from a list of sources
     which are potentially permuted and have different scales.
@@ -105,9 +105,9 @@ def delay_estimation_with_scale_perm(S_list, delay_max=10):
     ----------
     S_list : np array of shape (n_groups, n_features, n_samples)
         The list of sources found after calling Picard algorithm.
-    delay_max : int, optional (defaults to 10)
+    max_delay : int, optional (defaults to 10)
         Delays between subjects' sources will be searched
-        in the segment [-delay_max, delay_max], so delay_max should be
+        in the segment [-max_delay, max_delay], so max_delay should be
         in the segment [0, n//2].
         If None, delays will be searched in [0, n].
 
@@ -119,8 +119,8 @@ def delay_estimation_with_scale_perm(S_list, delay_max=10):
     m, _, n = S_list.shape
     S = S_list[0].copy()
     tau_list = np.zeros(m, dtype=int)
-    if delay_max is not None:
-        delays = np.concatenate((np.arange(delay_max+1), np.arange(n-delay_max, n)))
+    if max_delay is not None:
+        delays = np.concatenate((np.arange(max_delay+1), np.arange(n-max_delay, n)))
     else:
         delays = np.arange(n)
     for i, s in enumerate(S_list[1:]):
@@ -131,8 +131,8 @@ def delay_estimation_with_scale_perm(S_list, delay_max=10):
             _, _, cost = _hungarian(M)
             objective.append(cost)
         optimal_delay = np.argmax(objective)
-        if delay_max is not None and optimal_delay > delay_max:
-            optimal_delay += n - 2 * delay_max - 1
+        if max_delay is not None and optimal_delay > max_delay:
+            optimal_delay += n - 2 * max_delay - 1
         tau_list[i + 1] = optimal_delay
     return tau_list
 

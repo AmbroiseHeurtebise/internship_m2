@@ -14,7 +14,7 @@ def test_loss_decreasing(mode):
     m = 5
     p = 4
     n = 50
-    delay_max = 10
+    max_delay = 10
     seed = 0
     rng = np.random.RandomState(seed)
     X_list = rng.randn(m, p, n)
@@ -22,7 +22,7 @@ def test_loss_decreasing(mode):
     # MVICAD
     _, _, _, _, loss = multiviewica_delay(
         X_list,
-        delay_max=delay_max,
+        max_delay=max_delay,
         random_state=np.random.RandomState(seed),
         multiple_sources=multiple_sources,
         optim_delays_with_f=True,

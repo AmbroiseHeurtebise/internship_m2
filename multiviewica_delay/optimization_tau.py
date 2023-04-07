@@ -25,18 +25,18 @@ def _loss_delay_ref(S_list, tau_list, Y_avg):
     return _loss_function(Y_list, Y_avg)
 
 
-def _delay_estimation(Y, Y_avg, tau_i=0, delay_max=10):
+def _delay_estimation(Y, Y_avg, tau_i=0, max_delay=10):
     _, n = Y.shape
-    if delay_max is not None:
+    if max_delay is not None:
         if tau_i > n // 2:
             tau_i -= n
         conv1 = np.array([np.convolve(
-            np.concatenate((y, y[:delay_max-tau_i])), y_avg[::-1], mode='valid')
+            np.concatenate((y, y[:max_delay-tau_i])), y_avg[::-1], mode='valid')
             for y, y_avg in zip(Y, Y_avg)])
         conv1_norm = np.sum(conv1, axis=0)
-        if tau_i != -delay_max:
+        if tau_i != -max_delay:
             conv2 = np.array([np.convolve(
-                np.concatenate((y[n-delay_max-tau_i:], y[:-1])), y_avg[::-1], mode='valid')
+                np.concatenate((y[n-max_delay-tau_i:], y[:-1])), y_avg[::-1], mode='valid')
                 for y, y_avg in zip(Y, Y_avg)])
             conv2_norm = np.sum(conv2, axis=0)
         else:
@@ -48,8 +48,8 @@ def _delay_estimation(Y, Y_avg, tau_i=0, delay_max=10):
             for y, y_avg in zip(Y, Y_avg)])
         conv_norm = np.sum(conv, axis=0)
     optimal_delay = np.argmax(conv_norm)
-    if delay_max is not None and optimal_delay > delay_max - tau_i:
-        optimal_delay += n - 2 * delay_max - 1
+    if max_delay is not None and optimal_delay > max_delay - tau_i:
+        optimal_delay += n - 2 * max_delay - 1
     return optimal_delay
 
 
@@ -69,15 +69,15 @@ def _loss_mvica(Y_list, noise=1, use_f=True):
     return loss
 
 
-def _delay_estimation_with_f(Y_list, index, tau_i=0, noise=1, use_f=True, delay_max=10):
+def _delay_estimation_with_f(Y_list, index, tau_i=0, noise=1, use_f=True, max_delay=10):
     _, _, n = Y_list.shape
     Y = Y_list[index].copy()
     Y_list_copy = Y_list.copy()
     loss = []
-    if delay_max is not None:
+    if max_delay is not None:
         if tau_i > n // 2:
             tau_i -= n
-        delays = np.concatenate((np.arange(delay_max-tau_i+1), np.arange(n-delay_max-tau_i, n)))
+        delays = np.concatenate((np.arange(max_delay-tau_i+1), np.arange(n-max_delay-tau_i, n)))
     else:
         delays = np.arange(n)
     for delay in delays:
@@ -85,8 +85,8 @@ def _delay_estimation_with_f(Y_list, index, tau_i=0, noise=1, use_f=True, delay_
         Y_list_copy[index] = Y_delayed
         loss.append(_loss_mvica(Y_list_copy, noise, use_f))
     optimal_delay = np.argmin(loss)
-    if delay_max is not None and optimal_delay > delay_max - tau_i:
-        optimal_delay += n - 2 * delay_max - 1
+    if max_delay is not None and optimal_delay > max_delay - tau_i:
+        optimal_delay += n - 2 * max_delay - 1
     return optimal_delay
 
 
@@ -106,7 +106,7 @@ def distance_between_delays(tau1, tau2, n):
 def _optimization_tau_approach1(
     S_list,
     n_iter,
-    delay_max=10,
+    max_delay=10,
     error_tau=False,
     true_tau_list=None,
     tau_list_init=None,
@@ -133,7 +133,7 @@ def _optimization_tau_approach1(
                 gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
             new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
             tau_list[i] += _delay_estimation(
-                Y_list[i], new_Y_avg, tau_i=tau_list_final[i], delay_max=delay_max)
+                Y_list[i], new_Y_avg, tau_i=tau_list_final[i], max_delay=max_delay)
             old_Y = Y_list[i].copy()
             Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
             Y_avg += (Y_list[i] - old_Y) / n_sub
@@ -150,7 +150,7 @@ def _optimization_tau_approach1(
 def _optimization_tau_approach2(
     S_list,
     n_iter,
-    delay_max=10,
+    max_delay=10,
     error_tau=False,
     true_tau_list=None,
     tau_list_init=None,
@@ -176,7 +176,7 @@ def _optimization_tau_approach2(
             if error_tau is True and true_tau_list is not None:
                 gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
             tau_list[i] += _delay_estimation(
-                Y_list[i], Y_avg, tau_i=tau_list_final[i], delay_max=delay_max)
+                Y_list[i], Y_avg, tau_i=tau_list_final[i], max_delay=max_delay)
             Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
         Y_avg = np.mean(Y_list, axis=0)
         tau_list %= n
@@ -192,7 +192,7 @@ def _optimization_tau_approach2(
 def _optimization_tau(
     S_list,
     n_iter,
-    delay_max=10,
+    max_delay=10,
     error_tau=False,
     true_tau_list=None,
     tau_list_init=None,
@@ -217,7 +217,7 @@ def _optimization_tau(
         if error_tau is True and true_tau_list is not None:
             gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
         tau_list[i] = _delay_estimation(
-            Y_list[i], Y_avg, tau_i=tau_list_final[i], delay_max=delay_max)
+            Y_list[i], Y_avg, tau_i=tau_list_final[i], max_delay=max_delay)
         Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])  # XXX
     Y_avg = np.mean(Y_list, axis=0)
     tau_list %= n
@@ -230,7 +230,7 @@ def _optimization_tau(
                 gap_tau.append(distance_between_delays(true_tau_list, tau_list, n))
             new_Y_avg = n_sub / (n_sub - 1) * (Y_avg - Y_list[i] / n_sub)
             tau_list[i] += _delay_estimation(
-                Y_list[i], new_Y_avg, tau_i=tau_list_final[i], delay_max=delay_max)
+                Y_list[i], new_Y_avg, tau_i=tau_list_final[i], max_delay=max_delay)
             old_Y = Y_list[i].copy()
             Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
             Y_avg += (Y_list[i] - old_Y) / n_sub
@@ -249,7 +249,7 @@ def _optimization_tau_with_f(
     n_iter,
     noise=1,
     use_f=True,
-    delay_max=10,
+    max_delay=10,
     tau_list_init=None,
     previous_tau_list=None
 ):
@@ -266,7 +266,7 @@ def _optimization_tau_with_f(
     for _ in range(n_iter):
         for i in range(n_sub):
             tau_list[i] += _delay_estimation_with_f(
-                Y_list, i, tau_i=tau_list_final[i], noise=noise, use_f=use_f, delay_max=delay_max)
+                Y_list, i, tau_i=tau_list_final[i], noise=noise, use_f=use_f, max_delay=max_delay)
             tau_list[i] %= n
             Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
         tau_list_final = tau_list_init + previous_tau_list + tau_list
@@ -286,24 +286,24 @@ def _apply_delay_by_source(S_list, delays_by_source):
     return Y_list
 
 
-def delay_optimization_by_source(Y, Y_avg, delay_max=20):
+def delay_optimization_by_source(Y, Y_avg, max_delay=20):
     _, n = Y.shape
     conv1 = np.array([np.convolve(
-        np.concatenate((y, y[:delay_max])), y_avg[::-1], mode='valid')
+        np.concatenate((y, y[:max_delay])), y_avg[::-1], mode='valid')
         for y, y_avg in zip(Y, Y_avg)])
     conv2 = np.array([np.convolve(
-            np.concatenate((y[n-delay_max:], y[:-1])), y_avg[::-1], mode='valid')
+            np.concatenate((y[n-max_delay:], y[:-1])), y_avg[::-1], mode='valid')
             for y, y_avg in zip(Y, Y_avg)])
     conv = np.concatenate((conv1, conv2), axis=1)
     optimal_delay = np.argmax(conv, axis=1)
-    optimal_delay[optimal_delay > delay_max] += n - 2 * delay_max - 1
+    optimal_delay[optimal_delay > max_delay] += n - 2 * max_delay - 1
     return optimal_delay
 
 
 def _optimization_tau_by_source(
     S_list,
     n_iter=3,
-    delay_max=20,
+    max_delay=20,
     previous_tau_list=None,
     use_loss_total=False,
     noise=1,
@@ -318,13 +318,13 @@ def _optimization_tau_by_source(
                 sources,
                 n_iter=n_iter,
                 noise=noise,
-                delay_max=delay_max,
+                max_delay=max_delay,
                 previous_tau_list=previous_tau_list[:, i])
         else:
             _, estimated_delays, _ = _optimization_tau_approach1(
                 sources,
                 n_iter=n_iter,
-                delay_max=delay_max,
+                max_delay=max_delay,
                 previous_tau_list=previous_tau_list[:, i])
         tau_list[:, i] = estimated_delays
     return tau_list

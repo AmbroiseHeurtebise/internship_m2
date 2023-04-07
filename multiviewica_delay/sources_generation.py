@@ -4,11 +4,11 @@ from sklearn.utils import check_random_state
 from multiviewica_delay import _apply_delay, _apply_delay_one_sub
 
 
-def _create_sources(n_sub, p, n, delay_max=None, noise_sources=0.05, random_state=None):
+def _create_sources(n_sub, p, n, max_delay=None, noise_sources=0.05, random_state=None):
     rng = check_random_state(random_state)
-    if delay_max is None:
-        delay_max = int(0.2 * n)
-    n_inner = n - delay_max
+    if max_delay is None:
+        max_delay = int(0.2 * n)
+    n_inner = n - max_delay
     window = np.hamming(n_inner)
     S = window * np.outer(np.ones(p),
                           np.sin(np.linspace(0, 4 * np.pi, n_inner)))
@@ -18,16 +18,16 @@ def _create_sources(n_sub, p, n, delay_max=None, noise_sources=0.05, random_stat
     S_list = np.array([S + n for n in noise_list])
     S_list = np.concatenate(
         (S_list, np.zeros((n_sub, p, n - n_inner))), axis=2)
-    tau_list = rng.randint(0, delay_max, size=n_sub)
+    tau_list = rng.randint(0, max_delay, size=n_sub)
     S_list = _apply_delay(S_list, tau_list)
     A_list = rng.randn(n_sub, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list
 
 
-def create_sources_pierre(m, p, n, delay_max, sigma=0.05, random_state=None):
+def create_sources_pierre(m, p, n, max_delay, sigma=0.05, random_state=None):
     rng = check_random_state(random_state)
-    delays = rng.randint(0, 1 + delay_max, m)
+    delays = rng.randint(0, 1 + max_delay, m)
     s1 = np.zeros(n)
     s1[:n//2] = np.sin(np.linspace(0, np.pi, n//2))
     s2 = rng.randn(n) / 10
