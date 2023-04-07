@@ -25,22 +25,6 @@ def _apply_delay_by_source(S_list, delays_by_source):
 
 
 # ------------- Loss function -------------
-# def _loss_function(Y_list, Y_avg):
-#     loss = np.mean((Y_list - Y_avg) ** 2)
-#     return loss
-
-
-# def _loss_delay(S_list, tau_list):
-#     Y_list = _apply_delay(S_list, -tau_list)
-#     Y_avg = np.mean(Y_list, axis=0)
-#     return _loss_function(Y_list, Y_avg)
-
-
-# def _loss_delay_ref(S_list, tau_list, Y_avg):
-#     Y_list = _apply_delay(S_list, -tau_list)
-#     return _loss_function(Y_list, Y_avg)
-
-
 def _logcosh(X):
     Y = np.abs(X)
     return Y + np.log1p(np.exp(-2 * Y))
