@@ -61,7 +61,7 @@ def test_loss_partial_decreasing(mode):
             )
             Y_list = _apply_delay_by_source(S_list, -tau_list)
         else:
-            _, tau_list, _ = _optimization_tau_approach1(
+            tau_list = _optimization_tau_approach1(
                 S_list,
                 n_iter=3,
                 max_delay=max_delay,
