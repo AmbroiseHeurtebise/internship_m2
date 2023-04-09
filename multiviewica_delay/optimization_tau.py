@@ -134,7 +134,6 @@ def _optimization_tau_approach1(
                 max_delay=max_delay,
             )
             old_Y = Y_list[i].copy()
-            # Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
             Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
             Y_avg += (Y_list[i] - old_Y) / n_sub
         tau_list %= n
@@ -168,7 +167,6 @@ def _optimization_tau_approach2(
                 tau_i=tau_list_final[i],
                 max_delay=max_delay,
             )
-            # Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
             Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
         Y_avg = np.mean(Y_list, axis=0)
         tau_list %= n
@@ -201,7 +199,6 @@ def _optimization_tau(
             tau_i=tau_list_final[i],
             max_delay=max_delay,
         )
-        # Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
         Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
     Y_avg = np.mean(Y_list, axis=0)
     tau_list %= n
@@ -217,7 +214,6 @@ def _optimization_tau(
                 max_delay=max_delay,
             )
             old_Y = Y_list[i].copy()
-            # Y_list[i] = _apply_delay([Y_list_freeze[i]], [-tau_list[i]])
             Y_list[i] = _apply_delay_one_sub(Y_list_freeze[i], -tau_list[i])
             Y_avg += (Y_list[i] - old_Y) / n_sub
         tau_list %= n

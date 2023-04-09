@@ -14,7 +14,7 @@ from multiviewica_delay import (
 def loss_partial(basis_list, Y_list, Y_avg, noise=1.0):
     n_views, p, _ = basis_list.shape
     loss = 0
-    for i, (W, Y) in enumerate(zip(basis_list, Y_list)):
+    for W, Y in zip(basis_list, Y_list):
         loss += 1 / (2 * noise) * np.mean((Y - Y_avg) ** 2) * p
     return loss
 
