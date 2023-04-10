@@ -19,6 +19,7 @@ def multiviewica(
     init="permica",
     random_state=None,
     tol=1e-3,
+    tol_init=None,
     verbose=False,
     return_loss=False,
     return_basis_list=False,
@@ -83,16 +84,18 @@ def multiviewica(
         X, n_components=n_components, dimension_reduction=dimension_reduction
     )
     # Initialization
+    if tol_init is None:
+        tol_init = tol
     if type(init) is str:
         if init not in ["permica", "groupica"]:
             raise ValueError("init should either be permica or groupica")
         if init == "permica":
             _, W, S, _ = permica(
-                X, max_iter=max_iter, random_state=random_state, tol=tol
+                X, max_iter=max_iter, random_state=random_state, tol=tol_init
             )
         else:
             _, W, S = groupica(
-                X, max_iter=max_iter, random_state=random_state, tol=tol
+                X, max_iter=max_iter, random_state=random_state, tol=tol_init
             )
     else:
         if type(init) is not np.ndarray:
