@@ -41,7 +41,7 @@ def multiviewica_delay(
     random_state=None,
     tol=1e-3,
     tol_init=None,
-    shared_delays=False,
+    shared_delays=True,
     verbose=False,
     return_loss=False,
     return_basis_list=False,
@@ -274,7 +274,7 @@ def _multiview_ica_main(
     optim_delays_with_f=False,  # XXX to be removed
     n_iter_f=2,  # XXX to be removed
     ortho=False,
-    shared_delays=False,
+    shared_delays=True,
     return_gradients=False,
     timing=False,
     return_loss=False,
