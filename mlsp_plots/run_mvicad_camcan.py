@@ -48,7 +48,10 @@ def do_extract_data(
             X_name = "X_visual_task_mag_477.npy"
     elif task == "auditory":
         if artificial_delays:
-            X_name = "X_auditory_task_mag_501_artificially_delayed.npy"
+            if shared_delays:
+                X_name = "X_auditory_task_mag_501_artificially_delayed.npy"
+            else:
+                X_name = "X_auditory_task_mag_501_artificially_delayed_multiple.npy"
         else:
             X_name = "X_auditory_task_mag_501.npy"
     else:
@@ -116,7 +119,7 @@ def do_extract_data(
 
 if __name__ == '__main__':
     # parameters
-    task = "visual"
+    task = "auditory"
     artificial_delays = True
     shared_delays = False
     n_comp = 10  # should be 10 if artificial dataset with source-specific delays
