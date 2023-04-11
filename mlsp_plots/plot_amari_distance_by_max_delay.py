@@ -31,7 +31,7 @@ def run_experiment(
     X_list, A_list, _, _, _ = generate_data(
         m=m, p=p, n=n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
         treshold=treshold, delay=max_delay, noise=noise,
-        random_state=random_state)
+        random_state=random_state, shared_delays=False)
     if algo == 'MVICA':
         _, W_list, _ = multiviewica(
             X_list,
@@ -41,6 +41,7 @@ def run_experiment(
         _, W_list, _, _, _ = multiviewica_delay(
             X_list,
             max_delay=max_delay,
+            optim_delays_permica=False,  # XXX just a test
             every_n_iter_delay=10,
             random_state=random_state,
             shared_delays=True,
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     algos = ['MVICA', 'MVICAD', 'MVICAD_mul_delays']
     delays = np.linspace(0, 20, 11, dtype=int)
     noise = 1
-    n_expe = 20
+    n_expe = 5
     N_JOBS = 8
 
     # Run ICA
@@ -102,5 +103,5 @@ if __name__ == '__main__':
     #         l.set_weight('bold')
     plt.grid()
     plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
-    plt.savefig("mlsp_figures/amari_by_delay_%s_seeds.jpeg" % n_expe,
+    plt.savefig("mlsp_figures/amari_by_delay_multiple_%s_seeds.jpeg" % n_expe,
                 bbox_extra_artists=[x_, y_], bbox_inches="tight")
