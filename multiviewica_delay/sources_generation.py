@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.utils import check_random_state
-from multiviewica_delay import _apply_delay, _apply_delay_one_sub
+from multiviewica_delay import (
+    _apply_delay,
+    _apply_delay_one_sub,
+    _apply_delay_by_source,
+)
 
 
 def _create_sources(n_sub, p, n, max_delay=None, noise_sources=0.05, random_state=None):
@@ -81,7 +85,18 @@ def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
     return S
 
 
-def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, treshold=1, delay=None, noise=0.05, random_state=None):
+def generate_data(
+    m,
+    p,
+    n,
+    nb_intervals=5,
+    nb_freqs=20,
+    treshold=1,
+    delay=None,
+    noise=0.05,
+    random_state=None,
+    shared_delays=True,
+):
     rng = check_random_state(random_state)
     if delay is None:
         delay = n // 5
@@ -89,8 +104,12 @@ def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, treshold=1, delay=None, 
     S = soft_treshold(S, treshold=treshold)
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
-    tau_list = rng.randint(0, delay + 1, size=m)
-    S_list = _apply_delay(S_list, tau_list)
+    if shared_delays:
+        tau_list = rng.randint(0, delay + 1, size=m)
+        S_list = _apply_delay(S_list, tau_list)
+    else:
+        tau_list = rng.randint(0, delay + 1, size=(m, p))
+        S_list = _apply_delay_by_source(S_list, tau_list)
     A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
