@@ -40,35 +40,36 @@ def do_extract_data(
     dataset_path = "/storage/store2/work/aheurteb/mvicad/data/"
     if task == "visual":
         if artificial_delays:
-            data = np.load(
-                dataset_path + "X_visual_task_mag_477_artificially_delayed.npy")
+            if shared_delays:
+                X_name = "X_visual_task_mag_477_artificially_delayed.npy"
+            else:
+                X_name = "X_visual_task_mag_477_artificially_delayed_multiple.npy"
         else:
-            data = np.load(dataset_path + "X_visual_task_mag_477.npy")
-        if subsample is not None:
-            subjects = rng.choice(len(data), subsample, replace=False)
-            data = data[subjects]
-
+            X_name = "X_visual_task_mag_477.npy"
     elif task == "auditory":
         if artificial_delays:
-            data = np.load(
-                dataset_path + "X_auditory_task_mag_501_artificially_delayed.npy")
+            X_name = "X_auditory_task_mag_501_artificially_delayed.npy"
         else:
-            data = np.load(dataset_path + "X_auditory_task_mag_501.npy")
-        if subsample is not None:
-            subjects = rng.choice(len(data), subsample, replace=False)
-            data = data[subjects]
-
+            X_name = "X_auditory_task_mag_501.npy"
     else:
         raise ValueError("Wrong task name")
 
+    data = np.load(dataset_path + X_name)
+    if subsample is not None:
+        subjects = rng.choice(len(data), subsample, replace=False)
+        data = data[subjects]
+
     # preprocessing : PCA
-    X = []
-    for d in tqdm(data):
-        _, D, v = np.linalg.svd(d, full_matrices=False)
-        y = v[:n_comp]
-        x = y * D[:n_comp, None]
-        X.append(x)
-    X = np.array(X)
+    if artificial_delays and not shared_delays:
+        X = data
+    else:
+        X = []
+        for d in tqdm(data):
+            _, D, v = np.linalg.svd(d, full_matrices=False)
+            y = v[:n_comp]
+            x = y * D[:n_comp, None]
+            X.append(x)
+        X = np.array(X)
     print(X.shape)
 
     # MVICAD
@@ -116,9 +117,9 @@ def do_extract_data(
 if __name__ == '__main__':
     # parameters
     task = "visual"
-    artificial_delays = False
+    artificial_delays = True
     shared_delays = False
-    n_comp = 10
+    n_comp = 10  # should be 10 if artificial dataset with source-specific delays
     max_delay = 40
     seed = 1
     subsample = None
