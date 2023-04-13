@@ -13,12 +13,12 @@ def test_mvicad_retrieves_delays():
     random_state = 42
     m = 2
     p = 3
-    n = 40
+    n = 50
     nb_intervals = 2
     nb_freqs = 5
     treshold = 0.5
     max_delay = 5
-    snr = 10  # Signal to noise ratio
+    snr = 5  # Signal to noise ratio
 
     # Generate data
     _, _, _, _, S = generate_data(
@@ -36,8 +36,10 @@ def test_mvicad_retrieves_delays():
 
     # Estimate delays with MVICAD
     _, _, _, tau_list, _ = multiviewica_delay(
-        X_list, optim_delays_permica=False, max_delay=max_delay,
-        every_n_iter_delay=10, n_iter_delay=2, random_state=random_state)
+        X_list,
+        max_delay=max_delay,
+        every_n_iter_delay=10,
+        random_state=random_state)
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)
