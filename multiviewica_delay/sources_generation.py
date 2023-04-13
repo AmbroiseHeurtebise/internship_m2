@@ -100,6 +100,7 @@ def generate_data(
     rng = check_random_state(random_state)
     if delay is None:
         delay = n // 5
+    A_list = rng.randn(m, p, p)
     S = generate_sources(p, n, nb_intervals, nb_freqs, random_state)
     S = soft_treshold(S, treshold=treshold)
     noise_list = noise * rng.randn(m, p, n)
@@ -110,7 +111,6 @@ def generate_data(
     else:
         tau_list = rng.randint(0, delay + 1, size=(m, p))
         S_list = _apply_delay_by_source(S_list, tau_list)
-    A_list = rng.randn(m, p, p)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
 
