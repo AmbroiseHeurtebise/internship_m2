@@ -7,10 +7,10 @@ from multiviewica_delay import multiviewica_delay, multiviewica
 
 
 def get_losses(
-    task="auditory",
+    task="visual",
     seed=0,
     n_comp=20,  # nb components PCA
-    delay_max=20,
+    max_delay=20,
     nb_subjects=None,
 ):
     rng = np.random.RandomState(seed)
@@ -49,9 +49,8 @@ def get_losses(
     # MVICAD multiple sources
     _, _, _, _, loss = multiviewica_delay(
         X_list,
-        optim_delays_permica=False,
-        delay_max=delay_max,
-        every_N_iter_delay=10,
+        max_delay=max_delay,
+        every_n_iter_delay=10,
         random_state=np.random.RandomState(seed),
         multiple_sources=True,
         return_loss=True,
@@ -64,9 +63,8 @@ def get_losses(
     # MVICAD multiple sources with f
     _, _, _, _, loss = multiviewica_delay(
         X_list,
-        optim_delays_permica=False,
-        delay_max=delay_max,
-        every_N_iter_delay=10,
+        max_delay=max_delay,
+        every_n_iter_delay=10,
         tol=1e-5,
         tol_init=1e-3,
         max_iter=max_iter,
@@ -82,9 +80,8 @@ def get_losses(
     # MVICAD one source
     _, _, _, _, loss = multiviewica_delay(
         X_list,
-        optim_delays_permica=False,
-        delay_max=delay_max,
-        every_N_iter_delay=10,
+        max_delay=max_delay,
+        every_n_iter_delay=10,
         tol=1e-5,
         tol_init=1e-3,
         max_iter=max_iter,
@@ -96,12 +93,11 @@ def get_losses(
     loss_mvicad, _ = loss
     loss_mvicad = np.array(loss_mvicad)
 
-    # MVICAD one source
+    # MVICAD one source with f
     _, _, _, _, loss = multiviewica_delay(
         X_list,
-        optim_delays_permica=False,
-        delay_max=delay_max,
-        every_N_iter_delay=10,
+        max_delay=max_delay,
+        every_n_iter_delay=10,
         tol=1e-5,
         tol_init=1e-3,
         max_iter=max_iter,
@@ -125,11 +121,13 @@ def get_losses(
         verbose=True
     )
 
-    output = {"mvica": loss_mvica,
-              "mvicad": loss_mvicad,
-              "mvicad with f": loss_mvicad_with_f,
-              "mvicad multiple sources": loss_mvicad_mul,
-              "mvicad multiple sources with f": loss_mvicad_mul_with_f}
+    output = {
+        "mvica": loss_mvica,
+        "mvicad": loss_mvicad,
+        "mvicad with f": loss_mvicad_with_f,
+        "mvicad multiple sources": loss_mvicad_mul,
+        "mvicad multiple sources with f": loss_mvicad_mul_with_f
+        }
     return output
 
 
@@ -137,14 +135,14 @@ if __name__ == '__main__':
     # parameters
     task = "visual"  # should be either "auditory" or "visual"
     seed = 1
-    delay_max = 20
+    max_delay = 20
     nb_subjects = 20
 
     # get losses
     losses = get_losses(
         task=task,
         seed=seed,
-        delay_max=delay_max,
+        max_delay=max_delay,
         nb_subjects=nb_subjects
     )
     losses = pd.DataFrame(losses)
