@@ -62,7 +62,7 @@ def run_experiment(
             X_list,
             random_state=random_state
         )
-    elif algo == 'MVICAD':
+    elif algo == 'MVICAD_one_delay':
         _, W_list, _, _, _ = multiviewica_delay(
             X_list,
             max_delay=max_delay,
@@ -71,7 +71,7 @@ def run_experiment(
             random_state=random_state,
             shared_delays=True,
         )
-    elif algo == 'MVICAD_mul_delays':
+    elif algo == 'MVICAD':
         _, W_list, _, _, _ = multiviewica_delay(
             X_list,
             max_delay=max_delay,
@@ -89,15 +89,14 @@ def run_experiment(
 
 if __name__ == '__main__':
     # Parameters
-    m = 20
-    p = 10
+    m = 5
+    p = 3
     n = 700
     nb_intervals = 5
     nb_freqs = 20
     treshold = 1
-    algos = ['MVICA', 'MVICAD', 'MVICAD_mul_delays']
+    algos = ['MVICA', 'MVICAD']  # MVICAD_one_delay
     delays = np.linspace(0, 40, 11, dtype=int)
-    # delays = np.linspace(0, 100, 11, dtype=int)
     n_expe = 100
     shared_delays = False
     generation_function = 'second'
@@ -123,7 +122,7 @@ if __name__ == '__main__':
     sns.set_style('ticks')
     fig = sns.lineplot(data=results, x="Delay",
                        y="Amari_distance", hue="Algo", linewidth=2.5)
-    fig.set(yscale='log')
+    # fig.set(yscale='log')
     x_ = plt.xlabel("Delay")
     y_ = plt.ylabel("Amari distance")
     leg = plt.legend(prop={'size': 15})
