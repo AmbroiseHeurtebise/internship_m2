@@ -8,7 +8,8 @@ from picard import amari_distance
 from multiviewica_delay import (
     multiviewica,
     multiviewica_delay,
-    generate_data
+    generate_data,
+    data_generation,
 )
 
 
@@ -26,12 +27,36 @@ def run_experiment(
     algo,
     max_delay,
     noise,
-    random_state
+    random_state,
+    shared_delays,
+    generation_function,
 ):
-    X_list, A_list, _, _, _ = generate_data(
-        m=m, p=p, n=n, nb_intervals=nb_intervals, nb_freqs=nb_freqs,
-        treshold=treshold, delay=max_delay, noise=noise,
-        random_state=random_state, shared_delays=False)
+    if generation_function == 'first':
+        X_list, A_list, _, _, _ = generate_data(
+            m=m,
+            p=p,
+            n=n,
+            nb_intervals=nb_intervals,
+            nb_freqs=nb_freqs,
+            treshold=treshold,
+            delay=max_delay,
+            noise=noise,
+            random_state=random_state,
+            shared_delays=shared_delays
+        )
+    elif generation_function == 'second':
+        X_list, A_list, _, _, _ = data_generation(
+            m,
+            p,
+            n,
+            max_delay=max_delay,
+            noise=noise,
+            shared_delays=shared_delays,
+            random_state=random_state,
+        )
+    else:
+        raise ValueError("Wrong generation function name")
+
     if algo == 'MVICA':
         _, W_list, _ = multiviewica(
             X_list,
@@ -64,23 +89,29 @@ def run_experiment(
 
 if __name__ == '__main__':
     # Parameters
-    m = 6
+    m = 20
     p = 10
-    n = 400
+    n = 700
     nb_intervals = 5
     nb_freqs = 20
     treshold = 1
     algos = ['MVICA', 'MVICAD', 'MVICAD_mul_delays']
-    delays = np.linspace(0, 20, 11, dtype=int)
-    noise = 1
-    n_expe = 5
+    delays = np.linspace(0, 40, 11, dtype=int)
+    # delays = np.linspace(0, 100, 11, dtype=int)
+    n_expe = 100
+    shared_delays = False
+    generation_function = 'second'
+    if generation_function == 'first':
+        noise = 1
+    elif generation_function == 'second':
+        noise = 5 * 1e-4
     N_JOBS = 8
 
     # Run ICA
     results = Parallel(n_jobs=N_JOBS)(
         delayed(run_experiment)(
             m, p, n, nb_intervals, nb_freqs, treshold, algo, max_delay, noise,
-            random_state)
+            random_state, shared_delays, generation_function)
         for algo, max_delay, random_state
         in product(algos, delays, range(n_expe))
     )
@@ -103,5 +134,15 @@ if __name__ == '__main__':
     #         l.set_weight('bold')
     plt.grid()
     plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
-    plt.savefig("mlsp_figures/amari_by_delay_multiple_%s_seeds.jpeg" % n_expe,
-                bbox_extra_artists=[x_, y_], bbox_inches="tight")
+    if shared_delays:
+        shared_name = ""
+    else:
+        shared_name = "multiple_"
+    if generation_function == 'first':
+        gen_name = ""
+    elif generation_function == 'second':
+        gen_name = "_new_gen"
+    save_name = "amari_by_delay_%s%s_seeds%s.jpeg" % (shared_name, n_expe, gen_name)
+    plt.savefig(
+        "mlsp_figures/" + save_name, bbox_extra_artists=[x_, y_],
+        bbox_inches="tight")
