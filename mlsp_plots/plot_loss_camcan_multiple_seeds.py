@@ -123,12 +123,12 @@ if __name__ == '__main__':
         divisor = -losses_mvica[i][0]
         if i == 0:
             plt.plot(losses_mvica[i] / divisor, label="MVICA", c=colors[0])
-            plt.plot(losses_mvicad[i] / divisor, label="MVICAD", c=colors[1])
+            plt.plot(losses_mvicad[i] / divisor, label="Our algorithm", c=colors[1])
         else:
             plt.plot(losses_mvica[i] / divisor, c=colors[0])
             plt.plot(losses_mvicad[i] / divisor, c=colors[1])
 
-    plt.title(f"{task} task \nLosses of MVICA and MVICAD for {nb_seeds} seeds")
+    plt.title(f"{task} task")
     x_ = plt.xlabel("Iterations")
     y_ = plt.ylabel("Loss")
     ax.grid(True)

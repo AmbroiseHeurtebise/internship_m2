@@ -95,7 +95,7 @@ if __name__ == '__main__':
     nb_intervals = 5
     nb_freqs = 20
     treshold = 1
-    algos = ['MVICA', 'MVICAD']  # MVICAD_one_delay
+    algos = ['MVICA', 'MVICAD']
     delays = np.linspace(0, 40, 11, dtype=int)
     n_expe = 100
     shared_delays = False
@@ -103,7 +103,10 @@ if __name__ == '__main__':
     if generation_function == 'first':
         noise = 1
     elif generation_function == 'second':
-        noise = 5 * 1e-4
+        if n == 700:
+            noise = 5 * 1e-4
+        else:
+            noise = 2 * 1e-4
     N_JOBS = 8
 
     # Run ICA
@@ -117,22 +120,23 @@ if __name__ == '__main__':
     results = pd.DataFrame(results).drop(columns='random_state')
 
     # Plot
-    sns.set(font_scale=1.8)
+    sns.set(font_scale=1.1)
     sns.set_style("white")
     sns.set_style('ticks')
     fig = sns.lineplot(data=results, x="Delay",
                        y="Amari_distance", hue="Algo", linewidth=2.5)
     # fig.set(yscale='log')
-    x_ = plt.xlabel("Delay")
+    x_ = plt.xlabel("Delay (ms)")
     y_ = plt.ylabel("Amari distance")
-    leg = plt.legend(prop={'size': 15})
+    leg = plt.legend(prop={'size': 10})
     for line in leg.get_lines():
         line.set_linewidth(2.5)
     # for i, l in enumerate(leg.get_texts()):
     #     if i == 1:
     #         l.set_weight('bold')
     plt.grid()
-    plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
+    # plt.title("Amari distance wrt delay", fontsize=18, fontweight="bold")
+    plt.title("Synthetic experiment")
     if shared_delays:
         shared_name = ""
     else:

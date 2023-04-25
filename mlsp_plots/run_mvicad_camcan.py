@@ -119,9 +119,9 @@ def do_extract_data(
 
 if __name__ == '__main__':
     # parameters
-    task = "auditory"
+    task = "visual"
     artificial_delays = True
-    shared_delays = False
+    shared_delays = True
     n_comp = 10  # should be 10 if artificial dataset with source-specific delays
     max_delay = 40
     seed = 1
