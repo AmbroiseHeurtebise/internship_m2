@@ -126,7 +126,7 @@ def sources_generation(p, n, random_state=None):
     means = rng.randint(n // 4, 3 * n // 4, size=p)
     variances = rng.randint(n // 25, n // 10, size=p)
     S = np.array(
-        [norm.pdf(np.arange(n), mean, var) 
+        [norm.pdf(np.arange(n), mean, var)
          for mean, var in zip(means, variances)])
     return S
 
