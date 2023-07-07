@@ -507,7 +507,7 @@ def _multiview_ica_main(
         return outputs
 
     if return_loss:
-        return basis_list, Y_avg, tau_list, [loss_total, loss_partial]
+        return basis_list, Y_avg, Y_list, tau_list, [loss_total, loss_partial]
     return basis_list, Y_avg, Y_list, tau_list, loss_total
 
 
