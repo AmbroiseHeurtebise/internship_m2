@@ -5,7 +5,7 @@ import seaborn as sns
 from itertools import product
 from joblib import Parallel, delayed, Memory
 from picard import amari_distance
-from independent_vector_analysis import iva_g
+# from independent_vector_analysis import iva_g
 from multiviewica_delay import (
     multiviewica,
     multiviewica_delay,
@@ -129,10 +129,10 @@ def run_experiment(
             X_list,
             random_state=random_state,
         )
-    elif algo == 'IVA':
-        X_list_reshaped = X_list.transpose(1, 2, 0)
-        W_list, cost, Sigma_n, isi = iva_g(X_list_reshaped, jdiag_initW=False)
-        W_list = W_list.transpose(2, 0, 1)
+    # elif algo == 'IVA':
+    #     X_list_reshaped = X_list.transpose(1, 2, 0)
+    #     W_list, cost, Sigma_n, isi = iva_g(X_list_reshaped, jdiag_initW=False)
+    #     W_list = W_list.transpose(2, 0, 1)
     else:
         raise ValueError("Wrong algo name")
     amari = np.sum([amari_distance(W, A) for W, A in zip(W_list, A_list)])
