@@ -131,6 +131,26 @@ def sources_generation(p, n, random_state=None):
     return S
 
 
+def sources_generation_zero_mean(p, n, random_state=None):
+    rng = check_random_state(random_state)
+    # means = rng.randint(n // 4, 3 * n // 4, size=p)
+    means = np.cumsum(rng.poisson(lam=n/(2*p), size=p)) + n // 6
+    rng.shuffle(means)
+    variances = rng.randint(n // 25, n // 8, size=p)
+    heights = rng.randint(80, 120, size=p) / 100
+
+    def f(x, mean, var):
+        t = (x - mean) / var
+        t[t > 0] /= 2
+        s = -t/2 * np.exp(-t ** 2)
+        s[s < 0] /= 2
+        return s
+    S = np.array(
+        [height * f(np.arange(n), mean, var)
+         for height, mean, var in zip(heights, means, variances)])
+    return S
+
+
 def delays_generation(m, max_delay, random_state=None):
     rng = check_random_state(random_state)
     delays = (1/2 * max_delay * rng.randn(m)).astype('int')
@@ -150,10 +170,13 @@ def data_generation(
     noise=5*1e-4,
     shared_delays=True,
     random_state=None,
+    n_concat=1,
 ):
     rng = check_random_state(random_state)
-    S = sources_generation(p, n, rng)
-    noise_list = noise * rng.randn(m, p, n)
+    # S = sources_generation(p, n, rng)
+    S = sources_generation_zero_mean(p, n, rng)
+    S = np.hstack([S] * n_concat)
+    noise_list = noise * rng.randn(m, p, n * n_concat)
     S_list = np.array([S + N for N in noise_list])
     A_list = rng.randn(m, p, p)
     if shared_delays:
@@ -166,6 +189,82 @@ def data_generation(
             [delays_generation(m, max_delay, rng) for _ in range(p)]).T
         S_list = _apply_delay_by_source(S_list, tau_list)
     tau_list %= n
+    X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
+    return X_list, A_list, tau_list, S_list, S
+
+
+# ------------- New data generation functions by Pierre -------------
+def data_generation_pierre(
+    n_subjects,
+    n_sources,
+    n_bins,
+    n_samples_per_interval,
+    freq_level=50,
+    max_delay=0,
+    noise=0.2,
+    shared_delays=False,
+    random_state=None,
+):
+    rng = check_random_state(random_state)
+
+    # frequences, amplitudes and shifts
+    freq_list_all = rng.rand(n_sources, n_bins) * freq_level
+    ampl_list_all = rng.randn(n_sources, n_bins) * 4
+    shifts = rng.rand(n_sources)
+
+    # function written by Pierre
+    def generate_sources(
+        freq_list_all,
+        ampl_list_all,
+        n_samples_per_interval,
+        shifts,
+    ):
+        def generate_source(
+            freq_list,
+            ampl_list,
+            n_samples_per_interval,
+            shift,
+        ):
+            n_bins = len(freq_list)
+            s = np.zeros(n_bins * n_samples_per_interval)
+            for j, (freq, ampl) in enumerate(zip(freq_list, ampl_list)):
+                t = np.linspace(0, 1, n_samples_per_interval)
+                sine = ampl * np.sin(t * freq)
+                sine *= np.exp(- .1 / (t + 1e-7) ** 2)
+                sine *= np.exp(- .1 / (1 - t - 1e-7) ** 2)
+                s[j * n_samples_per_interval:(j+1) * n_samples_per_interval] = sine
+            n_shift = int(shift * n_bins * n_samples_per_interval)
+            s = np.roll(s, n_shift)
+            window = True
+            if window:
+                s *= np.hamming(n_bins * n_samples_per_interval)
+                # ts = np.linspace(0, 1, n_bins * n_samples_per_interval)
+                # s *= np.exp(- .1 / (ts + 1e-7) ** 2)
+                # s *= np.exp(- .1 / (1 - ts - 1e-7) ** 2)
+            return s
+        S = [
+            generate_source(freq_list, ampl_list, n_samples_per_interval, shift)
+            for freq_list, ampl_list, shift
+            in zip(freq_list_all, ampl_list_all, shifts)]
+        S = np.array(S)
+        return S
+    S = generate_sources(
+        freq_list_all, ampl_list_all, n_samples_per_interval, shifts)
+
+    # other data
+    noise_list = noise * rng.randn(
+        n_subjects, n_sources, n_bins * n_samples_per_interval)
+    S_list = np.array([S + N for N in noise_list])
+    A_list = rng.randn(n_subjects, n_sources, n_sources)
+    if shared_delays:
+        tau_list = delays_generation(n_subjects, max_delay, rng)
+        S_list = _apply_delay(S_list, tau_list)
+    else:
+        tau_list = np.array(
+            [delays_generation(n_subjects, max_delay, rng)
+             for _ in range(n_sources)]).T
+        S_list = _apply_delay_by_source(S_list, tau_list)
+    tau_list %= n_bins * n_samples_per_interval
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
 
