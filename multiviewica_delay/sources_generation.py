@@ -1,9 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 from sklearn.utils import check_random_state
-from multiviewica_delay import _apply_delay, _apply_delay_one_sub
+from multiviewica_delay import (
+    _apply_delay,
+    _apply_delay_one_sub,
+    _apply_delay_by_source,
+)
 
 
+# ------------- Old data generation functions -------------
 def _create_sources(n_sub, p, n, max_delay=None, noise_sources=0.05, random_state=None):
     rng = check_random_state(random_state)
     if max_delay is None:
@@ -57,6 +63,7 @@ def create_model(m, p, n, delay=None, noise=0.05, random_state=None):
     return X_list, A_list, tau_list, S_list, S
 
 
+# ------------- Actual data generation functions -------------
 def soft_treshold(S, treshold=1):
     return np.sign(S) * np.maximum(0, np.abs(S) - treshold)
 
@@ -81,21 +88,89 @@ def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
     return S
 
 
-def generate_data(m, p, n, nb_intervals=5, nb_freqs=20, treshold=1, delay=None, noise=0.05, random_state=None):
+def generate_data(
+    m,
+    p,
+    n,
+    nb_intervals=5,
+    nb_freqs=20,
+    treshold=1,
+    delay=None,
+    noise=0.05,
+    random_state=None,
+    shared_delays=True,
+):
     rng = check_random_state(random_state)
     if delay is None:
         delay = n // 5
+    A_list = rng.randn(m, p, p)
     S = generate_sources(p, n, nb_intervals, nb_freqs, random_state)
     S = soft_treshold(S, treshold=treshold)
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
-    tau_list = rng.randint(0, delay + 1, size=m)
-    S_list = _apply_delay(S_list, tau_list)
-    A_list = rng.randn(m, p, p)
+    if shared_delays:
+        tau_list = rng.randint(0, delay + 1, size=m)
+        # XXX should sample between -max_delay and max_delay, not between 0 and max_delay
+        S_list = _apply_delay(S_list, tau_list)
+    else:
+        tau_list = rng.randint(0, delay + 1, size=(m, p))
+        # XXX should sample between -max_delay and max_delay, not between 0 and max_delay
+        S_list = _apply_delay_by_source(S_list, tau_list)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
 
 
+# ------------- New data generation functions -------------
+def sources_generation(p, n, random_state=None):
+    rng = check_random_state(random_state)
+    means = rng.randint(n // 4, 3 * n // 4, size=p)
+    variances = rng.randint(n // 25, n // 10, size=p)
+    S = np.array(
+        [norm.pdf(np.arange(n), mean, var)
+         for mean, var in zip(means, variances)])
+    return S
+
+
+def delays_generation(m, max_delay, random_state=None):
+    rng = check_random_state(random_state)
+    delays = (1/2 * max_delay * rng.randn(m)).astype('int')
+    nb_outliers = np.sum(np.abs(delays) > max_delay)
+    while(nb_outliers > 0):
+        delays[np.abs(delays) > max_delay] = (
+            1/2 * max_delay * rng.randn(nb_outliers)).astype('int')
+        nb_outliers = np.sum(np.abs(delays) > max_delay)
+    return delays
+
+
+def data_generation(
+    m,
+    p,
+    n,
+    max_delay=0,
+    noise=5*1e-4,
+    shared_delays=True,
+    random_state=None,
+):
+    rng = check_random_state(random_state)
+    S = sources_generation(p, n, rng)
+    noise_list = noise * rng.randn(m, p, n)
+    S_list = np.array([S + N for N in noise_list])
+    A_list = rng.randn(m, p, p)
+    if shared_delays:
+        # tau_list = rng.randint(-max_delay, max_delay + 1, size=m)
+        tau_list = delays_generation(m, max_delay, rng)
+        S_list = _apply_delay(S_list, tau_list)
+    else:
+        # tau_list = rng.randint(-max_delay, max_delay + 1, size=(m, p))
+        tau_list = np.array(
+            [delays_generation(m, max_delay, rng) for _ in range(p)]).T
+        S_list = _apply_delay_by_source(S_list, tau_list)
+    tau_list %= n
+    X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
+    return X_list, A_list, tau_list, S_list, S
+
+
+# ------------- Functions that plot sources -------------
 def plot_sources(S, nb_intervals=None):
     p, n = S.shape
     height = 20

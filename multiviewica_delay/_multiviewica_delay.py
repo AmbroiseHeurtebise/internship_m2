@@ -41,7 +41,7 @@ def multiviewica_delay(
     random_state=None,
     tol=1e-3,
     tol_init=None,
-    shared_delays=False,
+    shared_delays=True,
     verbose=False,
     return_loss=False,
     return_basis_list=False,
@@ -151,7 +151,7 @@ def multiviewica_delay(
     P, X = reduce_data(
         X, n_components=n_components, dimension_reduction=dimension_reduction
     )
-    if optim_delays_permica and shared_delays:
+    if optim_delays_permica and not shared_delays:
         raise ValueError(
             "Cannot optimize source-specific delays during initialization")
     # Initialization
@@ -191,7 +191,7 @@ def multiviewica_delay(
         W = init
     X_rescaled = _apply_delay(X, -tau_list_init)
 
-    if shared_delays:
+    if not shared_delays:
         tau_list_init = np.zeros((n_views, p), dtype=int)
 
     if return_delays_every_iter:  # XXX needs to be removed
@@ -274,7 +274,7 @@ def _multiview_ica_main(
     optim_delays_with_f=False,  # XXX to be removed
     n_iter_f=2,  # XXX to be removed
     ortho=False,
-    shared_delays=False,
+    shared_delays=True,
     return_gradients=False,
     timing=False,
     return_loss=False,
@@ -352,14 +352,14 @@ def _multiview_ica_main(
     if return_loss:
         loss_total.append(_loss_total(basis_list, X_list, Y_avg, noise))
         loss_partial.append(np.mean((Y_list - np.mean(Y_list, axis=0)) ** 2))  # XXX
-    if shared_delays:
+    if not shared_delays:
         tau_list = np.zeros((n_views, p), dtype=int)
     else:
         tau_list = np.zeros(n_views, dtype=int)
     for i in range(n_iter):
         if optim_delays_ica and i < early_stopping_delay and i % every_n_iter_delay == 0:
             # Delay estimation
-            if shared_delays:
+            if not shared_delays:
                 tau_list = _optimization_tau_by_source(
                     S_list,
                     n_iter=n_iter_delay,
@@ -417,7 +417,7 @@ def _multiview_ica_main(
             W_old = basis_list[j].copy()
             # Y_denoise is the estimate of the sources without Y_j
             Y_denoise = Y_avg - Y_list[j] / n_views
-            if shared_delays:
+            if not shared_delays:
                 Y_denoise = _apply_delay_one_source_or_sub(Y_denoise, tau_list[j])
             else:
                 Y_denoise = _apply_delay_one_sub(Y_denoise, tau_list[j])
@@ -427,7 +427,7 @@ def _multiview_ica_main(
             )
             # Update the average vector (estimate of the sources)
             S_list[j] = np.dot(basis_list[j], X_list[j])
-            if shared_delays:
+            if not shared_delays:
                 Y_list[j] = _apply_delay_one_source_or_sub(S_list[j], -tau_list[j])
             else:
                 Y_list[j] = _apply_delay_one_sub(S_list[j], -tau_list[j])
