@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pandas as pd
 from scipy.linalg import expm
 from time import time
 import warnings
@@ -45,7 +46,7 @@ def multiviewica_delay(
     verbose=False,
     return_loss=False,
     return_basis_list=False,
-    return_delays_every_iter=False,  # XXX to be removed
+    return_every_iter=False,  # XXX to be removed
     return_unmixing_delays_both_phases=False,  # XXX to be removed
 ):
     """
@@ -194,8 +195,9 @@ def multiviewica_delay(
     if not shared_delays:
         tau_list_init = np.zeros((n_views, p), dtype=int)
 
-    if return_delays_every_iter:  # XXX needs to be removed
-        tau_list_main = _multiview_ica_main(
+    if return_every_iter:  # XXX needs to be removed
+        output_init = {"Iteration": "Initialization", "Delays": tau_list_init, "W": W, "S": S}
+        outputs = _multiview_ica_main(
             X_rescaled,
             noise=noise,
             n_iter=max_iter,
@@ -214,14 +216,16 @@ def multiviewica_delay(
             verbose=verbose,
             return_loss=return_loss,
             return_basis_list=return_basis_list,
-            return_delays_every_iter=return_delays_every_iter,
+            return_every_iter=return_every_iter,
         )
-        return tau_list_init, tau_list_main
+        outputs_final = [output_init] + outputs
+        outputs_final = pd.DataFrame(outputs_final)
+        return outputs_final
 
     W_init = W.copy()  # XXX to be removed
 
     # Performs multiview ica
-    W, S, tau_list_main, loss_total = _multiview_ica_main(
+    W, S, S_list, tau_list_main, loss_total = _multiview_ica_main(
         X_rescaled,
         noise=noise,
         n_iter=max_iter,
@@ -249,7 +253,7 @@ def multiviewica_delay(
     tau_list %= n
     if return_loss or return_basis_list:
         return P, W, S, tau_list, loss_total
-    return P, W, S, tau_list, tau_list_init  # XXX
+    return P, W, S, S_list, tau_list, tau_list_init  # XXX
 
 
 def _logcosh(X):
@@ -279,7 +283,7 @@ def _multiview_ica_main(
     timing=False,
     return_loss=False,
     return_basis_list=False,
-    return_delays_every_iter=False,  # XXX to be removed
+    return_every_iter=False,  # XXX to be removed
 ):
     n_views, p, n = X_list.shape
     tol_init = None
@@ -338,6 +342,10 @@ def _multiview_ica_main(
             )
         if g_norms < tol_init:
             break
+        if return_every_iter:
+            outputs = []
+            output = {"Iteration": "Scaling", "W": basis_list.copy(), "S": Y_avg.copy()}
+            outputs.append(output)
     # Start outer loop
     if timing:
         t0 = time()
@@ -421,10 +429,19 @@ def _multiview_ica_main(
                 Y_denoise = _apply_delay_one_source_or_sub(Y_denoise, tau_list[j])
             else:
                 Y_denoise = _apply_delay_one_sub(Y_denoise, tau_list[j])
-            # Perform one ICA quasi-Newton step
-            converged, basis_list[j], g_norm = _noisy_ica_step(
-                W_old, X_list[j], Y_denoise, noise, n_views, ortho,
-            )
+            test_alex = False  # XXX
+            if test_alex:
+                Y_denoise_crop = Y_denoise[:, int(2*max_delay): int(n-2*max_delay)]
+                X_crop = X_list[j][:, int(2*max_delay): int(n-2*max_delay)]
+                # Perform one ICA quasi-Newton step
+                converged, basis_list[j], g_norm = _noisy_ica_step(
+                    W_old, X_crop, Y_denoise_crop, noise, n_views, ortho,
+                )
+            else:
+                # Perform one ICA quasi-Newton step
+                converged, basis_list[j], g_norm = _noisy_ica_step(
+                    W_old, X_list[j], Y_denoise, noise, n_views, ortho,
+                )
             # Update the average vector (estimate of the sources)
             S_list[j] = np.dot(basis_list[j], X_list[j])
             if not shared_delays:
@@ -441,6 +458,12 @@ def _multiview_ica_main(
             loss_total.append(_loss_total_by_source(basis_list, Y_list, Y_avg, noise))
             y_avg = np.mean(Y_list, axis=0)
             loss_partial.append(np.mean((Y_list - y_avg) ** 2))
+
+        if return_every_iter:
+            output = {
+                "Iteration": i, "Delays": tau_list.copy(), "W": basis_list.copy(), 
+                "S": Y_avg.copy(), "S_list": Y_list.copy()}
+            outputs.append(output)
 
         g_list.append(g_norms)
         if timing:
@@ -479,12 +502,13 @@ def _multiview_ica_main(
     if return_basis_list:
         return basis_list, Y_avg, tau_list, W_total
 
-    if return_delays_every_iter:
-        return np.asarray(tau_list_every_iter)
+    if return_every_iter:
+        # return np.asarray(tau_list_every_iter)
+        return outputs
 
     if return_loss:
         return basis_list, Y_avg, tau_list, [loss_total, loss_partial]
-    return basis_list, Y_avg, tau_list, loss_total
+    return basis_list, Y_avg, Y_list, tau_list, loss_total
 
 
 def _loss_total(basis_list, X_list, Y_avg, noise):
