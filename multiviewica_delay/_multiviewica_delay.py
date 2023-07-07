@@ -48,6 +48,7 @@ def multiviewica_delay(
     return_basis_list=False,
     return_every_iter=False,  # XXX to be removed
     return_unmixing_delays_both_phases=False,  # XXX to be removed
+    test_alex=False,  # XXX to be removed
 ):
     """
     Performs MultiViewICA.
@@ -217,6 +218,7 @@ def multiviewica_delay(
             return_loss=return_loss,
             return_basis_list=return_basis_list,
             return_every_iter=return_every_iter,
+            test_alex=test_alex,  # XXX to be removed
         )
         outputs_final = [output_init] + outputs
         outputs_final = pd.DataFrame(outputs_final)
@@ -244,6 +246,7 @@ def multiviewica_delay(
         verbose=verbose,
         return_loss=return_loss,
         return_basis_list=return_basis_list,
+        test_alex=test_alex,  # XXX to be removed
     )
 
     if return_unmixing_delays_both_phases:  # XXX to be removed
@@ -284,6 +287,7 @@ def _multiview_ica_main(
     return_loss=False,
     return_basis_list=False,
     return_every_iter=False,  # XXX to be removed
+    test_alex=False,  # XXX to be removed
 ):
     n_views, p, n = X_list.shape
     tol_init = None
@@ -429,7 +433,6 @@ def _multiview_ica_main(
                 Y_denoise = _apply_delay_one_source_or_sub(Y_denoise, tau_list[j])
             else:
                 Y_denoise = _apply_delay_one_sub(Y_denoise, tau_list[j])
-            test_alex = False  # XXX
             if test_alex:
                 Y_denoise_crop = Y_denoise[:, int(2*max_delay): int(n-2*max_delay)]
                 X_crop = X_list[j][:, int(2*max_delay): int(n-2*max_delay)]
