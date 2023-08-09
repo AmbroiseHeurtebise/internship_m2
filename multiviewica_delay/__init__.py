@@ -17,6 +17,8 @@ from .optimization_tau import (
     _apply_delay_by_source,
     _apply_delay_one_source_or_sub,
     _optimization_tau_by_source,
+    _optimization_tau_continuous_delays,
+    _apply_continuous_delays,
 )
 from .sources_generation import (
     _create_sources,

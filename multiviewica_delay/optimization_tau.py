@@ -1,4 +1,7 @@
 import numpy as np
+import jax.numpy as jnp
+from jax import grad, jit
+from scipy.optimize import minimize, Bounds
 
 
 # ------------- Functions that apply delay to signals -------------
@@ -21,6 +24,42 @@ def _apply_delay_by_source(S_list, delays_by_source):
         _apply_delay_one_source_or_sub(
             S_list[i], delays_by_source[i].astype('int'))
         for i in range(len(S_list))])
+    return Y_list
+
+
+def _apply_continuous_delays(
+    S_list,
+    tau_list,
+    shared_delays=False,
+    multiple_subjects=True,
+):
+    if multiple_subjects:
+        m, p, n = S_list.shape
+        Y_list = np.zeros((m, p, n))
+        for i in range(m):
+            for j in range(p):
+                fy = np.fft.fft(S_list[i, j])
+                freqs = np.fft.fftfreq(fy.size)
+                if shared_delays:
+                    delay = tau_list[i]
+                else:
+                    delay = tau_list[i, j]
+                fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
+                y = np.fft.ifft(fy)
+                Y_list[i, j] = y.copy()
+    else:
+        p, n = S_list.shape
+        Y_list = np.zeros((p, n))
+        for i in range(p):
+            fy = np.fft.fft(S_list[i])
+            freqs = np.fft.fftfreq(fy.size)
+            if shared_delays:
+                delay = tau_list
+            else:
+                delay = tau_list[i]
+            fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
+            y = np.fft.ifft(fy)
+            Y_list[i] = y.copy()
     return Y_list
 
 
@@ -104,6 +143,15 @@ def _delay_estimation_with_f(Y_list, index, tau_i=0, noise=1, use_f=True, max_de
     if max_delay is not None and optimal_delay > max_delay - tau_i:
         optimal_delay += n - 2 * max_delay - 1
     return optimal_delay
+
+
+def cost_jax(delay, x, y):
+    np = jnp  # hack
+    fy = np.fft.fft(y)
+    freqs = np.fft.fftfreq(y.size)
+    cost = np.linalg.norm(
+        x - np.fft.ifft(fy * np.exp(2 * np.pi * 1j * delay * freqs))) ** 2
+    return cost
 
 
 # ------------- _optimization_tau methods -------------
@@ -288,4 +336,41 @@ def _optimization_tau_by_source(
             # # print(np.mean(estimated_delays_copy).astype('int'))
             # estimated_delays -= np.mean(estimated_delays_copy).astype('int')
         tau_list[:, i] = estimated_delays
+    return tau_list
+
+
+def _optimization_tau_continuous_delays(
+    S_list,
+    previous_tau_list,
+    max_delay,
+    shared_delays=False,
+    tol=None,  # corresponds to tol=1e-5
+    max_iter_delay=100,  # maybe too large
+):
+    m, p, _ = S_list.shape
+    bounds = Bounds(lb=-max_delay, ub=max_delay)
+    S1 = S_list[0].copy()
+    tau_list = previous_tau_list.copy()
+    if shared_delays:
+        S1 = S1.ravel()
+    for i in range(1, m):
+        S2 = S_list[i].copy()
+        if shared_delays:
+            S2 = S2.ravel()
+            grad_cost = grad(lambda delay: cost_jax(delay, S1, S2))
+            grad_cost = jit(grad_cost)
+            tau_list[i] = minimize(
+                lambda delay: cost_jax(delay, S1, S2), x0=[tau_list[i]], 
+                jac=lambda d: float(grad_cost(d)), method='L-BFGS-B', 
+                bounds=bounds, tol=tol, options={"maxiter": max_iter_delay}).x
+        else:
+            for j in range(p):
+                s1 = S1[j]
+                s2 = S2[j]        
+                grad_cost = grad(lambda delay: cost_jax(delay, s1, s2))
+                grad_cost = jit(grad_cost)
+                tau_list[i, j] = minimize(
+                    lambda delay: cost_jax(delay, s1, s2), x0=[tau_list[i, j]], 
+                    jac=lambda d: float(grad_cost(d)), method='L-BFGS-B', 
+                    bounds=bounds, tol=tol, options={"maxiter": max_iter_delay}).x
     return tau_list
