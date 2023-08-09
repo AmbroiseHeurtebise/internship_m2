@@ -9,7 +9,7 @@ def normalize_delays(tau_list, n):
     return tau_list
 
 
-def test_mvicad_retrieves_delays():
+def test_every_n_iter_delay():
     random_state = 42
     m = 2
     p = 3
@@ -38,8 +38,10 @@ def test_mvicad_retrieves_delays():
     _, _, _, _, tau_list, _ = multiviewica_delay(
         X_list,
         max_delay=max_delay,
-        every_n_iter_delay=10,
-        random_state=random_state)
+        optim_delays_every_n_iter=10,
+        random_state=random_state,
+        shared_delays=True,
+    )
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)
