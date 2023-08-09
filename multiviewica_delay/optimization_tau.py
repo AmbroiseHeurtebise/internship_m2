@@ -265,7 +265,7 @@ def _optimization_tau_by_source(
     use_loss_total=False,
     noise=1,
 ):
-    _, p, _ = S_list.shape
+    _, p, n = S_list.shape
     tau_list = previous_tau_list.copy()
     for i in range(p):
         sources = S_list[:, i]
@@ -283,5 +283,9 @@ def _optimization_tau_by_source(
                 n_iter=n_iter,
                 max_delay=max_delay,
                 previous_tau_list=previous_tau_list[:, i])
+            # estimated_delays_copy = estimated_delays.copy()
+            # estimated_delays_copy[estimated_delays_copy > n // 2] -= n
+            # # print(np.mean(estimated_delays_copy).astype('int'))
+            # estimated_delays -= np.mean(estimated_delays_copy).astype('int')
         tau_list[:, i] = estimated_delays
     return tau_list

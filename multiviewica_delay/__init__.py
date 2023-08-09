@@ -24,6 +24,7 @@ from .sources_generation import (
     create_model,
     generate_data,
     data_generation,
+    data_generation_pierre,
     plot_sources,
     _plot_delayed_sources,
 )
