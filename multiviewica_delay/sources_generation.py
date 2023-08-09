@@ -6,6 +6,7 @@ from multiviewica_delay import (
     _apply_delay,
     _apply_delay_one_sub,
     _apply_delay_by_source,
+    _apply_delay_one_source_or_sub,
 )
 
 
@@ -85,6 +86,8 @@ def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
     freqs = rng.randn(p, nb_intervals, nb_freqs)
     power = rng.exponential(size=(p, nb_intervals))
     S = np.array([generate_one_source(interval_length, freqs[i], power[i]) for i in range(p)])
+    shifts = (rng.rand(p) * n).astype("int")
+    S = _apply_delay_one_source_or_sub(S, shifts)
     return S
 
 
