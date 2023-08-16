@@ -10,7 +10,7 @@ def normalize_delays(tau_list, n):
 
 
 def test_every_n_iter_delay():
-    random_state = 42
+    random_state = 4
     m = 2
     p = 3
     n = 50
