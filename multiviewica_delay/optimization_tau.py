@@ -1,5 +1,4 @@
 import numpy as np
-import jax
 import jax.numpy as jnp
 from jax import grad, jit
 from scipy.optimize import minimize, Bounds

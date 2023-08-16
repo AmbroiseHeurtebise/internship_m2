@@ -9,3 +9,4 @@ fastsrm
 matplotlib
 seaborn
 jax
+jaxlib
