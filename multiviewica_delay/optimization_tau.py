@@ -1,4 +1,5 @@
 import numpy as np
+import jax
 import jax.numpy as jnp
 from jax import grad, jit
 from scipy.optimize import minimize, Bounds
@@ -46,6 +47,8 @@ def _apply_continuous_delays(
                     delay = tau_list[i, j]
                 fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
                 y = np.fft.ifft(fy)
+                # should we use the real part (by default) or the norm of y?
+                # maybe use np.abs(y)
                 Y_list[i, j] = y.copy()
     else:
         p, n = S_list.shape
