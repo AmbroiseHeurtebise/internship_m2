@@ -35,13 +35,16 @@ def test_every_n_iter_delay():
         random_state=random_state)
 
     # Estimate delays with MVICAD
-    _, _, _, _, tau_list, _ = multiviewica_delay(
+    results_dict = multiviewica_delay(
         X_list,
         max_delay=max_delay,
         optim_delays_every_n_iter=10,
         random_state=random_state,
         shared_delays=True,
+        return_every_iter=True,
     )
+    print(results_dict["Delays"])
+    tau_list = results_dict.iloc[-1]["Delays"]
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)
