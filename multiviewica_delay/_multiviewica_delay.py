@@ -53,6 +53,7 @@ def multiviewica_delay(
     return_unmixing_delays_both_phases=False,  # XXX to be removed
     test_alex=False,  # XXX to be removed
     continuous_delays=False,
+    discrete_init_optim_delays=False,
 ):
     """
     Performs MultiViewICA.
@@ -226,6 +227,7 @@ def multiviewica_delay(
             return_every_iter=return_every_iter,
             test_alex=test_alex,  # XXX to be removed
             continuous_delays=continuous_delays,
+            discrete_init_optim_delays=discrete_init_optim_delays,
         )
         outputs_final = [output_init] + outputs
         outputs_final = pd.DataFrame(outputs_final)
@@ -256,6 +258,7 @@ def multiviewica_delay(
         return_basis_list=return_basis_list,
         test_alex=test_alex,  # XXX to be removed
         continuous_delays=continuous_delays,
+        discrete_init_optim_delays=discrete_init_optim_delays,
     )
 
     if return_unmixing_delays_both_phases:  # XXX to be removed
@@ -299,6 +302,7 @@ def _multiview_ica_main(
     return_every_iter=False,  # XXX to be removed
     test_alex=False,  # XXX to be removed
     continuous_delays=False,
+    discrete_init_optim_delays=False,
 ):
     n_views, p, n = X_list.shape
     tol_init = None
@@ -381,6 +385,56 @@ def _multiview_ica_main(
         tau_list = np.zeros(n_views)
     if not continuous_delays:
         tau_list = tau_list.astype("int")
+    if discrete_init_optim_delays and continuous_delays:
+        tau_list = tau_list.astype("int")
+        if not shared_delays:
+            tau_list = _optimization_tau_by_source(
+                S_list,
+                n_iter=n_iter_delay,
+                max_delay=max_delay,
+                use_loss_total=optim_delays_with_f,
+                previous_tau_list=tau_list,
+            )
+        else:
+            if optim_delays_with_f:
+                tau_list = _optimization_tau_with_f(
+                    S_list,
+                    n_iter=n_iter_f,
+                    noise=noise,
+                    max_delay=max_delay,
+                    tau_list_init=tau_list_init,
+                    previous_tau_list=tau_list,
+                )
+            else:
+                if optim_approach is None:
+                    tau_list = _optimization_tau(
+                        S_list,
+                        n_iter_delay,
+                        max_delay=max_delay,
+                        tau_list_init=tau_list_init,
+                        previous_tau_list=tau_list,
+                    )
+                elif optim_approach == 1:
+                    tau_list = _optimization_tau_approach1(
+                        S_list,
+                        n_iter_delay,
+                        max_delay=max_delay,
+                        tau_list_init=tau_list_init,
+                        previous_tau_list=tau_list,
+                    )
+                elif optim_approach == 2:
+                    tau_list = _optimization_tau_approach2(
+                        S_list,
+                        n_iter_delay,
+                        max_delay=max_delay,
+                        tau_list_init=tau_list_init,
+                        previous_tau_list=tau_list,
+                    )
+                else:
+                    raise ValueError("optim_approach should be either None, 1 or 2")
+        tau_list[tau_list > n // 2] -= n
+        tau_list -= tau_list[0]
+        tau_list = tau_list.astype("float")
     for i in range(n_iter):
         if optim_delays_ica and i < early_stopping_delay and i % optim_delays_every_n_iter == 0 and i >= optim_delays_from_iter_n:
             # Delay estimation
