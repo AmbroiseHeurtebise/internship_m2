@@ -10,7 +10,7 @@ def normalize_delays(tau_list, n):
 
 
 def test_every_n_iter_delay():
-    random_state = 4
+    random_state = 10
     m = 2
     p = 3
     n = 50
@@ -18,7 +18,7 @@ def test_every_n_iter_delay():
     nb_freqs = 5
     treshold = 0.5
     max_delay = 5
-    snr = 5  # Signal to noise ratio
+    snr = 8  # Signal to noise ratio
 
     # Generate data
     _, _, _, _, S = generate_data(
