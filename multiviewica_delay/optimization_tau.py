@@ -46,9 +46,8 @@ def _apply_continuous_delays(
                     delay = tau_list[i, j]
                 fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
                 y = np.fft.ifft(fy)
-                # should we use the real part (by default) or the norm of y?
-                # maybe use np.abs(y)
-                Y_list[i, j] = y.copy()
+                # Y_list[i, j] = y.copy()
+                Y_list[i, j] = np.real(y)
     else:
         p, n = S_list.shape
         Y_list = np.zeros((p, n))
@@ -61,7 +60,8 @@ def _apply_continuous_delays(
                 delay = tau_list[i]
             fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
             y = np.fft.ifft(fy)
-            Y_list[i] = y.copy()
+            # Y_list[i] = y.copy()
+            Y_list[i] = np.real(y)
     return Y_list
 
 
@@ -362,17 +362,17 @@ def _optimization_tau_continuous_delays(
             grad_cost = grad(lambda delay: cost_jax(delay, S1, S2))
             grad_cost = jit(grad_cost)
             tau_list[i] = minimize(
-                lambda delay: cost_jax(delay, S1, S2), x0=[tau_list[i]], 
-                jac=lambda d: float(grad_cost(d)), method='L-BFGS-B', 
+                lambda delay: cost_jax(delay, S1, S2), x0=[tau_list[i]],
+                jac=lambda d: float(grad_cost(d)), method='L-BFGS-B',
                 bounds=bounds, tol=tol, options={"maxiter": max_iter_delay}).x
         else:
             for j in range(p):
                 s1 = S1[j]
-                s2 = S2[j]        
+                s2 = S2[j]
                 grad_cost = grad(lambda delay: cost_jax(delay, s1, s2))
                 grad_cost = jit(grad_cost)
                 tau_list[i, j] = minimize(
-                    lambda delay: cost_jax(delay, s1, s2), x0=[tau_list[i, j]], 
-                    jac=lambda d: float(grad_cost(d)), method='L-BFGS-B', 
+                    lambda delay: cost_jax(delay, s1, s2), x0=[tau_list[i, j]],
+                    jac=lambda d: float(grad_cost(d)), method='L-BFGS-B',
                     bounds=bounds, tol=tol, options={"maxiter": max_iter_delay}).x
     return tau_list
