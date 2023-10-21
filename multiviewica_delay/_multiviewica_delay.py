@@ -347,7 +347,7 @@ def _multiview_ica_main(
             g_norms = max(g_norm, g_norms)
 
         # If line search does not converge for any subject we ll stop there
-        if convergence is False  and n_iter > 0:
+        if convergence is False and n_iter > 0:
             break
 
         if verbose:

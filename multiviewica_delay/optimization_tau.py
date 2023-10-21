@@ -61,7 +61,10 @@ def _apply_continuous_delays(
                     delay = tau_list[i, j]
                 fy *= np.exp(-2 * np.pi * 1j * delay * freqs)
                 y = np.fft.ifft(fy)
-                Y_list[i, j] = np.real(y)
+                if use_jax:
+                    Y_list = Y_list.at[i, j].set(np.real(y))  # XXX
+                else:
+                    Y_list[i, j] = np.real(y)
     else:
         p, n = S_list.shape
         Y_list = np.zeros((p, n))
