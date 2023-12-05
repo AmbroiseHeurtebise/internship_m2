@@ -8,3 +8,5 @@ python-picard==0.7
 fastsrm
 matplotlib
 seaborn
+jax
+jaxlib

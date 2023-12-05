@@ -9,8 +9,8 @@ def normalize_delays(tau_list, n):
     return tau_list
 
 
-def test_mvicad_retrieves_delays():
-    random_state = 42
+def test_every_n_iter_delay():
+    random_state = 10
     m = 2
     p = 3
     n = 50
@@ -18,7 +18,7 @@ def test_mvicad_retrieves_delays():
     nb_freqs = 5
     treshold = 0.5
     max_delay = 5
-    snr = 5  # Signal to noise ratio
+    snr = 8  # Signal to noise ratio
 
     # Generate data
     _, _, _, _, S = generate_data(
@@ -35,11 +35,16 @@ def test_mvicad_retrieves_delays():
         random_state=random_state)
 
     # Estimate delays with MVICAD
-    _, _, _, _, tau_list, _ = multiviewica_delay(
+    results_dict = multiviewica_delay(
         X_list,
         max_delay=max_delay,
-        every_n_iter_delay=10,
-        random_state=random_state)
+        optim_delays_every_n_iter=10,
+        random_state=random_state,
+        shared_delays=True,
+        return_every_iter=True,
+    )
+    print(results_dict["Delays"])
+    tau_list = results_dict.iloc[-1]["Delays"]
 
     # Normalize delays
     true_tau_list = normalize_delays(true_tau_list, n)

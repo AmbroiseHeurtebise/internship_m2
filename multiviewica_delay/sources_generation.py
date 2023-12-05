@@ -6,6 +6,7 @@ from multiviewica_delay import (
     _apply_delay,
     _apply_delay_one_sub,
     _apply_delay_by_source,
+    _apply_delay_one_source_or_sub,
 )
 
 
@@ -85,6 +86,8 @@ def generate_sources(p, n, nb_intervals=5, nb_freqs=20, random_state=None):
     freqs = rng.randn(p, nb_intervals, nb_freqs)
     power = rng.exponential(size=(p, nb_intervals))
     S = np.array([generate_one_source(interval_length, freqs[i], power[i]) for i in range(p)])
+    shifts = (rng.rand(p) * n).astype("int")
+    S = _apply_delay_one_source_or_sub(S, shifts)
     return S
 
 
@@ -109,12 +112,16 @@ def generate_data(
     noise_list = noise * rng.randn(m, p, n)
     S_list = np.array([S + N for N in noise_list])
     if shared_delays:
-        tau_list = rng.randint(0, delay + 1, size=m)
+        # tau_list = rng.randint(0, delay + 1, size=m)
         # XXX should sample between -max_delay and max_delay, not between 0 and max_delay
+        tau_list = rng.randint(-delay, delay + 1, size=m)
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay(S_list, tau_list)
     else:
-        tau_list = rng.randint(0, delay + 1, size=(m, p))
+        # tau_list = rng.randint(0, delay + 1, size=(m, p))
         # XXX should sample between -max_delay and max_delay, not between 0 and max_delay
+        tau_list = rng.randint(-delay, delay + 1, size=(m, p))
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay_by_source(S_list, tau_list)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, tau_list, S_list, S
@@ -182,11 +189,13 @@ def data_generation(
     if shared_delays:
         # tau_list = rng.randint(-max_delay, max_delay + 1, size=m)
         tau_list = delays_generation(m, max_delay, rng)
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay(S_list, tau_list)
     else:
         # tau_list = rng.randint(-max_delay, max_delay + 1, size=(m, p))
         tau_list = np.array(
             [delays_generation(m, max_delay, rng) for _ in range(p)]).T
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay_by_source(S_list, tau_list)
     tau_list %= n
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
@@ -258,11 +267,13 @@ def data_generation_pierre(
     A_list = rng.randn(n_subjects, n_sources, n_sources)
     if shared_delays:
         tau_list = delays_generation(n_subjects, max_delay, rng)
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay(S_list, tau_list)
     else:
         tau_list = np.array(
             [delays_generation(n_subjects, max_delay, rng)
              for _ in range(n_sources)]).T
+        tau_list[0] = 0   # XXX
         S_list = _apply_delay_by_source(S_list, tau_list)
     tau_list %= n_bins * n_samples_per_interval
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
