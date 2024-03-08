@@ -12,54 +12,63 @@ def plot_sources_2d(S):
     plt.show()
 
 
-def plot_sources_3d(S, dilations=None, shifts=None):
+def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True):
     m, p, n = S.shape
     if dilations is None:
         dilations = np.zeros((m, p))
     if shifts is None:
         shifts = np.zeros((m, p))
 
-    plt.subplots(m, p, figsize=(10*p, 2*m))
+    if axes is None:
+        fig, axes = plt.subplots(m, p, figsize=(10*p, 2*m))
+    else:
+        fig = axes.flatten()[0].get_figure()
     for i in range(m):
         for j in range(p):
-            plt.subplot(m, p, p * i + j + 1)
-            plt.plot(S[i, j], label=f'a={dilations[i, j]:.3f} ; b={shifts[i, j]:.3f}')
-            plt.ylim([np.min(S), np.max(S)])
+            axes[i, j].plot(S[i, j], label=f'a={dilations[i, j]:.3f} ; b={shifts[i, j]:.3f}')
+            axes[i, j].set_ylim([np.min(S), np.max(S)])
             if j == 0:
-                plt.ylabel(f"Subject {i}")
+                axes[i, j].set_ylabel(f"Subject {i}")
             if i == 1:
-                plt.xlabel(f"Source {j}")
-            plt.legend()
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.suptitle(f"True sources S ; there are {m} subjects and {p} sources", fontsize=24)
-    plt.show()
+                axes[i, j].set_xlabel(f"Source {j}")
+            axes[i, j].legend()
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    fig.suptitle(f"True sources S ; there are {m} subjects and {p} sources", fontsize=24)
+    if show:
+        plt.show()
+    return axes
 
 
 def scatter_plot_shifts_or_dilations(
-    true_params, estim_params, params_error=None, dilations_not_shifts=True, legend=True
+    true_params, estim_params, params_error=None, dilations_not_shifts=True, legend=True, ax=None
 ):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = ax.get_figure()
     # colors
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     # plot
     m, p = true_params.shape
     for i in range(p):
-        plt.scatter(true_params[:, i], estim_params[:, i], c=colors[i], label=f"source {i}")
+        ax.scatter(true_params[:, i], estim_params[:, i], c=colors[i], label=f"source {i}")
     if dilations_not_shifts:
         params_name = "dilations"
     else:
-        params_name = "shifts"
-    plt.title(f"{params_name} ; error={params_error:.3}")
-    plt.xlabel(f"True {params_name}")
-    plt.ylabel(f"Estimated {params_name}")
+        params_name = "shifts (%)"
+    ax.set_title(f"{params_name} ; error={params_error:.3}")
+    ax.set_xlabel(f"True {params_name}")
+    ax.set_ylabel(f"Estimated {params_name}")
     if legend:
-        plt.legend()
+        ax.legend()
+    fig.tight_layout()
     # diagonal
-    xmin, xmax = plt.xlim()
-    ymin, ymax = plt.ylim()
-    plt.plot([xmin, xmax], [xmin, xmax], c='k', linestyle='--', label="diagonal")
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    ax.plot([xmin, xmax], [xmin, xmax], c='k', linestyle='--', label="diagonal")
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
 
 
 def plot_params_across_iters(params, dilations_not_shifts=True, legend=True):
