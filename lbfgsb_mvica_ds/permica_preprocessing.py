@@ -2,6 +2,8 @@ import numpy as np
 import scipy
 from tqdm import tqdm
 from multiviewica_delay import _apply_delay_by_source, _apply_delay_one_source_or_sub
+from apply_dilations_shifts import apply_dilations_shifts_1d, apply_dilations_shifts_3d_jax
+from lbfgsb_loss_and_grad import smoothing_filter_3d
 
 
 # function from multiviewica_delay/_permica.py
@@ -77,3 +79,103 @@ def find_sign(S_list):
 #     signs_sub_0 = np.array([np.sign(np.max(s) + np.min(s)) for s in S_list[0]])
 #     S = S_list[0] * np.repeat(signs_sub_0, n).reshape(p, n)
 #     return np.array([np.sign(np.sum(S * Si, axis=1)) for Si in S_list])
+
+
+# initialize dilations and shifts with a gridsearch after permica
+def grid_search_orders_dilations_shifts(S_list, max_dilation, max_shift, n_concat=1, nb_points_grid=10):
+    m, p, _ = S_list.shape
+    allowed_dilations = np.linspace(1/max_dilation, max_dilation, nb_points_grid)
+    allowed_shifts = np.linspace(-max_shift, max_shift, nb_points_grid)
+    grid_d, grid_s = np.meshgrid(allowed_dilations, allowed_shifts)
+    grid_d = grid_d.ravel()
+    grid_s = grid_s.ravel()
+    S = S_list[0].copy()
+    orders = np.zeros((m, p))
+    orders[0] = np.arange(p)
+    dilations = np.ones((m, p))
+    shifts = np.zeros((m, p))
+    for i in range(1, m):
+        best_scores = np.zeros((p, p))
+        best_dilation_shift = np.zeros((p, p))
+        for j in tqdm(range(p)):
+            s = S_list[i, j]
+            scores = np.zeros((len(grid_d), p))
+            for k, (dilation, shift) in enumerate(zip(grid_d, grid_s)):
+                s_delayed = apply_dilations_shifts_1d(
+                    s, dilation, shift, max_dilation, max_shift, False, n_concat)
+                scores[k] = np.minimum(np.mean((S - s_delayed) ** 2, axis=1), np.mean((S + s_delayed) ** 2, axis=1))
+            best_scores[j] = np.min(scores, axis=0)
+            best_dilation_shift[j] = np.argmin(scores, axis=0)
+        _, order = scipy.optimize.linear_sum_assignment(best_scores)
+        orders[i] = order
+        best_dilation_shift_idx = np.array([best_dilation_shift[l, order[l]] for l in range(p)]).astype(int)
+        dilations[i] = np.array([grid_d[idx] for idx in best_dilation_shift_idx])
+        shifts[i] = np.array([grid_s[idx] for idx in best_dilation_shift_idx])
+    orders = orders.astype(int)
+    return orders, dilations, shifts
+
+
+def find_signs_sources(S_list):
+    m, p, _ = S_list.shape
+    S = S_list[0].copy()
+    signs = np.ones((m, p))
+    for i in range(1, m):
+        signs[i] = 2 * np.argmin(
+            np.vstack(
+                [np.mean((S_list[i] + S) ** 2, axis=1),
+                 np.mean((S_list[i] - S) ** 2, axis=1)]
+                ), axis=0
+            ) - 1
+    signs = signs.astype(int)
+    return signs
+
+
+def permica_preprocessing(
+    S_list_init, W_list_init, max_dilation, max_shift, n_concat, nb_points_grid=30, S_list_true=None, filter_length=20,
+):
+    m, p, n_total = S_list_init.shape
+    # smoothing
+    print("Smoothing...")
+    # S_list_init_smooth = smoothing_filter_3d(S_list_init, filter_length)
+    S_list_init_smooth = S_list_init
+    # find order, dilation and shift for each source of each subject
+    print("Finding order, dilation and shift for each source of each subject...")
+    orders_init, dilations_init, shifts_init = grid_search_orders_dilations_shifts(
+        S_list_init_smooth, max_dilation=1+2*(max_dilation-1), max_shift=2*max_shift, n_concat=n_concat,
+        nb_points_grid=nb_points_grid)
+    print(f"order : {orders_init}")
+    S_list_init = apply_dilations_shifts_3d_jax(
+        S_list_init, dilations_init, shifts_init, max_dilation=1+2*(max_dilation-1),
+        max_shift=2*max_shift, shift_before_dilation=False, n_concat=n_concat)
+    W_list_init = np.array([W_list_init[i][orders_init[i]] for i in range(m)])
+    S_list_init = np.array([S_list_init[i][orders_init[i]] for i in range(m)])
+    dilations_init = np.array([dilations_init[i][orders_init[i]] for i in range(m)])
+    shifts_init = np.array([shifts_init[i][orders_init[i]] for i in range(m)])
+    # find sign
+    print("Finding sign...")
+    signs = find_signs_sources(S_list_init)
+    W_list_init *= np.repeat(signs, p, axis=1).reshape(m, p, p)
+    # S_list_init *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
+    S_list_init *= signs[:, :, np.newaxis]
+    # find the order that aligns S_list and S_list_init
+    if S_list_true is not None:
+        print("Finding the same order as in the true sources...")
+        order_global = find_order(np.mean(S_list_true, axis=0), np.mean(S_list_init, axis=0))
+        W_list_init = W_list_init[:, order_global, :]
+        S_list_init = S_list_init[:, order_global, :]
+        dilations_init = dilations_init[:, order_global]
+        shifts_init = shifts_init[:, order_global]
+        signs_0 = 2 * np.argmin(np.vstack(
+            [np.mean((S_list_init[0] + S_list_true[0]) ** 2, axis=1),
+             np.mean((S_list_init[0] - S_list_true[0]) ** 2, axis=1)]), axis=0) - 1
+        signs_0 = signs_0.astype(int)
+        W_list_init[0] *= signs_0[:, np.newaxis]
+        S_list_init[0] *= signs_0[:, np.newaxis]
+        signs = find_signs_sources(S_list_init)
+        W_list_init *= np.repeat(signs, p, axis=1).reshape(m, p, p)
+        S_list_init *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
+    print("Aligning back...")
+    S_list_init = apply_dilations_shifts_3d_jax(
+        S_list_init, 1/dilations_init, -shifts_init, max_dilation=1+2*(max_dilation-1),
+        max_shift=2*max_shift, shift_before_dilation=True, n_concat=n_concat)
+    return S_list_init, W_list_init
