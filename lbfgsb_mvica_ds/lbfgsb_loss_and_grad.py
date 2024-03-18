@@ -1,15 +1,20 @@
 import numpy as np
 import jax.numpy as jnp
 from apply_dilations_shifts import (
-    apply_dilations_shifts, apply_both_delays_3d_cyclic, apply_dilations_shifts_3d_jax, apply_dilations_shifts_4d_jax
+    apply_dilations_shifts,
+    apply_both_delays_3d_cyclic,
+    apply_dilations_shifts_3d_jax,
+    apply_dilations_shifts_4d_jax,
+    apply_dilations_shifts_3d_no_argmin,
+    apply_dilations_shifts_4d_no_argmin,
 )
 
 
-def penalization(A, B, max_dilation, max_shift):
-    pen_A = jnp.sum(
-        jnp.mean(2 * (A - 1) / (max_dilation - 1 / max_dilation), axis=0) ** 2)
-    pen_B = jnp.sum(jnp.mean(B / (max_shift), axis=0) ** 2)
-    return pen_A + pen_B
+def penalization(dilations, shifts, max_dilation, max_shift):
+    pen_dilations = jnp.sum(
+        jnp.mean(2 * (dilations - 1) / (max_dilation - 1 / max_dilation), axis=0) ** 2)
+    pen_shifts = jnp.sum(jnp.mean(shifts / (max_shift), axis=0) ** 2)
+    return pen_dilations + pen_shifts
 
 
 def smoothing_filter_3d(S_list, filter_length):
@@ -41,6 +46,7 @@ def loss(
     filter_length_squarenorm_f,
     use_envelop_term,
     n_concat,
+    # apply_delays_function,
 ):
     m, p, _ = X_list.shape
     W_list = W_A_B[:m*p**2].reshape((m, p, p))
@@ -49,10 +55,10 @@ def loss(
     S_list = jnp.array([jnp.dot(W, X) for W, X in zip(W_list, X_list)])
 
     # ########################################## temporary block ###########################################
-    which_method = 0
+    which_method = 4
     if which_method == 0:  # for loops
         Y_list = apply_both_delays_3d_cyclic(
-            S_list, A=A, B=B, max_shift=max_shift, max_dilation=max_dilation,
+            S_list, dilations=A, shifts=B, max_shift=max_shift, max_dilation=max_dilation,
             shift_before_dilation=False, n_concat=n_concat)
     elif which_method == 1:  # vectorize with many if else conditions
         S_list_4d = jnp.moveaxis(jnp.array(jnp.split(S_list, n_concat, axis=-1)), source=0, destination=2)
@@ -68,8 +74,21 @@ def loss(
     elif which_method == 3:  # vectorize in 3d instead of 4d
         Y_list = apply_dilations_shifts_3d_jax(
             S_list, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat)
+    elif which_method == 4:
+        Y_list = apply_dilations_shifts_3d_no_argmin(
+            S_list, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift,
+            shift_before_dilation=False, n_concat=n_concat)
+    elif which_method == 5:
+        S_list_4d = jnp.moveaxis(jnp.array(jnp.split(S_list, n_concat, axis=-1)), source=0, destination=2)
+        Y_list_4d = apply_dilations_shifts_4d_no_argmin(
+            S_list_4d, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift,
+            shift_before_dilation=False)
+        Y_list = Y_list_4d.reshape((m, p, -1))
     else:
         raise ValueError("which_number should be 0, 1, 2 or 3.")
+    # Y_list = apply_delays_function(
+    #     S_list, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift,
+    #     shift_before_dilation=False, n_concat=n_concat)
     # ######################################### end of the block ###########################################
 
     # shifts and dilations' penalization term

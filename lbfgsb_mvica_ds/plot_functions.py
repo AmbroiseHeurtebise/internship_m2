@@ -12,7 +12,7 @@ def plot_sources_2d(S):
     plt.show()
 
 
-def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True):
+def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True, title="true sources S"):
     m, p, n = S.shape
     if dilations is None:
         dilations = np.zeros((m, p))
@@ -33,7 +33,7 @@ def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True):
                 axes[i, j].set_xlabel(f"Source {j}")
             axes[i, j].legend()
     fig.tight_layout(rect=[0, 0, 1, 0.96])
-    fig.suptitle(f"True sources S ; there are {m} subjects and {p} sources", fontsize=24)
+    fig.suptitle(f"{title} ; there are {m} subjects and {p} sources", fontsize=24)
     if show:
         plt.show()
     return axes
@@ -60,8 +60,6 @@ def scatter_plot_shifts_or_dilations(
     ax.set_title(f"{params_name} ; error={params_error:.3}")
     ax.set_xlabel(f"True {params_name}")
     ax.set_ylabel(f"Estimated {params_name}")
-    if legend:
-        ax.legend()
     fig.tight_layout()
     # diagonal
     xmin, xmax = ax.get_xlim()
@@ -69,6 +67,8 @@ def scatter_plot_shifts_or_dilations(
     ax.plot([xmin, xmax], [xmin, xmax], c='k', linestyle='--', label="diagonal")
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
+    if legend:
+        ax.legend()
 
 
 def plot_params_across_iters(params, dilations_not_shifts=True, legend=True):
