@@ -10,7 +10,7 @@ from itertools import product
 from picard import amari_distance
 
 from multiviewica_delay import permica, multiviewica_delay
-from generate_data import generate_new_data
+from generate_data import generate_data, generate_new_data
 from permica_preprocessing import permica_preprocessing
 from other_functions import compute_lambda
 from lbfgsb_loss_and_grad import loss
@@ -41,16 +41,32 @@ def generate_and_preprocess(**params):
         params, "m", "p", "n_concat", "n", "max_dilation", "max_shift", "noise_data", "random_state")
     rng = np.random.RandomState(random_state)
 
-    X_list, A_list, dilations, shifts, S_list, _ = generate_new_data(
-        m=m,
-        p=p,
-        n_concat=n_concat,
-        n=n,
-        max_dilation=max_dilation,
-        max_shift=max_shift,
-        noise_data=noise_data,
-        rng=rng,
-    )
+    generation_function = 1
+    if generation_function == 1:
+        X_list, A_list, dilations, shifts, S_list, S = generate_data(
+            m=m,
+            p=p,
+            n=n,
+            max_shift=max_shift,
+            max_dilation=max_dilation,
+            noise_data=noise_data/5,
+            n_bins=10,
+            freq_level=50,
+            S1_S2_scale=0.7,
+            rng=rng,
+            n_concat=n_concat,
+        )
+    else:
+        X_list, A_list, dilations, shifts, S_list, _ = generate_new_data(
+            m=m,
+            p=p,
+            n_concat=n_concat,
+            n=n,
+            max_dilation=max_dilation,
+            max_shift=max_shift,
+            noise_data=noise_data,
+            rng=rng,
+        )
 
     # center dilations and shifts
     dilations_c = dilations - np.mean(dilations, axis=0)
@@ -270,10 +286,10 @@ if __name__ == '__main__':
     params = {
         "m": 5,
         "p": 3,
-        "n_concat": 3,
+        "n_concat": 5,
         "n": 600,
         "max_shift": 0.05,
-        "max_dilation": 1.2,
+        "max_dilation": 1.15,
         "bounds_factor": 1.2,
         "noise_data": 0.05,
         "noise_model": 1,  # 1 by default
@@ -286,7 +302,7 @@ if __name__ == '__main__':
     }
 
     # varying params
-    W_scales = np.arange(1, 10)
+    W_scales = np.arange(1, 20)
     nb_seeds = 30
     random_states = np.arange(nb_seeds)
     nb_expes = len(W_scales) * len(random_states)
@@ -305,8 +321,8 @@ if __name__ == '__main__':
     print(df_res)
 
     # save dataframe
-    results_dir = "lbfgsb_results/results_run_many_seeds/"
-    save_name = f"DataFrame_with_{nb_seeds}_seeds"
+    results_dir = "/storage/store2/work/aheurteb/mvicad/lbfgsb_results/results_run_many_seeds/"
+    save_name = f"DataFrame_with_{nb_seeds}_seeds_gen1_maxdilation115_nconcat5"
     save_path = results_dir + save_name
     df_res.to_csv(save_path, index=False)
     print("\n################################################ End ################################################")
