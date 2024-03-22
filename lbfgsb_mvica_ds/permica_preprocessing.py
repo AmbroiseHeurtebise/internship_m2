@@ -174,4 +174,4 @@ def permica_preprocessing(
         S_list_init, 1/dilations_init, -shifts_init, max_dilation=1+2*(max_dilation-1),
         max_shift=2*max_shift, shift_before_dilation=True, n_concat=n_concat)
     print("Preprocessing done.")
-    return S_list_init, W_list_init
+    return S_list_init, W_list_init, dilations_init, shifts_init
