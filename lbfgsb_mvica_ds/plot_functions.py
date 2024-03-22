@@ -57,7 +57,10 @@ def scatter_plot_shifts_or_dilations(
         params_name = "dilations"
     else:
         params_name = "shifts (%)"
-    ax.set_title(f"{params_name} ; error={params_error:.3}")
+    if params_error is not None:
+        ax.set_title(f"{params_name} ; error={params_error:.3}")
+    else:
+        ax.set_title(f"{params_name}")
     ax.set_xlabel(f"True {params_name}")
     ax.set_ylabel(f"Estimated {params_name}")
     fig.tight_layout()
