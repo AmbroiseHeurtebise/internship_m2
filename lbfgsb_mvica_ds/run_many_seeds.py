@@ -37,11 +37,11 @@ def unpack_dict(dict, *keys):
 
 def generate_and_preprocess(**params):
     # generate data
-    m, p, n_concat, n, max_dilation, max_shift, noise_data, random_state = unpack_dict(
-        params, "m", "p", "n_concat", "n", "max_dilation", "max_shift", "noise_data", "random_state")
+    m, p, n_concat, n, max_dilation, max_shift, noise_data, random_state, generation_function = unpack_dict(
+        params, "m", "p", "n_concat", "n", "max_dilation", "max_shift", "noise_data", "random_state",
+        "generation_function")
     rng = np.random.RandomState(random_state)
 
-    generation_function = 1
     if generation_function == 1:
         X_list, A_list, dilations, shifts, S_list, S = generate_data(
             m=m,
@@ -99,12 +99,21 @@ def generate_and_preprocess(**params):
         X_list, max_iter=1000, random_state=random_state, tol=1e-9,
         optim_delays=True, max_delay=max_delay_samples)
     S_list_init = np.array([np.dot(W, X) for W, X in zip(W_list_init, X_list)])
-    S_list_init, W_list_init = permica_preprocessing(
+    S_list_init, W_list_init, dilations_init, shifts_init = permica_preprocessing(
         S_list_init, W_list_init, max_dilation, max_shift, n_concat, nb_points_grid=10, S_list_true=S_list)
 
+    # center time parameters
+    dilations_init_c = dilations_init - np.mean(dilations_init, axis=0) + 1
+    shifts_init_c = shifts_init - np.mean(shifts_init, axis=0)
+
     # initialize A and B
-    A_init = jnp.ones((m, p)) * dilation_scale
-    B_init = jnp.zeros((m, p))
+    A_B_init_permica = params["A_B_init_permica"]
+    if A_B_init_permica:
+        A_init = dilations_init_c * dilation_scale
+        B_init = shifts_init_c * shift_scale
+    else:
+        A_init = jnp.ones((m, p)) * dilation_scale
+        B_init = jnp.zeros((m, p))
     W_A_B_init = jnp.concatenate([jnp.ravel(W_list_init), jnp.ravel(A_init), jnp.ravel(B_init)])
 
     # arguments used by LBFGSB
@@ -193,7 +202,9 @@ def compute_3_scores(
 
 def run_experiment(**params):
     # generate data, intialize with permica, find orders and signs
+    start = time()
     data = generate_and_preprocess(**params)
+    time_preprocess = time() - start
 
     # jit
     args_lbfgsb = data["args_lbfgsb"]
@@ -225,7 +236,7 @@ def run_experiment(**params):
         maxiter=3000,
     )
     time_lbfgsb = time() - start
-    time_lbfgsb += time_jit
+    time_lbfgsb += time_jit + time_preprocess
     print("LBFGSB done.")
 
     # get scores
@@ -299,10 +310,12 @@ if __name__ == '__main__':
         "number_of_filters_envelop": 1,
         "filter_length_envelop": 10,
         "dilation_scale_per_source": True,
+        "generation_function": 2,
+        "A_B_init_permica": True,
     }
 
     # varying params
-    W_scales = np.arange(1, 20)
+    W_scales = np.logspace(0, 2, 20)
     nb_seeds = 30
     random_states = np.arange(nb_seeds)
     nb_expes = len(W_scales) * len(random_states)
@@ -322,7 +335,7 @@ if __name__ == '__main__':
 
     # save dataframe
     results_dir = "/storage/store2/work/aheurteb/mvicad/lbfgsb_results/results_run_many_seeds/"
-    save_name = f"DataFrame_with_{nb_seeds}_seeds_gen1_maxdilation115_nconcat5"
+    save_name = f"DataFrame_with_{nb_seeds}_seeds_gen2_initpermica"
     save_path = results_dir + save_name
     df_res.to_csv(save_path, index=False)
     print("\n################################################ End ################################################")
