@@ -20,7 +20,7 @@ jax.config.update('jax_enable_x64', True)
 
 
 # arguments 1 and 2 have to be static because they are np.ndarray
-val_and_grad = jax.jit(jax.value_and_grad(loss), static_argnums=tuple(np.arange(3, 13)))
+val_and_grad = jax.jit(jax.value_and_grad(loss), static_argnums=tuple(np.arange(3, 14)))
 
 
 def wrapper_loss_and_grad(*args):
@@ -73,7 +73,7 @@ def generate_and_preprocess(**params):
     shifts_c = shifts - np.mean(shifts, axis=0)
 
     # shift scale and dilation scale
-    dilation_scale_per_source = params["dilation_scale_per_source"]
+    W_scale, dilation_scale_per_source = unpack_dict(params, "W_scale", "dilation_scale_per_source")
 
     if max_shift > 0:
         shift_scale = W_scale / max_shift  # scalar
@@ -121,6 +121,7 @@ def generate_and_preprocess(**params):
         params, "noise_model", "number_of_filters_squarenorm_f", "filter_length_squarenorm_f")
     use_envelop_term, number_of_filters_envelop, filter_length_envelop = unpack_dict(
         params, "use_envelop_term", "number_of_filters_envelop", "filter_length_envelop")
+    penalization_scale = params["penalization_scale"]
 
     args_lbfgsb = (
         W_A_B_init,
@@ -136,6 +137,7 @@ def generate_and_preprocess(**params):
         filter_length_squarenorm_f,
         use_envelop_term,
         n_concat,
+        penalization_scale,
     )
 
     output = {
@@ -278,6 +280,7 @@ def run_experiment(**params):
     amari_permica = np.mean([amari_distance(W, A) for W, A in zip(W_list_init, A_list)])
 
     # output
+    W_scale = params["W_scale"]
     output = {"Amari LBFGSB": amari_lbfgsb,
               "Dilations score LBFGSB": score_dilations_lbfgsb,
               "Shifts score LBFGSB": score_shifts_lbfgsb,
@@ -312,6 +315,7 @@ if __name__ == '__main__':
         "dilation_scale_per_source": True,
         "generation_function": 2,
         "A_B_init_permica": True,
+        "penalization_scale": 1e1,
     }
 
     # varying params

@@ -20,7 +20,7 @@ jax.config.update('jax_enable_x64', True)
 
 
 # arguments 1 and 2 have to be static because they are np.ndarray
-val_and_grad = jax.jit(jax.value_and_grad(loss), static_argnums=tuple(np.arange(3, 13)))
+val_and_grad = jax.jit(jax.value_and_grad(loss), static_argnums=tuple(np.arange(3, 14)))
 
 
 def wrapper_loss_and_grad(*args):
