@@ -46,6 +46,7 @@ def loss(
     filter_length_squarenorm_f,
     use_envelop_term,
     n_concat,
+    penalization_scale,
     # apply_delays_function,
 ):
     m, p, _ = X_list.shape
@@ -92,11 +93,12 @@ def loss(
     # ######################################### end of the block ###########################################
 
     # shifts and dilations' penalization term
-    penalization_scale = 1 / (2 * noise_model) * p * m * 1e1  # XXX
-    loss = penalization_scale * penalization(A, B, max_dilation, max_shift)
+    penalization_factor = 1 / (2 * noise_model) * p * m * penalization_scale
+    loss = penalization_factor * penalization(A, B, max_dilation, max_shift)
     # envelop fitting term
     if use_envelop_term:
         Y_abs_smooth = jnp.abs(Y_list)
+        # Y_abs_smooth = Y_list ** 2  # XXX now it is differentiable; just a test
         for _ in range(number_of_filters_envelop):
             # Y_abs_smooth = smoothing_filter_3d_envelop(Y_abs_smooth)
             Y_abs_smooth = smoothing_filter_3d(Y_abs_smooth, filter_length_envelop)
