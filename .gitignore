@@ -168,3 +168,5 @@ joblib/**
 .pkl
 .csv
 .gif
+data/results_ica.pkl
+lbfgsb_results/
