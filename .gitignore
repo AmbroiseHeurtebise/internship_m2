@@ -163,3 +163,8 @@ cython_debug/
 
 # joblib
 joblib/**
+
+# too large data
+.pkl
+.csv
+.gif
