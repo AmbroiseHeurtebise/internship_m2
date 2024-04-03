@@ -280,6 +280,7 @@ def run_experiment(**params):
     amari_permica = np.mean([amari_distance(W, A) for W, A in zip(W_list_init, A_list)])
 
     # output
+    penalization_scale = params["penalization_scale"]
     output = {"Amari LBFGSB": amari_lbfgsb,
               "Dilations score LBFGSB": score_dilations_lbfgsb,
               "Shifts score LBFGSB": score_shifts_lbfgsb,
@@ -312,13 +313,13 @@ if __name__ == '__main__':
         "number_of_filters_envelop": 1,
         "filter_length_envelop": 10,
         "dilation_scale_per_source": True,
-        "generation_function": 2,
-        "A_B_init_permica": True,
+        "generation_function": 1,
+        "A_B_init_permica": False,
         "W_scale": 15,
     }
 
     # varying params
-    penalization_scales = np.logspace(-1, 2, 20)
+    penalization_scales = np.logspace(-2, 4, 20)
     nb_seeds = 30
     random_states = np.arange(nb_seeds)
     nb_expes = len(penalization_scales) * len(random_states)
@@ -343,7 +344,7 @@ if __name__ == '__main__':
         init = "_initpermica"
     else:
         init = ""
-    save_name = f"DataFrame_with_{nb_seeds}_seeds_gen{gen}{init}_by_penalization_scale"
+    save_name = f"DataFrame_with_{nb_seeds}_seeds_gen{gen}{init}_by_penalization_scale_high"
     save_path = results_dir + save_name
     df_res.to_csv(save_path, index=False)
     print("\n################################################ End ################################################")
