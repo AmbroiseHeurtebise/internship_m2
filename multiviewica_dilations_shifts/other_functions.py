@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 
 class Memory_callback():
@@ -44,3 +45,16 @@ def compute_dilation_shift_scales(
     else:
         dilation_scale = 1.
     return dilation_scale, shift_scale
+
+
+# find the order of S2's sources, compared to S1's sources
+def find_order(S1, S2):
+    p, n = S1.shape
+    S1 = S1 / np.linalg.norm(S1, axis=1, keepdims=True)
+    S2 = S2 / np.linalg.norm(S2, axis=1, keepdims=True)
+    M = np.abs(np.dot(S1, S2.T))
+    try:
+        _, order = scipy.optimize.linear_sum_assignment(-abs(M))
+    except ValueError:
+        order = np.arange(p)
+    return order

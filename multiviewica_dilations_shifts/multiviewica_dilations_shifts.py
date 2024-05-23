@@ -32,20 +32,17 @@ def mvica_ds(
     penalization_scale,
     return_all_iterations,
     nb_points_grid_init=20,
+    S_list_true=None,
 ):
     m, p, n_total = X_list.shape
-    # n = n_total // n_concat
 
     # initialize W_list, S_list, dilations and shifts with permica
-    # max_delay = (1 + max_shift) * max_dilation - 1
-    # max_delay_samples = np.ceil(max_delay * n).astype("int")
     _, W_list_permica, _, _ = permica(
         X_list, max_iter=1000, random_state=random_state, tol=1e-9,
-        # optim_delays=True, max_delay=max_delay_samples)
         optim_delays=False)
     S_list_permica, W_list_permica, dilations_permica, shifts_permica = permica_preprocessing(
-        W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
-        nb_points_grid=nb_points_grid_init, verbose=verbose)
+        W_list_permica=W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift,
+        n_concat=n_concat, nb_points_grid=nb_points_grid_init, S_list_true=S_list_true, verbose=verbose)
 
     # shift and dilation scales
     dilation_scale, shift_scale = compute_dilation_shift_scales(
@@ -57,7 +54,8 @@ def mvica_ds(
     shifts_permica_c = shifts_permica - np.mean(shifts_permica, axis=0)
     dilations_init = dilations_permica_c * dilation_scale
     shifts_init = shifts_permica_c * shift_scale
-    W_dilations_shifts_init = jnp.concatenate([jnp.ravel(W_list_permica), jnp.ravel(dilations_init), jnp.ravel(shifts_init)])
+    W_dilations_shifts_init = jnp.concatenate(
+        [jnp.ravel(W_list_permica), jnp.ravel(dilations_init), jnp.ravel(shifts_init)])
 
     # arguments for L-BFGS
     args = (
@@ -133,5 +131,6 @@ def mvica_ds(
         max_dilation=max_dilation, shift_before_dilation=False, n_concat=n_concat)
 
     if return_all_iterations:
-        return W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb, callback, W_list_permica, dilations_permica, shifts_permica
+        return (W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb, callback, W_list_permica, dilations_permica,
+                shifts_permica)
     return W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb

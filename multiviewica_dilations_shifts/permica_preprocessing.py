@@ -1,10 +1,5 @@
 import numpy as np
 import scipy
-from tqdm import tqdm
-from multiviewica_delay import (
-    _apply_delay_by_source,
-    _apply_delay_one_source_or_sub,
-)
 from apply_dilations_shifts import (
     apply_dilations_shifts_3d_no_argmin,
     apply_dilations_shifts_1d,
@@ -60,22 +55,9 @@ from apply_dilations_shifts import (
 #     return order, signs, S
 
 
-# same order for S_list and S_list_init
-def find_order(S1, S2):
-    p, n = S1.shape
-    S1 = S1 / np.linalg.norm(S1, axis=1, keepdims=True)
-    S2 = S2 / np.linalg.norm(S2, axis=1, keepdims=True)
-    M = np.abs(np.dot(S1, S2.T))
-    try:
-        _, order = scipy.optimize.linear_sum_assignment(-abs(M))
-    except ValueError:
-        order = np.arange(p)
-    return order
-
-
-# find sign from sources' height
-def find_sign(S_list):
-    return np.array([[np.sign(np.max(s) + np.min(s)) for s in S] for S in S_list])
+# # find sign from sources' height
+# def find_sign(S_list):
+#     return np.array([[np.sign(np.max(s) + np.min(s)) for s in S] for S in S_list])
 
 
 # initialize dilations and shifts with a gridsearch after permica
@@ -105,7 +87,7 @@ def grid_search_orders_dilations_shifts(S_list, max_dilation, max_shift, n_conca
             best_dilation_shift[j] = np.argmin(scores, axis=0)
         _, order = scipy.optimize.linear_sum_assignment(best_scores)
         orders[i] = order
-        best_dilation_shift_idx = np.array([best_dilation_shift[l, order[l]] for l in range(p)]).astype(int)
+        best_dilation_shift_idx = np.array([best_dilation_shift[k, order[k]] for k in range(p)]).astype(int)
         dilations[i] = np.array([grid_d[idx] for idx in best_dilation_shift_idx])
         shifts[i] = np.array([grid_s[idx] for idx in best_dilation_shift_idx])
     orders = orders.astype(int)
@@ -143,11 +125,9 @@ def permica_preprocessing(
     m, p, n_total = S_list_permica.shape
     # find order, dilation and shift for each source of each subject
     orders_permica, dilations_permica, shifts_permica = grid_search_orders_dilations_shifts(
-        # S_list_init, max_dilation=1+2*(max_dilation-1), max_shift=2*max_shift, n_concat=n_concat,
         S_list_permica, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
         nb_points_grid=nb_points_grid)
     S_list_permica = apply_dilations_shifts_3d_no_argmin(
-        # S_list_init, dilations_init, shifts_init, max_dilation=1+2*(max_dilation-1),
         S_list_permica, dilations=dilations_permica, shifts=shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
     W_list_permica = np.array([W_list_permica[i][orders_permica[i]] for i in range(m)])
@@ -175,9 +155,7 @@ def permica_preprocessing(
         W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
         S_list_permica *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
     S_list_permica = apply_dilations_shifts_3d_no_argmin(
-        # S_list_init, 1/dilations_init, -shifts_init, max_dilation=1+2*(max_dilation-1),
         S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
-        # max_shift=2*max_shift, shift_before_dilation=True, n_concat=n_concat)
         max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat)
     if verbose:
         print("Preprocessing done.")
