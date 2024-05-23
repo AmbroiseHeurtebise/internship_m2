@@ -21,7 +21,6 @@ def mvica_ds(
     max_shift,
     W_scale,
     dilation_scale_per_source,
-    bounds_factor,
     verbose,
     random_state,
     noise_model,
@@ -35,43 +34,39 @@ def mvica_ds(
     nb_points_grid_init=20,
 ):
     m, p, n_total = X_list.shape
-    n = n_total // n_concat
-
-    # extend max_dilation and max_shift, only useful for synthetic experiments
-    max_dilation_2 = 1 + bounds_factor * (max_dilation - 1)
-    max_shift_2 = bounds_factor * max_shift
+    # n = n_total // n_concat
 
     # initialize W_list, S_list, dilations and shifts with permica
-    max_delay = (1 + max_shift) * max_dilation - 1
-    max_delay_samples = np.ceil(max_delay * n).astype("int")
-    _, W_list_init, _, _ = permica(
-        X_list, max_iter=100, random_state=random_state, tol=1e-9,
-        optim_delays=True, max_delay=max_delay_samples)
-    S_list_init = np.array([np.dot(W, X) for W, X in zip(W_list_init, X_list)])
-    S_list_init, W_list_init, dilations_init, shifts_init = permica_preprocessing(
-        S_list_init, W_list_init, max_dilation, max_shift, n_concat,
+    # max_delay = (1 + max_shift) * max_dilation - 1
+    # max_delay_samples = np.ceil(max_delay * n).astype("int")
+    _, W_list_permica, _, _ = permica(
+        X_list, max_iter=1000, random_state=random_state, tol=1e-9,
+        # optim_delays=True, max_delay=max_delay_samples)
+        optim_delays=False)
+    S_list_permica, W_list_permica, dilations_permica, shifts_permica = permica_preprocessing(
+        W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
         nb_points_grid=nb_points_grid_init, verbose=verbose)
 
     # shift and dilation scales
     dilation_scale, shift_scale = compute_dilation_shift_scales(
-        max_dilation, max_shift, W_scale, dilation_scale_per_source,
-        S_list_init, n_concat)
+        max_dilation=max_dilation, max_shift=max_shift, W_scale=W_scale,
+        dilation_scale_per_source=dilation_scale_per_source, S_list=S_list_permica, n_concat=n_concat)
 
-    # initialize A and B
-    dilations_init_c = dilations_init - np.mean(dilations_init, axis=0) + 1
-    shifts_init_c = shifts_init - np.mean(shifts_init, axis=0)
-    A_init = dilations_init_c * dilation_scale
-    B_init = shifts_init_c * shift_scale
-    W_A_B_init = jnp.concatenate([jnp.ravel(W_list_init), jnp.ravel(A_init), jnp.ravel(B_init)])
+    # initialize W, dilations and shifts
+    dilations_permica_c = dilations_permica - np.mean(dilations_permica, axis=0) + 1
+    shifts_permica_c = shifts_permica - np.mean(shifts_permica, axis=0)
+    dilations_init = dilations_permica_c * dilation_scale
+    shifts_init = shifts_permica_c * shift_scale
+    W_dilations_shifts_init = jnp.concatenate([jnp.ravel(W_list_permica), jnp.ravel(dilations_init), jnp.ravel(shifts_init)])
 
     # arguments for L-BFGS
     args = (
-        W_A_B_init,
+        W_dilations_shifts_init,
         X_list,
         dilation_scale,
         shift_scale,
-        max_shift_2,
-        max_dilation_2,
+        max_shift,
+        max_dilation,
         noise_model,
         number_of_filters_envelop,
         filter_length_envelop,
@@ -98,14 +93,14 @@ def mvica_ds(
     # bounds
     bounds_W = [(-jnp.inf, jnp.inf)] * (m * p**2)
     if dilation_scale_per_source:
-        bounds_A = [
-            (1 / max_dilation_2 * dilation_scale.ravel()[i], max_dilation_2 * dilation_scale.ravel()[i])
+        bounds_dilations = [
+            (1 / max_dilation * dilation_scale.ravel()[i], max_dilation * dilation_scale.ravel()[i])
             for i in range(m * p)]
     else:
-        bounds_A = [
-            (1 / max_dilation_2 * dilation_scale, max_dilation_2 * dilation_scale)] * (m * p)
-    bounds_B = [(-max_shift_2 * shift_scale, max_shift_2 * shift_scale)] * (m * p)
-    bounds_W_A_B = jnp.array(bounds_W + bounds_A + bounds_B)
+        bounds_dilations = [
+            (1 / max_dilation * dilation_scale, max_dilation * dilation_scale)] * (m * p)
+    bounds_shifts = [(-max_shift * shift_scale, max_shift * shift_scale)] * (m * p)
+    bounds_W_dilations_shifts = jnp.array(bounds_W + bounds_dilations + bounds_shifts)
 
     # LBFGSB
     callback = Memory_callback(m, p, dilation_scale, shift_scale)
@@ -116,7 +111,7 @@ def mvica_ds(
         func=wrapper_loss_and_grad,
         x0=args[0],
         args=args[1:],
-        bounds=bounds_W_A_B,
+        bounds=bounds_W_dilations_shifts,
         disp=True,
         factr=1e3,
         pgtol=1e-5,
@@ -127,19 +122,16 @@ def mvica_ds(
         print(f"LBFGSB time : {time() - start}")
 
     # get parameters of the last iteration
-    memory_W = np.array(callback.memory_W)
-    memory_A = np.array(callback.memory_A)
-    memory_B = np.array(callback.memory_B)
-    W_lbfgs = memory_W[-1]
-    A_lbfgs = 1 / memory_A[-1]
-    B_lbfgs = -memory_B[-1]
+    W_lbfgsb = np.array(callback.memory_W)[-1]
+    dilations_lbfgsb = np.array(callback.memory_dilations)[-1]
+    shifts_lbfgsb = np.array(callback.memory_shifts)[-1]
 
     # reconstruct sources
-    S_list_lbfgsb = jnp.array([jnp.dot(W, X) for W, X in zip(W_lbfgs, X_list)])
+    S_list_lbfgsb = jnp.array([jnp.dot(W, X) for W, X in zip(W_lbfgsb, X_list)])
     Y_list_lbfgsb = apply_dilations_shifts_3d_no_argmin(
-        S_list_lbfgsb, dilations=1/A_lbfgs, shifts=-B_lbfgs, max_shift=max_shift_2,
-        max_dilation=max_dilation_2, shift_before_dilation=False)
+        S_list_lbfgsb, dilations=dilations_lbfgsb, shifts=shifts_lbfgsb, max_shift=max_shift,
+        max_dilation=max_dilation, shift_before_dilation=False, n_concat=n_concat)
 
     if return_all_iterations:
-        return W_lbfgs, A_lbfgs, B_lbfgs, Y_list_lbfgsb, callback, W_list_init, dilations_init, shifts_init
-    return W_lbfgs, A_lbfgs, B_lbfgs, Y_list_lbfgsb
+        return W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb, callback, W_list_permica, dilations_permica, shifts_permica
+    return W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb

@@ -128,56 +128,57 @@ def find_signs_sources(S_list):
 
 
 def permica_preprocessing(
-    S_list_init,
-    W_list_init,
-    max_dilation,
-    max_shift,
-    n_concat,
+    W_list_permica,
+    X_list,
+    max_dilation=1.15,
+    max_shift=0.05,
+    n_concat=1,
     nb_points_grid=20,
     S_list_true=None,
     verbose=False,
 ):
     if verbose:
         print("\nPreprocess permica data...")
-    m, p, n_total = S_list_init.shape
+    S_list_permica = np.array([np.dot(W, X) for W, X in zip(W_list_permica, X_list)])
+    m, p, n_total = S_list_permica.shape
     # find order, dilation and shift for each source of each subject
-    orders_init, dilations_init, shifts_init = grid_search_orders_dilations_shifts(
+    orders_permica, dilations_permica, shifts_permica = grid_search_orders_dilations_shifts(
         # S_list_init, max_dilation=1+2*(max_dilation-1), max_shift=2*max_shift, n_concat=n_concat,
-        S_list_init, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
+        S_list_permica, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
         nb_points_grid=nb_points_grid)
-    S_list_init = apply_dilations_shifts_3d_no_argmin(
+    S_list_permica = apply_dilations_shifts_3d_no_argmin(
         # S_list_init, dilations_init, shifts_init, max_dilation=1+2*(max_dilation-1),
-        S_list_init, dilations_init, shifts_init, max_dilation=max_dilation,
+        S_list_permica, dilations=dilations_permica, shifts=shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
-    W_list_init = np.array([W_list_init[i][orders_init[i]] for i in range(m)])
-    S_list_init = np.array([S_list_init[i][orders_init[i]] for i in range(m)])
-    dilations_init = np.array([dilations_init[i][orders_init[i]] for i in range(m)])
-    shifts_init = np.array([shifts_init[i][orders_init[i]] for i in range(m)])
+    W_list_permica = np.array([W_list_permica[i][orders_permica[i]] for i in range(m)])
+    S_list_permica = np.array([S_list_permica[i][orders_permica[i]] for i in range(m)])
+    dilations_permica = np.array([dilations_permica[i][orders_permica[i]] for i in range(m)])
+    shifts_permica = np.array([shifts_permica[i][orders_permica[i]] for i in range(m)])
     # find sign
-    signs = find_signs_sources(S_list_init)
-    W_list_init *= np.repeat(signs, p, axis=1).reshape(m, p, p)
-    S_list_init *= signs[:, :, np.newaxis]
-    # find the order that aligns S_list and S_list_init
+    signs = find_signs_sources(S_list_permica)
+    W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
+    S_list_permica *= signs[:, :, np.newaxis]
+    # find the order that aligns S_list and S_list_init; only used for synthetic experiments
     if S_list_true is not None:
-        order_global = find_order(np.mean(S_list_true, axis=0), np.mean(S_list_init, axis=0))
-        W_list_init = W_list_init[:, order_global, :]
-        S_list_init = S_list_init[:, order_global, :]
-        dilations_init = dilations_init[:, order_global]
-        shifts_init = shifts_init[:, order_global]
+        order_global = find_order(np.mean(S_list_true, axis=0), np.mean(S_list_permica, axis=0))
+        W_list_permica = W_list_permica[:, order_global, :]
+        S_list_permica = S_list_permica[:, order_global, :]
+        dilations_permica = dilations_permica[:, order_global]
+        shifts_permica = shifts_permica[:, order_global]
         signs_0 = 2 * np.argmin(np.vstack(
-            [np.mean((S_list_init[0] + S_list_true[0]) ** 2, axis=1),
-             np.mean((S_list_init[0] - S_list_true[0]) ** 2, axis=1)]), axis=0) - 1
+            [np.mean((S_list_permica[0] + S_list_true[0]) ** 2, axis=1),
+             np.mean((S_list_permica[0] - S_list_true[0]) ** 2, axis=1)]), axis=0) - 1
         signs_0 = signs_0.astype(int)
-        W_list_init[0] *= signs_0[:, np.newaxis]
-        S_list_init[0] *= signs_0[:, np.newaxis]
-        signs = find_signs_sources(S_list_init)
-        W_list_init *= np.repeat(signs, p, axis=1).reshape(m, p, p)
-        S_list_init *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
-    S_list_init = apply_dilations_shifts_3d_no_argmin(
+        W_list_permica[0] *= signs_0[:, np.newaxis]
+        S_list_permica[0] *= signs_0[:, np.newaxis]
+        signs = find_signs_sources(S_list_permica)
+        W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
+        S_list_permica *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
+    S_list_permica = apply_dilations_shifts_3d_no_argmin(
         # S_list_init, 1/dilations_init, -shifts_init, max_dilation=1+2*(max_dilation-1),
-        S_list_init, 1/dilations_init, -shifts_init, max_dilation=max_dilation,
+        S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
         # max_shift=2*max_shift, shift_before_dilation=True, n_concat=n_concat)
         max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat)
     if verbose:
         print("Preprocessing done.")
-    return S_list_init, W_list_init, dilations_init, shifts_init
+    return S_list_permica, W_list_permica, dilations_permica, shifts_permica
