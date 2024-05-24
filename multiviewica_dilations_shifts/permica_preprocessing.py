@@ -55,6 +55,19 @@ def find_signs_sources(S_list):
     return signs
 
 
+# find the order of S2's sources, compared to S1's sources
+def find_order(S1, S2):
+    p, n = S1.shape
+    S1 = S1 / np.linalg.norm(S1, axis=1, keepdims=True)
+    S2 = S2 / np.linalg.norm(S2, axis=1, keepdims=True)
+    M = np.abs(np.dot(S1, S2.T))
+    try:
+        _, order = scipy.optimize.linear_sum_assignment(-abs(M))
+    except ValueError:
+        order = np.arange(p)
+    return order
+
+
 def permica_preprocessing(
     W_list_permica,
     X_list,
