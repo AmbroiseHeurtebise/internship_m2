@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 from scipy.signal.windows import tukey
-from apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
+from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
 
 
 # ##################################### First data generation function ######################################

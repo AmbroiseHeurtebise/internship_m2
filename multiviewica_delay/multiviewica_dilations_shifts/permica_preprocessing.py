@@ -1,6 +1,6 @@
 import numpy as np
 import scipy
-from apply_dilations_shifts import (
+from .apply_dilations_shifts import (
     apply_dilations_shifts_3d_no_argmin,
     apply_dilations_shifts_1d,
 )

@@ -6,6 +6,7 @@ from sklearn.utils.extmath import randomized_svd
 from picard import picard
 from .reduce_data import reduce_data
 
+
 def groupica(
     X,
     n_components=None,

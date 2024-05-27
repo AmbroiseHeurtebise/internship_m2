@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from sklearn.utils import check_random_state
-from multiviewica_delay import (
+from .apply_shifts import (
     _apply_delay,
     _apply_delay_one_sub,
     _apply_delay_by_source,

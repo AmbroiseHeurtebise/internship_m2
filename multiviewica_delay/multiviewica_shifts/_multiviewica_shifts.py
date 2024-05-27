@@ -10,7 +10,7 @@ from .reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
 from ._sameica import sameica
-from .optimization_tau import (
+from .apply_shifts import (
     _optimization_tau,
     _optimization_tau_approach1,
     _optimization_tau_approach2,
@@ -25,7 +25,7 @@ from .optimization_tau import (
 )
 
 
-def multiviewica_delay(
+def multiviewica_shifts(
     X,
     n_components=None,
     dimension_reduction="pca",

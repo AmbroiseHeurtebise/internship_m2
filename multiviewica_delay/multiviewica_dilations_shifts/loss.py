@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
+from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
 
 
 def penalization(dilations, shifts, max_dilation, max_shift):

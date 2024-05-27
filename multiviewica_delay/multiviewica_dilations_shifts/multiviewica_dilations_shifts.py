@@ -3,12 +3,12 @@ import jax
 import jax.numpy as jnp
 from scipy.optimize import fmin_l_bfgs_b
 from time import time
-from multiviewica_delay import permica
 
-from loss import loss
-from other_functions import Memory_callback, compute_dilation_shift_scales
-from apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
-from permica_preprocessing import permica_preprocessing
+from multiviewica_delay.multiviewica_shifts._multiviewica_shifts import permica
+from .loss import loss
+from .other_functions import Memory_callback, compute_dilation_shift_scales
+from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
+from .permica_preprocessing import permica_preprocessing
 
 
 jax.config.update('jax_enable_x64', True)
