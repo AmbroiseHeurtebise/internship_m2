@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="multiviewica_delay",
-    description="Multi-view ICA",
+    description="Multi-view ICA with shifts and eventually dilations",
     version="0.0.1",
     keywords="",
     packages=find_packages(),

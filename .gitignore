@@ -170,3 +170,5 @@ joblib/**
 .gif
 data/results_ica.pkl
 lbfgsb_results/
+
+.coverage
