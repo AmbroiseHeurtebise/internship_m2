@@ -4,7 +4,7 @@
 import numpy as np
 import warnings
 from scipy.linalg import expm
-from .reduce_data import reduce_data
+from ._reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
 from time import time

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from multiviewica_delay.sources_generation import generate_data
-from multiviewica_delay._multiviewica_delay import multiviewica_delay
+from multiviewica_delay.multiviewica_shifts._generate_data import generate_data
+from multiviewica_delay import multiviewica_shifts
 
 
 def normalize_delays(tau_list, n):
@@ -47,7 +47,7 @@ def test_mvicad_retrieves_delays(mode):
         kwargs = dict(optim_delays_with_f=True)
 
     # Estimate delays with MVICAD
-    _, _, _, _, tau_list, _ = multiviewica_delay(
+    _, _, _, _, tau_list, _ = multiviewica_shifts(
         X_list,
         max_delay=max_delay,
         n_iter_delay=2,

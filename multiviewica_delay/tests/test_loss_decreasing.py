@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from multiviewica_delay import multiviewica_delay
+from multiviewica_delay import multiviewica_shifts
 
 
 @pytest.mark.parametrize(
@@ -20,7 +20,7 @@ def test_loss_decreasing(mode):
     X_list = rng.randn(m, p, n)
 
     # MVICAD
-    _, _, _, _, loss = multiviewica_delay(
+    _, _, _, _, loss = multiviewica_shifts(
         X_list,
         max_delay=max_delay,
         random_state=np.random.RandomState(seed),

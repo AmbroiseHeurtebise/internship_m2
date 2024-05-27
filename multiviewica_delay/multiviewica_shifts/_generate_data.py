@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from sklearn.utils import check_random_state
-from .apply_shifts import (
+from ._apply_shifts import (
     _apply_delay,
     _apply_delay_one_sub,
     _apply_delay_by_source,

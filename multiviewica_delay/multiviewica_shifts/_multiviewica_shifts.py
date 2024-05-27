@@ -6,11 +6,11 @@ import pandas as pd
 from scipy.linalg import expm
 from time import time
 import warnings
-from .reduce_data import reduce_data
+from ._reduce_data import reduce_data
 from ._permica import permica
 from ._groupica import groupica
 from ._sameica import sameica
-from .apply_shifts import (
+from ._apply_shifts import (
     _optimization_tau,
     _optimization_tau_approach1,
     _optimization_tau_approach2,

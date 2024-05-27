@@ -4,7 +4,7 @@
 import numpy as np
 from sklearn.utils.extmath import randomized_svd
 from picard import picard
-from .reduce_data import reduce_data
+from ._reduce_data import reduce_data
 
 
 def groupica(

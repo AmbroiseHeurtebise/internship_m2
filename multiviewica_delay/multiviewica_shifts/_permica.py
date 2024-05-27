@@ -4,8 +4,8 @@
 import numpy as np
 import scipy
 from picard import picard
-from .reduce_data import reduce_data
-from .apply_shifts import _apply_delay, _apply_delay_one_sub
+from ._reduce_data import reduce_data
+from ._apply_shifts import _apply_delay, _apply_delay_one_sub
 
 
 def permica(
