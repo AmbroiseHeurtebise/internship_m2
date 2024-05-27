@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
-from .apply_dilations_shifts import (
-    apply_dilations_shifts_3d_no_argmin,
+from ._apply_dilations_shifts import (
+    apply_dilations_shifts_3d,
     apply_dilations_shifts_1d,
 )
 
@@ -68,7 +68,7 @@ def find_order(S1, S2):
     return order
 
 
-def permica_preprocessing(
+def permica_processing(
     W_list_permica,
     X_list,
     max_dilation=1.15,
@@ -86,7 +86,7 @@ def permica_preprocessing(
     orders_permica, dilations_permica, shifts_permica = grid_search_orders_dilations_shifts(
         S_list_permica, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
         nb_points_grid=nb_points_grid)
-    S_list_permica = apply_dilations_shifts_3d_no_argmin(
+    S_list_permica = apply_dilations_shifts_3d(
         S_list_permica, dilations=dilations_permica, shifts=shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
     W_list_permica = np.array([W_list_permica[i][orders_permica[i]] for i in range(m)])
@@ -113,7 +113,7 @@ def permica_preprocessing(
         signs = find_signs_sources(S_list_permica)
         W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
         S_list_permica *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
-    S_list_permica = apply_dilations_shifts_3d_no_argmin(
+    S_list_permica = apply_dilations_shifts_3d(
         S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat)
     if verbose:

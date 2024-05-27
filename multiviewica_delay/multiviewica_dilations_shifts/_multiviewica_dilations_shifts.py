@@ -5,10 +5,10 @@ from scipy.optimize import fmin_l_bfgs_b
 from time import time
 
 from multiviewica_delay.multiviewica_shifts._multiviewica_shifts import permica
-from .loss import loss
-from .other_functions import Memory_callback, compute_dilation_shift_scales
-from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
-from .permica_preprocessing import permica_preprocessing
+from ._loss import loss
+from ._other_functions import Memory_callback, compute_dilation_shift_scales
+from ._apply_dilations_shifts import apply_dilations_shifts_3d
+from ._permica_processing import permica_processing
 
 
 jax.config.update('jax_enable_x64', True)
@@ -40,7 +40,7 @@ def mvica_ds(
     _, W_list_permica, _, _ = permica(
         X_list, max_iter=1000, random_state=random_state, tol=1e-9,
         optim_delays=False)
-    S_list_permica, W_list_permica, dilations_permica, shifts_permica = permica_preprocessing(
+    S_list_permica, W_list_permica, dilations_permica, shifts_permica = permica_processing(
         W_list_permica=W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift,
         n_concat=n_concat, nb_points_grid=nb_points_grid_init, S_list_true=S_list_true, verbose=verbose)
 
@@ -126,7 +126,7 @@ def mvica_ds(
 
     # reconstruct sources
     S_list_lbfgsb = jnp.array([jnp.dot(W, X) for W, X in zip(W_lbfgsb, X_list)])
-    Y_list_lbfgsb = apply_dilations_shifts_3d_no_argmin(
+    Y_list_lbfgsb = apply_dilations_shifts_3d(
         S_list_lbfgsb, dilations=dilations_lbfgsb, shifts=shifts_lbfgsb, max_shift=max_shift,
         max_dilation=max_dilation, shift_before_dilation=False, n_concat=n_concat)
 

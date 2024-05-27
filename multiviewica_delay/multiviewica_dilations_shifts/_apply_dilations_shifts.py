@@ -7,7 +7,7 @@ def interp_mapped(*args):
     return vmap(vmap(jnp.interp, (0, None, 0)), (1, None, None), out_axes=1)(*args)
 
 
-def apply_dilations_shifts_3d_no_argmin(
+def apply_dilations_shifts_3d(
     S, dilations, shifts, max_dilation=1., max_shift=0., shift_before_dilation=True, n_concat=1,
 ):
     """ Apply dilations and shifts to sources.
@@ -26,10 +26,14 @@ def apply_dilations_shifts_3d_no_argmin(
         max_shift (float, optional):
             Maximum shift factor allowed. Shifts are in [-max_shift, max_shift].
             Defaults to 0.
-        shift_before_dilation
-            ...
-        n_concat
-            ...
+        shift_before_dilation (bool, optional)
+            Decide if we apply shift before or after dilation.
+            If True: s(t) <- s(rho (t + tau)).
+            If False: s(t) <- s(rho t + tau).
+            Default is True.
+        n_concat (int, optional)
+            Number of concatenations, i.e. number of epochs in the context of M/EEG data.
+            Default to 1.
 
     Returns:
         S_ds (nd.array):

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 from scipy.signal.windows import tukey
-from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
+from ._apply_dilations_shifts import apply_dilations_shifts_3d
 
 
 # ##################################### First data generation function ######################################
@@ -100,7 +100,7 @@ def generate_data(
     shifts = np.zeros((m, p))
     dilations[1:] = rng.uniform(low=1/max_dilation, high=max_dilation, size=(m-1, p))
     shifts[1:] = rng.uniform(low=-max_shift, high=max_shift, size=(m-1, p))
-    S_list = apply_dilations_shifts_3d_no_argmin(
+    S_list = apply_dilations_shifts_3d(
         S_list, dilations=dilations, shifts=shifts, max_shift=max_shift,
         max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
@@ -188,7 +188,7 @@ def generate_data_multiple_peaks(
     shifts = np.zeros((m, p))
     dilations[1:] = rng.uniform(low=1/max_dilation, high=max_dilation, size=(m-1, p))
     shifts[1:] = rng.uniform(low=-max_shift, high=max_shift, size=(m-1, p))
-    S_list = apply_dilations_shifts_3d_no_argmin(
+    S_list = apply_dilations_shifts_3d(
         S_list, dilations=dilations, shifts=shifts, max_shift=max_shift,
         max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])

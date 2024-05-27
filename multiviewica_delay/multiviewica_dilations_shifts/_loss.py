@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from .apply_dilations_shifts import apply_dilations_shifts_3d_no_argmin
+from ._apply_dilations_shifts import apply_dilations_shifts_3d
 
 
 def penalization(dilations, shifts, max_dilation, max_shift):
@@ -46,7 +46,7 @@ def loss(
     A = W_A_B[m*p**2: m*p*(p+1)].reshape((m, p)) / dilation_scale
     B = W_A_B[m*p*(p+1):].reshape((m, p)) / shift_scale
     S_list = jnp.array([jnp.dot(W, X) for W, X in zip(W_list, X_list)])
-    Y_list = apply_dilations_shifts_3d_no_argmin(
+    Y_list = apply_dilations_shifts_3d(
         S_list, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift,
         shift_before_dilation=False, n_concat=n_concat)
     # shifts and dilations' penalization term
