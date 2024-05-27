@@ -495,7 +495,8 @@ def _optimization_tau_continuous_delays_total(
                     delay, i, Y_list, tau_list[i], basis_list, noise, shared_delays))
             grad_cost = jit(grad_cost)
             tau_list[i] = minimize(
-                lambda delay: cost_jax_total_loss_subject_specific_delays(delay, i, Y_list, tau_list[i], basis_list, noise, shared_delays),
+                lambda delay: cost_jax_total_loss_subject_specific_delays(
+                    delay, i, Y_list, tau_list[i], basis_list, noise, shared_delays),
                 x0=[tau_list[i]], jac=lambda d: float(grad_cost(d)),
                 method='L-BFGS-B', bounds=bounds, tol=tol, options={"maxiter": max_iter_delay}).x
             Y_list = _apply_continuous_delays(S_list, -tau_list, shared_delays=shared_delays)

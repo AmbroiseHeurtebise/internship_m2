@@ -25,7 +25,7 @@ from ._apply_shifts import (
 )
 
 
-def multiviewica_shifts(
+def mvica_s(
     X,
     n_components=None,
     dimension_reduction="pca",

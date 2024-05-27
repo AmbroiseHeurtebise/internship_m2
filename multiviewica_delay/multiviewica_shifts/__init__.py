@@ -1,1 +1,1 @@
-from ._multiviewica_shifts import multiviewica_shifts
+from ._multiviewica_shifts import mvica_s
