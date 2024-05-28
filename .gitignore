@@ -163,3 +163,12 @@ cython_debug/
 
 # joblib
 joblib/**
+
+# too large data
+.pkl
+.csv
+.gif
+data/results_ica.pkl
+lbfgsb_results/
+
+.coverage

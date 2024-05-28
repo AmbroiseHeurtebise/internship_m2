@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
-from multiviewica_delay import (
-    _noisy_ica_step,
+from multiviewica_delay.multiviewica_shifts._apply_shifts import (
     _apply_delay,
     _apply_delay_one_sub,
     _optimization_tau_approach1,
     _apply_delay_by_source,
     _optimization_tau_by_source
 )
+from multiviewica_delay.multiviewica_shifts._multiviewica_shifts import _noisy_ica_step
 
 
 # partial loss function
