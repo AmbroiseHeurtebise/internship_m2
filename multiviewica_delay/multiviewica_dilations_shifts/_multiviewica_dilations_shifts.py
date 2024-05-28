@@ -110,7 +110,7 @@ def mvica_ds(
         x0=args[0],
         args=args[1:],
         bounds=bounds_W_dilations_shifts,
-        disp=True,
+        disp=verbose,
         factr=1e3,
         pgtol=1e-5,
         maxiter=3000,
