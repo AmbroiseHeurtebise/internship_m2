@@ -162,7 +162,7 @@ n_concat = 5
 n = 600
 max_shift = 0.05
 max_dilation = 1.15
-noise_data = 0.05
+noise_data = 0.01
 noise_model = 1
 n_bins = 10
 freq_level = 50
@@ -221,7 +221,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/data/"
-save_name = f"DataFrame_with_{nb_seeds}_by_penalization_scale"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_penalization_scale"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
