@@ -157,7 +157,7 @@ def generate_frequencies(n, rng, n_intervals=10):
 def generate_source(n, rng, n_intervals=10):
     s1 = generate_main_pattern(n=n, rng=rng)
     s2 = generate_frequencies(n=n, rng=rng, n_intervals=n_intervals)
-    s = tukey(n) * (s1 + s2)
+    s = tukey(n) * (s1 + s2) / 4
     return s
 
 
