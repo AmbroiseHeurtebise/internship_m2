@@ -26,7 +26,7 @@ def _logcosh(X):
 
 
 def loss(
-    W_A_B,
+    W_dilations_shifts,
     X_list,
     dilation_scale,
     shift_scale,
@@ -42,15 +42,15 @@ def loss(
     penalization_scale,
 ):
     m, p, _ = X_list.shape
-    W_list = W_A_B[:m*p**2].reshape((m, p, p))
-    A = W_A_B[m*p**2: m*p*(p+1)].reshape((m, p)) / dilation_scale
-    B = W_A_B[m*p*(p+1):].reshape((m, p)) / shift_scale
+    W_list = W_dilations_shifts[:m*p**2].reshape((m, p, p))
+    dilations = W_dilations_shifts[m*p**2: m*p*(p+1)].reshape((m, p)) / dilation_scale
+    shifts = W_dilations_shifts[m*p*(p+1):].reshape((m, p)) / shift_scale
     S_list = jnp.array([jnp.dot(W, X) for W, X in zip(W_list, X_list)])
     Y_list = apply_dilations_shifts_3d(
-        S_list, dilations=A, shifts=B, max_dilation=max_dilation, max_shift=max_shift,
-        shift_before_dilation=False, n_concat=n_concat)
+        S_list, dilations=dilations, shifts=shifts, max_dilation=max_dilation,
+        max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
     # shifts and dilations' penalization term
-    loss = penalization_scale * penalization(A, B, max_dilation, max_shift)
+    loss = penalization_scale * penalization(dilations, shifts, max_dilation, max_shift)
     # envelop fitting term
     if use_envelop_term:
         Y_abs_smooth = jnp.abs(Y_list)
