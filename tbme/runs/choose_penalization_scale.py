@@ -179,8 +179,8 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-penalization_scales = np.logspace(-5, 0, 6)
-nb_seeds = 2
+penalization_scales = np.logspace(-5, 0, 11)
+nb_seeds = 30
 random_states = np.arange(nb_seeds)
 nb_expes = len(penalization_scales) * len(random_states)
 
