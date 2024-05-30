@@ -37,8 +37,12 @@ plt.show()
 
 # plot shift and dilation's errors
 plt.figure(figsize=(6, 4))
-sns.lineplot(data=df, x="penalization scale", y="Dilations error LBFGSB", linewidth=2.5, label="dilations error", estimator=np.median)
-sns.lineplot(data=df, x="penalization scale", y="Shifts error LBFGSB", linewidth=2.5, label="shifts error", estimator=np.median)
+sns.lineplot(
+    data=df, x="penalization scale", y="Dilations error LBFGSB", linewidth=2.5,
+    label="dilations error", estimator=np.median)
+sns.lineplot(
+    data=df, x="penalization scale", y="Shifts error LBFGSB", linewidth=2.5,
+    label="shifts error", estimator=np.median)
 plt.xscale("log")
 plt.yscale("log")
 plt.ylabel("Error")
