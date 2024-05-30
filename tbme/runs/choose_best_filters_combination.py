@@ -12,7 +12,7 @@ n_concat = 5
 n = 600
 max_shift = 0.05
 max_dilation = 1.15
-noise_data = 0.01
+noise_data = 0.03
 noise_model = 1
 n_bins = 10
 freq_level = 50
@@ -26,7 +26,7 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 10
+nb_seeds = 20
 random_states = np.arange(nb_seeds)
 filter_length_squarenorm_f_all = np.array([1, 2, 3, 5, 7, 10, 15])
 number_of_filters_envelop_all = np.array([1, 2])
@@ -121,7 +121,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/data/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations_noise_0-03"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
