@@ -26,14 +26,16 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 2
+nb_seeds = 10
 random_states = np.arange(nb_seeds)
 filter_length_squarenorm_f_all = np.array([1, 2, 3, 5, 7, 10, 15])
 number_of_filters_envelop_all = np.array([1, 2])
 filter_length_envelop_all = np.array([2, 3, 5, 10, 15, 20, 25])
 
 # DataFrame of combinations
-columns = ['filter_length_squarenorm_f', 'use_envelop_term', 'number_of_filters_envelop', 'filter_length_envelop', 'random_state']
+columns = [
+    'filter_length_squarenorm_f', 'use_envelop_term', 'number_of_filters_envelop',
+    'filter_length_envelop', 'random_state']
 df_varying_outputs = pd.DataFrame(columns=columns)
 
 # first 98*nb_seeds combinations
@@ -83,6 +85,7 @@ nb_expes = len(df_varying_outputs)
 print("\n############################################### Start ###############################################")
 df_res = pd.DataFrame()
 for _, row in tqdm(df_varying_outputs.iterrows()):
+    print(f"Total number of experiments : {nb_expes}\n")
     dict_varying_outputs = row.to_dict()
     del dict_varying_outputs['random_state']
     dict_expe = run_experiment(
@@ -113,7 +116,6 @@ for _, row in tqdm(df_varying_outputs.iterrows()):
     )
     df_expe = pd.DataFrame(dict_expe, index=[i])
     df_res = pd.concat([df_res, df_expe], ignore_index=True)
-    print(f"Total number of experiments : {nb_expes}\n")
 print("\n######################################### Obtained DataFrame #########################################")
 print(df_res)
 

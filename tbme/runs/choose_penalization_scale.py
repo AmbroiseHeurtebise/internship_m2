@@ -29,8 +29,8 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-penalization_scales = np.logspace(-5, 0, 11)
-nb_seeds = 30
+penalization_scales = np.logspace(-8, 5, 27)
+nb_seeds = 20
 random_states = np.arange(nb_seeds)
 nb_expes = len(penalization_scales) * len(random_states)
 
@@ -38,6 +38,7 @@ nb_expes = len(penalization_scales) * len(random_states)
 print("\n############################################### Start ###############################################")
 df_res = pd.DataFrame()
 for i, (penalization_scale, random_state) in tqdm(enumerate(product(penalization_scales, random_states))):
+    print(f"Total number of experiments : {nb_expes}\n")
     dict_varying_outputs = {
         "penalization scale": penalization_scale,
     }
@@ -67,9 +68,8 @@ for i, (penalization_scale, random_state) in tqdm(enumerate(product(penalization
         return_all_iterations=return_all_iterations,
         dict_varying_outputs=dict_varying_outputs,
     )
-    df = pd.DataFrame(dict_expe, index=[i])
-    df_res = pd.concat([df_res, df], ignore_index=True)
-    print(f"Total number of experiments : {nb_expes}\n")
+    df_expe = pd.DataFrame(dict_expe, index=[i])
+    df_res = pd.concat([df_res, df_expe], ignore_index=True)
 print("\n######################################### Obtained DataFrame #########################################")
 print(df_res)
 
