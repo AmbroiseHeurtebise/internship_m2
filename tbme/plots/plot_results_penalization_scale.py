@@ -12,17 +12,25 @@ save_path = results_dir + save_name
 df = pd.read_csv(save_path)
 
 # plot
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = prop_cycle.by_key()['color']
+
 fig = plt.figure(figsize=(6, 4))
-sns.lineplot(data=df, x="penalization scale", y="Amari LBFGSB", linewidth=2.5, label="LBFGSB", estimator=np.median)
-sns.lineplot(data=df, x="penalization scale", y="Amari MVICAD", linewidth=2.5, label="MVICAD", estimator=np.median)
 sns.lineplot(
-    data=df, x="penalization scale", y="Amari MVICAD ext", linewidth=2.5, label="MVICAD extended", estimator=np.median)
+    data=df, x="penalization scale", y="Amari MVICAD", linewidth=2.5,
+    label="MVICAD", estimator=np.median, c=colors[1])
+sns.lineplot(
+    data=df, x="penalization scale", y="Amari MVICAD ext", linewidth=2.5,
+    label="MVICAD extended", estimator=np.median, c=colors[2])
+sns.lineplot(
+    data=df, x="penalization scale", y="Amari LBFGSB", linewidth=2.5,
+    label="LBFGSB", estimator=np.median, c=colors[0])
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
 plt.ylabel("Amari distance")
 plt.grid()
-plt.title("Amari distance with respect to penalization scale")
+plt.title("Median Amari distance with respect to penalization scale")
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "amari_distance_wrt_penalization_scale.pdf")
 plt.show()
