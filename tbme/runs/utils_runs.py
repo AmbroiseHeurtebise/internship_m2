@@ -148,7 +148,7 @@ def run_experiment(
               "Amari MVICAD ext": amari_mvicad_2,
               "Time MVICAD ext": time_mvicad_2,
               "Amari permica": amari_permica,
-              "random state": random_state}
+              "random_state": random_state}
     if dict_varying_outputs is not None:
         output.update(dict_varying_outputs)
     return output

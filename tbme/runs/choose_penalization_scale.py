@@ -40,7 +40,7 @@ df_res = pd.DataFrame()
 for i, (penalization_scale, random_state) in tqdm(enumerate(product(penalization_scales, random_states))):
     print(f"Total number of experiments : {nb_expes}\n")
     dict_varying_outputs = {
-        "penalization scale": penalization_scale,
+        "penalization_scale": penalization_scale,
     }
     dict_expe = run_experiment(
         m=m,
