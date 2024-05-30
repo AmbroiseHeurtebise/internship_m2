@@ -34,8 +34,8 @@ filter_length_envelop_all = np.array([2, 3, 5, 10, 15, 20, 25])
 
 # DataFrame of combinations
 columns = [
-    'filter_length_squarenorm_f', 'use_envelop_term', 'number_of_filters_envelop',
-    'filter_length_envelop', 'random_state']
+    "filter_length_squarenorm_f", "use_envelop_term", "number_of_filters_envelop",
+    "filter_length_envelop", "random_state"]
 df_varying_outputs = pd.DataFrame(columns=columns)
 
 # first 98*nb_seeds combinations
@@ -45,11 +45,11 @@ for i, (
         product(filter_length_squarenorm_f_all, number_of_filters_envelop_all,
                 filter_length_envelop_all, random_states)):
     row = {
-        'filter_length_squarenorm_f': filter_length_squarenorm_f,
-        'use_envelop_term': True,
-        'number_of_filters_envelop': number_of_filters_envelop,
-        'filter_length_envelop': filter_length_envelop,
-        'random_state': random_state,
+        "filter_length_squarenorm_f": filter_length_squarenorm_f,
+        "use_envelop_term": True,
+        "number_of_filters_envelop": number_of_filters_envelop,
+        "filter_length_envelop": filter_length_envelop,
+        "random_state": random_state,
     }
     df_varying_outputs.loc[i] = row
 
@@ -58,11 +58,11 @@ for j, (
     filter_length_squarenorm_f, random_state) in enumerate(
         product(filter_length_squarenorm_f_all, random_states)):
     row = {
-        'filter_length_squarenorm_f': filter_length_squarenorm_f,
-        'use_envelop_term': True,
-        'number_of_filters_envelop': 1,
-        'filter_length_envelop': 1,
-        'random_state': random_state,
+        "filter_length_squarenorm_f": filter_length_squarenorm_f,
+        "use_envelop_term": True,
+        "number_of_filters_envelop": 1,
+        "filter_length_envelop": 1,
+        "random_state": random_state,
     }
     df_varying_outputs.loc[i+j+1] = row
 
@@ -71,11 +71,11 @@ for k, (
     filter_length_squarenorm_f, random_state) in enumerate(
         product(filter_length_squarenorm_f_all, random_states)):
     row = {
-        'filter_length_squarenorm_f': filter_length_squarenorm_f,
-        'use_envelop_term': False,
-        'number_of_filters_envelop': 0,
-        'filter_length_envelop': 0,
-        'random_state': random_state,
+        "filter_length_squarenorm_f": filter_length_squarenorm_f,
+        "use_envelop_term": False,
+        "number_of_filters_envelop": 0,
+        "filter_length_envelop": 0,
+        "random_state": random_state,
     }
     df_varying_outputs.loc[i+j+k+2] = row
 
@@ -87,7 +87,7 @@ df_res = pd.DataFrame()
 for _, row in tqdm(df_varying_outputs.iterrows()):
     print(f"Total number of experiments : {nb_expes}\n")
     dict_varying_outputs = row.to_dict()
-    del dict_varying_outputs['random_state']
+    del dict_varying_outputs["random_state"]
     dict_expe = run_experiment(
         m=m,
         p=p,
@@ -101,14 +101,14 @@ for _, row in tqdm(df_varying_outputs.iterrows()):
         freq_level=freq_level,
         S1_S2_scale=S1_S2_scale,
         number_of_filters_squarenorm_f=number_of_filters_squarenorm_f,
-        filter_length_squarenorm_f=row['filter_length_squarenorm_f'],
-        use_envelop_term=row['use_envelop_term'],
-        number_of_filters_envelop=row['number_of_filters_envelop'],
-        filter_length_envelop=row['filter_length_envelop'],
+        filter_length_squarenorm_f=row["filter_length_squarenorm_f"],
+        use_envelop_term=row["use_envelop_term"],
+        number_of_filters_envelop=row["number_of_filters_envelop"],
+        filter_length_envelop=row["filter_length_envelop"],
         dilation_scale_per_source=dilation_scale_per_source,
         W_scale=W_scale,
         penalization_scale=penalization_scale,
-        random_state=random_state,
+        random_state=row["random_state"],
         nb_points_grid_init=nb_points_grid_init,
         verbose=verbose,
         return_all_iterations=return_all_iterations,
