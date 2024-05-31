@@ -17,13 +17,13 @@ colors = prop_cycle.by_key()['color']
 
 plt.figure(figsize=(6, 4))
 sns.lineplot(
-    data=df, x="penalization scale", y="Amari MVICAD", linewidth=2.5,
+    data=df, x="penalization_scale", y="Amari MVICAD", linewidth=2.5,
     label="MVICAD", estimator=np.median, c=colors[1])
 sns.lineplot(
-    data=df, x="penalization scale", y="Amari MVICAD ext", linewidth=2.5,
+    data=df, x="penalization_scale", y="Amari MVICAD ext", linewidth=2.5,
     label="MVICAD extended", estimator=np.median, c=colors[2])
 sns.lineplot(
-    data=df, x="penalization scale", y="Amari LBFGSB", linewidth=2.5,
+    data=df, x="penalization_scale", y="Amari LBFGSB", linewidth=2.5,
     label="LBFGSB", estimator=np.median, c=colors[0])
 plt.legend()
 plt.xscale("log")
@@ -38,10 +38,10 @@ plt.show()
 # plot shift and dilation's errors
 plt.figure(figsize=(6, 4))
 sns.lineplot(
-    data=df, x="penalization scale", y="Dilations error LBFGSB", linewidth=2.5,
+    data=df, x="penalization_scale", y="Dilations error LBFGSB", linewidth=2.5,
     label="dilations error", estimator=np.median)
 sns.lineplot(
-    data=df, x="penalization scale", y="Shifts error LBFGSB", linewidth=2.5,
+    data=df, x="penalization_scale", y="Shifts error LBFGSB", linewidth=2.5,
     label="shifts error", estimator=np.median)
 plt.xscale("log")
 plt.yscale("log")
