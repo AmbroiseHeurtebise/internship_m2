@@ -1,18 +1,26 @@
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from itertools import product
+from joblib import Parallel, delayed
 from utils_runs import run_experiment
 
 
+def run_experiment_wrapped(varying_output_row, **kwargs):
+    dict_varying_outputs = varying_output_row.to_dict()
+    del dict_varying_outputs["random_state"]
+    dict_expe = run_experiment(dict_varying_outputs=dict_varying_outputs, **kwargs)
+    return dict_expe
+
+
 # fixed params
+N_JOBS = 4
 m = 5
 p = 3
 n_concat = 5
 n = 600
 max_shift = 0.05
 max_dilation = 1.15
-noise_data = 0.05
+noise_data = 0.01
 noise_model = 1
 n_bins = 10
 freq_level = 50
@@ -26,7 +34,7 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 20
+nb_seeds = 2
 random_states = np.arange(nb_seeds)
 filter_length_squarenorm_f_all = np.array([1, 2, 3, 5, 7, 10, 15])
 number_of_filters_envelop_all = np.array([1, 2])
@@ -82,13 +90,11 @@ for k, (
 nb_expes = len(df_varying_outputs)
 
 # run experiment
+print(f"\nTotal number of experiments : {nb_expes}")
 print("\n############################################### Start ###############################################")
-df_res = pd.DataFrame()
-for _, row in tqdm(df_varying_outputs.iterrows()):
-    print(f"\nTotal number of experiments : {nb_expes}\n")
-    dict_varying_outputs = row.to_dict()
-    del dict_varying_outputs["random_state"]
-    dict_expe = run_experiment(
+dict_res = Parallel(n_jobs=N_JOBS)(
+    delayed(run_experiment_wrapped)(
+        varying_output_row=row,
         m=m,
         p=p,
         n_concat=n_concat,
@@ -112,16 +118,15 @@ for _, row in tqdm(df_varying_outputs.iterrows()):
         nb_points_grid_init=nb_points_grid_init,
         verbose=verbose,
         return_all_iterations=return_all_iterations,
-        dict_varying_outputs=dict_varying_outputs,
-    )
-    df_expe = pd.DataFrame(dict_expe, index=[i])
-    df_res = pd.concat([df_res, df_expe], ignore_index=True)
+    ) for _, row in df_varying_outputs.iterrows()
+)
 print("\n######################################### Obtained DataFrame #########################################")
+df_res = pd.DataFrame(dict_res)
 print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/data/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations_noise_0-05"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
