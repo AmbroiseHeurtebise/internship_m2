@@ -12,7 +12,7 @@ n_concat = 5
 n = 600
 max_shift = 0.05
 max_dilation = 1.15
-noise_data = 0.03
+noise_data = 0.05
 noise_model = 1
 n_bins = 10
 freq_level = 50
@@ -85,7 +85,7 @@ nb_expes = len(df_varying_outputs)
 print("\n############################################### Start ###############################################")
 df_res = pd.DataFrame()
 for _, row in tqdm(df_varying_outputs.iterrows()):
-    print(f"Total number of experiments : {nb_expes}\n")
+    print(f"\nTotal number of experiments : {nb_expes}\n")
     dict_varying_outputs = row.to_dict()
     del dict_varying_outputs["random_state"]
     dict_expe = run_experiment(
@@ -121,7 +121,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/data/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations_noise_0-03"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations_noise_0-05"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
