@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from itertools import product
+from joblib import Parallel, delayed
 from utils_runs import run_experiment
 
 
+def run_experiment_wrapped(varying_output, **kwargs):
+    dict_varying_outputs = {"noise_data": varying_output}
+    dict_expe = run_experiment(dict_varying_outputs=dict_varying_outputs, **kwargs)
+    return dict_expe
+
+
 # fixed params
+N_JOBS = 4
 m = 5
 p = 3
 n_concat = 5
@@ -29,20 +36,17 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 30
+nb_seeds = 2
 random_states = np.arange(nb_seeds)
 noise_data_all = np.logspace(-3, 0, 10)
 nb_expes = len(noise_data_all) * len(random_states)
 
 # run experiment
+print(f"\nTotal number of experiments : {nb_expes}")
 print("\n############################################### Start ###############################################")
-df_res = pd.DataFrame()
-for i, (noise_data, random_state) in tqdm(enumerate(product(noise_data_all, random_states))):
-    print(f"Total number of experiments : {nb_expes}\n")
-    dict_varying_outputs = {
-        "noise_data": noise_data,
-    }
-    dict_expe = run_experiment(
+dict_res = Parallel(n_jobs=N_JOBS)(
+    delayed(run_experiment_wrapped)(
+        varying_output=noise_data,
         m=m,
         p=p,
         n_concat=n_concat,
@@ -66,11 +70,11 @@ for i, (noise_data, random_state) in tqdm(enumerate(product(noise_data_all, rand
         nb_points_grid_init=nb_points_grid_init,
         verbose=verbose,
         return_all_iterations=return_all_iterations,
-        dict_varying_outputs=dict_varying_outputs,
-    )
-    df_expe = pd.DataFrame(dict_expe, index=[i])
-    df_res = pd.concat([df_res, df_expe], ignore_index=True)
+    ) for noise_data, random_state
+    in product(noise_data_all, random_states)
+)
 print("\n######################################### Obtained DataFrame #########################################")
+df_res = pd.DataFrame(dict_res)
 print(df_res)
 
 # save dataframe
