@@ -6,7 +6,7 @@ import seaborn as sns
 
 # read dataframe
 nb_seeds = 30
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/data/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_noise"
 save_path = results_dir + save_name
 df = pd.read_csv(save_path)
