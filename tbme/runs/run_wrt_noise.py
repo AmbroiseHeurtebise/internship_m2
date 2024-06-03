@@ -23,11 +23,11 @@ noise_model = 1
 n_bins = 10
 freq_level = 50
 S1_S2_scale = 0.7
-number_of_filters_squarenorm_f = 0
-filter_length_squarenorm_f = 3
+number_of_filters_squarenorm_f = 1
+filter_length_squarenorm_f = 2
 use_envelop_term = True
 number_of_filters_envelop = 1
-filter_length_envelop = 10
+filter_length_envelop = 5
 dilation_scale_per_source = True
 W_scale = 15
 penalization_scale = 1e-5
@@ -36,7 +36,7 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 2
+nb_seeds = 30
 random_states = np.arange(nb_seeds)
 noise_data_all = np.logspace(-3, 0, 10)
 nb_expes = len(noise_data_all) * len(random_states)
