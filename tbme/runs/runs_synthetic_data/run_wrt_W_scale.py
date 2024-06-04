@@ -13,7 +13,7 @@ def run_experiment_wrapped(varying_output, **kwargs):
 
 # fixed params
 N_JOBS = 4
-m = 5
+m = 10
 p = 3
 n_concat = 5
 n = 600
@@ -79,7 +79,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_W_scale"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_W_scale_m{m}_p{p}"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
