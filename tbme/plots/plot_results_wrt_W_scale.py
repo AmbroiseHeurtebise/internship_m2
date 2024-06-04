@@ -28,6 +28,7 @@ sns.lineplot(
     data=df, x="W_scale", y="Amari LBFGSB", linewidth=2.5,
     label="LBFGSB", estimator=np.median, c=colors[0])
 plt.legend()
+plt.xscale("log", base=2)
 plt.yscale("log")
 plt.xlabel("W scale")
 plt.ylabel("Amari distance")
@@ -45,6 +46,7 @@ sns.lineplot(
 sns.lineplot(
     data=df, x="W_scale", y="Shifts error LBFGSB", linewidth=2.5,
     label="shifts error", estimator=np.median)
+plt.xscale("log", base=2)
 plt.yscale("log")
 plt.xlabel("W scale")
 plt.ylabel("Error")
