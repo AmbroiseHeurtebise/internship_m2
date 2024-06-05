@@ -36,7 +36,7 @@ verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 30
+nb_seeds = 20
 random_states = np.arange(nb_seeds)
 p_all = np.arange(2, 11)
 nb_expes = len(p_all) * len(random_states)
