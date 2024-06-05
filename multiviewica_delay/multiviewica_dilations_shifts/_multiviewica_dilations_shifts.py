@@ -58,33 +58,38 @@ def mvica_ds(
         [jnp.ravel(W_list_permica), jnp.ravel(dilations_init), jnp.ravel(shifts_init)])
 
     # arguments for L-BFGS
-    args = (
-        W_dilations_shifts_init,
-        X_list,
-        dilation_scale,
-        shift_scale,
-        max_shift,
-        max_dilation,
-        noise_model,
-        number_of_filters_envelop,
-        filter_length_envelop,
-        number_of_filters_squarenorm_f,
-        filter_length_squarenorm_f,
-        use_envelop_term,
-        n_concat,
-        penalization_scale)
+    kwargs = {
+        "X_list": X_list,
+        "dilation_scale": dilation_scale,
+        "shift_scale": shift_scale,
+        "max_shift": max_shift,
+        "max_dilation": max_dilation,
+        "noise_model": noise_model,
+        "number_of_filters_envelop": number_of_filters_envelop,
+        "filter_length_envelop": filter_length_envelop,
+        "number_of_filters_squarenorm_f": number_of_filters_squarenorm_f,
+        "filter_length_squarenorm_f": filter_length_squarenorm_f,
+        "use_envelop_term": use_envelop_term,
+        "n_concat": n_concat,
+        "penalization_scale": penalization_scale,
+    }
 
     # jit
-    val_and_grad = jax.jit(jax.value_and_grad(loss), static_argnums=tuple(np.arange(3, 14)))
+    val_and_grad = jax.jit(
+        jax.value_and_grad(loss),
+        static_argnames=("shift_scale", "max_shift", "max_dilation", "noise_model",
+                         "number_of_filters_envelop", "filter_length_envelop",
+                         "number_of_filters_squarenorm_f", "filter_length_squarenorm_f",
+                         "use_envelop_term", "n_concat", "penalization_scale"))
 
-    def wrapper_loss_and_grad(*args):
-        val, grad = val_and_grad(*args)
+    def wrapper_loss_and_grad(W_dilations_shifts, kwargs):
+        val, grad = val_and_grad(W_dilations_shifts, **kwargs)
         return val, np.array(grad)
 
     if verbose:
         print("Jit...")
         start = time()
-    wrapper_loss_and_grad(*args)
+    wrapper_loss_and_grad(W_dilations_shifts_init, kwargs)
     if verbose:
         print(f"Jit time : {time() - start}")
 
@@ -107,8 +112,8 @@ def mvica_ds(
         start = time()
     fmin_l_bfgs_b(
         func=wrapper_loss_and_grad,
-        x0=args[0],
-        args=args[1:],
+        x0=W_dilations_shifts_init,
+        args=(kwargs,),
         bounds=bounds_W_dilations_shifts,
         disp=verbose,
         factr=1e3,
