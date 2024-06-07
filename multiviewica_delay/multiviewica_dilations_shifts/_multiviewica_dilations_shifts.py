@@ -4,6 +4,7 @@ import jax.numpy as jnp
 from scipy.optimize import fmin_l_bfgs_b
 from time import time
 
+from multiviewica_delay.multiviewica_shifts._reduce_data import reduce_data
 from multiviewica_delay.multiviewica_shifts._multiviewica_shifts import permica
 from ._loss import loss
 from ._other_functions import Memory_callback, compute_dilation_shift_scales
@@ -33,7 +34,13 @@ def mvica_ds(
     return_all_iterations,
     nb_points_grid_init=20,
     S_list_true=None,
+    n_components=None,
+    dimension_reduction="pca",
 ):
+    # dimensionality reduction
+    P_list, X_list = reduce_data(
+        X_list, n_components=n_components, dimension_reduction=dimension_reduction
+    )
     m, p, n_total = X_list.shape
 
     # initialize W_list, S_list, dilations and shifts with permica
