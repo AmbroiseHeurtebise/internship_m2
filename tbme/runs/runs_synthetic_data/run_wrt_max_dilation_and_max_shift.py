@@ -42,7 +42,7 @@ return_all_iterations = True
 nb_seeds = 30
 random_states = np.arange(nb_seeds)
 max_dilation_all = np.linspace(1.03, 1.3, 10)
-max_shift_all = np.linspace(0.1, 0.1, 10)
+max_shift_all = np.linspace(0.01, 0.1, 10)
 max_dilation_max_shift_pairs = list(zip(max_dilation_all, max_shift_all))
 nb_expes = len(max_dilation_all) * len(random_states)
 
