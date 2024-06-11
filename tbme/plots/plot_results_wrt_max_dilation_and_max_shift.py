@@ -15,7 +15,7 @@ class AnyObject(object):
 class AnyObjectHandler(object):
     def legend_artist(self, legend, orig_handle, fontsize, handlebox):
         patch = mpl_text.Text(
-            x=0, y=0, text=orig_handle.my_text, color=orig_handle.my_color, verticalalignment=u'baseline', 
+            x=0, y=0, text=orig_handle.my_text, color=orig_handle.my_color, verticalalignment=u'baseline',
             horizontalalignment=u'left', multialignment=None,
             fontproperties=None, rotation=0, linespacing=None,
             rotation_mode=None)
