@@ -13,7 +13,7 @@ def run_experiment_wrapped(varying_output, **kwargs):
 
 # fixed params
 N_JOBS = 4
-m = 10
+m = 5
 p = 3
 n_concat = 5
 n = 600
@@ -38,7 +38,7 @@ return_all_iterations = True
 # varying params
 nb_seeds = 30
 random_states = np.arange(nb_seeds)
-W_scales = 2. ** np.arange(-2, 6)  # [0.25, 0.5, 1., 2., 4., 8., 16., 32.]
+W_scales = 2. ** np.arange(-2, 26)
 nb_expes = len(W_scales) * len(random_states)
 
 # run experiment
