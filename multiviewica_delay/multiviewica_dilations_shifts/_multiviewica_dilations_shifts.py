@@ -102,13 +102,13 @@ def mvica_ds(
 
     # bounds
     bounds_W = [(-jnp.inf, jnp.inf)] * (m * p**2)
-    if dilation_scale_per_source:
+    if (not dilation_scale_per_source) or (max_dilation == 1):
+        bounds_dilations = [
+            (1 / max_dilation * dilation_scale, max_dilation * dilation_scale)] * (m * p)
+    else:
         bounds_dilations = [
             (1 / max_dilation * dilation_scale.ravel()[i], max_dilation * dilation_scale.ravel()[i])
             for i in range(m * p)]
-    else:
-        bounds_dilations = [
-            (1 / max_dilation * dilation_scale, max_dilation * dilation_scale)] * (m * p)
     bounds_shifts = [(-max_shift * shift_scale, max_shift * shift_scale)] * (m * p)
     bounds_W_dilations_shifts = jnp.array(bounds_W + bounds_dilations + bounds_shifts)
 
@@ -134,7 +134,8 @@ def mvica_ds(
     # raise error in the case where L-BFGS-B didn't run
     if len(callback.memory_W) == 0:
         raise ValueError(
-            "The algorithm immediately stopped before the first iteration. Maybe you used W_scale=0.")
+            "The algorithm immediately stopped before the first iteration. "
+            "Maybe you used W_scale=0, max_dilation=1, or max_shift=0.")
 
     # get parameters of the last iteration
     W_lbfgsb = np.array(callback.memory_W)[-1]
