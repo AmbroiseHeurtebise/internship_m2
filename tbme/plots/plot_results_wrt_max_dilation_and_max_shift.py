@@ -44,6 +44,9 @@ sns.lineplot(
     data=df, x="max_dilation", y="Amari MVICAD ext", linewidth=2.5,
     label="MVICAD extended", estimator=np.median, c=colors[2])
 sns.lineplot(
+    data=df, x="max_dilation", y="Amari permica", linewidth=2.5,
+    label="PermICA", estimator=np.median, c=colors[3])
+sns.lineplot(
     data=df, x="max_dilation", y="Amari LBFGSB", linewidth=2.5,
     label="LBFGSB", estimator=np.median, c=colors[0])
 # xticks
