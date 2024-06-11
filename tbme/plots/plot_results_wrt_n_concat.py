@@ -39,10 +39,12 @@ plt.show()
 plt.figure(figsize=(6, 4))
 sns.lineplot(
     data=df, x="n_concat", y="Dilations error LBFGSB", linewidth=2.5,
-    label="dilations error", estimator=np.median)
+    label="dilations error", estimator=np.median, c=colors[0], linestyle=":",
+    marker="^")
 sns.lineplot(
     data=df, x="n_concat", y="Shifts error LBFGSB", linewidth=2.5,
-    label="shifts error", estimator=np.median)
+    label="shifts error", estimator=np.median, c=colors[0], linestyle="--",
+    marker="o")
 plt.yscale("log")
 plt.xlabel("Number of concatenations")
 plt.ylabel("Error")

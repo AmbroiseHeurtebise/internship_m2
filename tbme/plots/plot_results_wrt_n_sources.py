@@ -5,7 +5,7 @@ import seaborn as sns
 
 
 # read dataframe
-nb_seeds = 2
+nb_seeds = 3
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_n_sources"
 save_path = results_dir + save_name
@@ -39,10 +39,12 @@ plt.show()
 plt.figure(figsize=(6, 4))
 sns.lineplot(
     data=df, x="p", y="Dilations error LBFGSB", linewidth=2.5,
-    label="dilations error", estimator=np.median)
+    label="dilations error", estimator=np.median, c=colors[0], linestyle=":",
+    marker="^")
 sns.lineplot(
     data=df, x="p", y="Shifts error LBFGSB", linewidth=2.5,
-    label="shifts error", estimator=np.median)
+    label="shifts error", estimator=np.median, c=colors[0], linestyle="--",
+    marker="o")
 plt.yscale("log")
 plt.xlabel("Number of sources")
 plt.ylabel("Error")

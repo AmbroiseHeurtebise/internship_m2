@@ -40,10 +40,12 @@ plt.show()
 plt.figure(figsize=(6, 4))
 sns.lineplot(
     data=df, x="noise_data", y="Dilations error LBFGSB", linewidth=2.5,
-    label="dilations error", estimator=np.median)
+    label="dilations error", estimator=np.median, c=colors[0], linestyle=":",
+    marker="^")
 sns.lineplot(
     data=df, x="noise_data", y="Shifts error LBFGSB", linewidth=2.5,
-    label="shifts error", estimator=np.median)
+    label="shifts error", estimator=np.median, c=colors[0], linestyle="--",
+    marker="o")
 plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("Noise")
