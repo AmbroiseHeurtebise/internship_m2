@@ -131,6 +131,11 @@ def mvica_ds(
     if verbose:
         print(f"LBFGSB time : {time() - start}")
 
+    # raise error in the case where L-BFGS-B didn't run
+    if len(callback.memory_W) == 0:
+        raise ValueError(
+            "The algorithm immediately stopped before the first iteration. Maybe you used W_scale=0.")
+
     # get parameters of the last iteration
     W_lbfgsb = np.array(callback.memory_W)[-1]
     dilations_lbfgsb = np.array(callback.memory_dilations)[-1]
