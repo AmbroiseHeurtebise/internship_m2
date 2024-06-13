@@ -47,14 +47,15 @@ def mvica_ds(
     _, W_list_permica, _, _ = permica(
         X_list, max_iter=1000, random_state=random_state, tol=1e-9,
         optim_delays=False)
-    S_list_permica, W_list_permica, dilations_permica, shifts_permica = permica_processing(
+    _, W_list_permica, dilations_permica, shifts_permica, S_avg_permica = permica_processing(
         W_list_permica=W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift,
         n_concat=n_concat, nb_points_grid=nb_points_grid_init, S_list_true=S_list_true, verbose=verbose)
 
     # shift and dilation scales
     dilation_scale, shift_scale = compute_dilation_shift_scales(
         max_dilation=max_dilation, max_shift=max_shift, W_scale=W_scale,
-        dilation_scale_per_source=dilation_scale_per_source, S_list=S_list_permica, n_concat=n_concat)
+        dilation_scale_per_source=dilation_scale_per_source, S_avg=S_avg_permica,
+        n_concat=n_concat, m=m)
 
     # initialize W, dilations and shifts
     dilations_permica_c = dilations_permica - np.mean(dilations_permica, axis=0) + 1

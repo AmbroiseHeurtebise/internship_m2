@@ -113,9 +113,10 @@ def permica_processing(
         signs = find_signs_sources(S_list_permica)
         W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
         S_list_permica *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
+    S_avg_permica = np.mean(S_list_permica, axis=0)
     S_list_permica = apply_dilations_shifts_3d(
         S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat)
     if verbose:
         print("Preprocessing done.")
-    return S_list_permica, W_list_permica, dilations_permica, shifts_permica
+    return S_list_permica, W_list_permica, dilations_permica, shifts_permica, S_avg_permica
