@@ -41,8 +41,9 @@ return_all_iterations = True
 # varying params
 nb_seeds = 30
 random_states = np.arange(nb_seeds)
-max_dilation_all = np.linspace(1.03, 1.3, 10)
-max_shift_all = np.linspace(0.01, 0.1, 10)
+eps = 1e-5
+max_dilation_all = np.concatenate([np.array([1+eps]), np.linspace(1.03, 1.3, 10)])
+max_shift_all = np.concatenate([np.array([eps]), np.linspace(0.01, 0.1, 10)])
 max_dilation_max_shift_pairs = list(zip(max_dilation_all, max_shift_all))
 nb_expes = len(max_dilation_all) * len(random_states)
 
@@ -84,7 +85,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_max_dilation_and_max_shift"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_max_dilation_and_max_shift_bis"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
