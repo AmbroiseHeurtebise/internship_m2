@@ -172,3 +172,6 @@ data/results_ica.pkl
 lbfgsb_results/
 
 .coverage
+
+# Cam-CAN data
+tbme/data/**
