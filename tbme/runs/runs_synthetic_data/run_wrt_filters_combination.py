@@ -125,7 +125,7 @@ df_res = pd.DataFrame(dict_res)
 print(df_res)
 
 # save dataframe
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_different_filters_combinations"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
