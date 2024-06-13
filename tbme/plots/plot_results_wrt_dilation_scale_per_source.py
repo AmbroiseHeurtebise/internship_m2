@@ -16,7 +16,8 @@ colors = prop_cycle.by_key()['color']
 
 plt.figure(figsize=(6, 4))
 sns.boxplot(
-    data=df, x="dilation_scale_per_source", y="Amari LBFGSB", linewidth=2.5)
+    data=df, x="dilation_scale_per_source", y="Amari LBFGSB", hue="dilation_scale_per_source",
+    linewidth=2.5, palette=colors[:2], legend=False)
 plt.yscale("log")
 plt.ylabel("Amari distance")
 plt.grid()
@@ -30,13 +31,17 @@ plt.figure(figsize=(12, 4))
 plt.subplots(1, 2)
 plt.subplot(1, 2, 1)
 sns.boxplot(
-    data=df, x="dilation_scale_per_source", y="Dilations error LBFGSB", linewidth=2.5)
+    data=df, x="dilation_scale_per_source", y="Dilations error LBFGSB",
+    hue="dilation_scale_per_source", linewidth=2.5, palette=colors[:2], legend=False)
+plt.yscale("log")
 plt.grid()
 plt.ylabel("")
 plt.title("Dilation error")
 plt.subplot(1, 2, 2)
 sns.boxplot(
-    data=df, x="dilation_scale_per_source", y="Shifts error LBFGSB", linewidth=2.5)
+    data=df, x="dilation_scale_per_source", y="Shifts error LBFGSB",
+    hue="dilation_scale_per_source", linewidth=2.5, palette=colors[:2], legend=False)
+plt.yscale("log")
 plt.grid()
 plt.ylabel("")
 plt.title("Shift error")
