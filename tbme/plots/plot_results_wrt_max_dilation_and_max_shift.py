@@ -60,7 +60,7 @@ ax.set_xticks(xticks)
 ax.set_xticklabels("")
 xticklabels_colors = ["blue", "black", "green"]
 for i, tick in enumerate(xticks):
-    if i % 2 == 0:
+    if i % 2 == 1:
         label_parts = xticklabels[i].split()
         for j, part in enumerate(label_parts):
             ax.text(
