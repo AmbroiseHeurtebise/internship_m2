@@ -124,8 +124,8 @@ def mvica_ds(
         args=(kwargs,),
         bounds=bounds_W_dilations_shifts,
         disp=verbose,
-        factr=1e3,
-        pgtol=1e-5,
+        factr=1e5,
+        pgtol=1e-8,
         maxiter=3000,
         callback=callback,
     )
@@ -136,7 +136,7 @@ def mvica_ds(
     if len(callback.memory_W) == 0:
         raise ValueError(
             "The algorithm immediately stopped before the first iteration. "
-            "Maybe you used W_scale=0, max_dilation=1, or max_shift=0.")
+            "Maybe you used W_scale=0, max_dilation=1, max_shift=0, a too high pgtol, or a too low factr.")
 
     # get parameters of the last iteration
     W_lbfgsb = np.array(callback.memory_W)[-1]
