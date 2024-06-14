@@ -42,7 +42,10 @@ def get_subject_data(subject, task, n_concat=1):
     for i in range(n_concat-1):
         epochs_avg.append(np.mean(epochs_data[i*batch_size: (i+1)*batch_size], axis=0))
     epochs_avg.append(np.mean(epochs_data[(n_concat-1)*batch_size:], axis=0))
-    return np.array(epochs_avg)
+    # ravel
+    epochs_avg = np.array(epochs_avg)  # (n_concat, 102, 701)
+    epochs_avg = epochs_avg.reshape(epochs_avg.shape[1], -1)  # (102, n_concat*701)
+    return epochs_avg
 
 
 # create a dataset of epochs
@@ -111,28 +114,19 @@ def save_data(X, subjects, ages, task, n_concat=1):
     # Save dataset
     dataset_name = f"X_{task}_task_mag_{len(X)}_{n_concat}.npy"
     dataset_path = data_dir + dataset_name
-    if os.path.exists(dataset_path):
-        print("Dataset already exists.")
-    else:
-        np.save(dataset_path, X)
+    np.save(dataset_path, X)
     # Save subjects
     subjects_name = f"subjects_{task}_task_{len(X)}_{n_concat}.npy"
     subjects_path = data_dir + subjects_name
-    if os.path.exists(subjects_path):
-        print("Subjects info already exist.")
-    else:
-        np.save(subjects_path, subjects)
+    np.save(subjects_path, subjects)
     # save ages
     ages_name = f"ages_{task}_task_{len(X)}_{n_concat}.npy"
     ages_path = data_dir + ages_name
-    if os.path.exists(ages_path):
-        print("Ages info already exist.")
-    else:
-        np.save(ages_path, ages)
+    np.save(ages_path, ages)
 
 
 # parameters
-task = "visual"
+task = "auditory"
 n_concat = 3
 n_subjects = None
 N_JOBS = 4
