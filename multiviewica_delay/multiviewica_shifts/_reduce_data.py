@@ -43,7 +43,7 @@ def reduce_data(X, n_components, dimension_reduction):
             )
 
 
-def pca_reduce_data(X, n_components):
+def pca_reduce_data(X, n_components, random_state=None):
     """
     Reduce the number of features in X via group specific PCA
     Parameters
@@ -66,7 +66,8 @@ def pca_reduce_data(X, n_components):
     reduced = []
     basis = []
     for i in range(n_groups):
-        U_i, S_i, V_i = randomized_svd(X[i], n_components=n_components)
+        U_i, S_i, V_i = randomized_svd(
+            X[i], n_components=n_components, random_state=random_state)
         reduced.append(S_i.reshape(-1, 1) * V_i)
         basis.append(U_i.T)
     return np.array(basis), np.array(reduced)
