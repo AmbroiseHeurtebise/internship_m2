@@ -8,7 +8,7 @@ import seaborn as sns
 nb_seeds = 30
 m = 5
 p = 3
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_W_scale_m{m}_p{p}"
 save_path = results_dir + save_name
 df = pd.read_csv(save_path)

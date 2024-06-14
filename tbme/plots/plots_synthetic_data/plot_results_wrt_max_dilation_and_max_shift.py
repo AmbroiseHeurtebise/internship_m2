@@ -25,7 +25,7 @@ class AnyObjectHandler(object):
 
 # read dataframe
 nb_seeds = 30
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_max_dilation_and_max_shift"
 save_path = results_dir + save_name
 df = pd.read_csv(save_path)
