@@ -4,8 +4,9 @@ from ._apply_dilations_shifts import apply_dilations_shifts_3d
 
 
 def penalization(dilations, shifts, max_dilation, max_shift):
-    pen_dilations = jnp.sum(
-        jnp.mean(2 * (dilations - 1) / (max_dilation - 1 / max_dilation), axis=0) ** 2)
+    avg_dilations_minus_1 = jnp.mean(dilations, axis=0) - 1
+    denominator = max_dilation * (avg_dilations_minus_1 >= 0) + 1 / max_dilation * (avg_dilations_minus_1 < 0) - 1
+    pen_dilations = jnp.sum((avg_dilations_minus_1 / denominator) ** 2)
     pen_shifts = jnp.sum(jnp.mean(shifts / (max_shift), axis=0) ** 2)
     return pen_dilations + pen_shifts
 
