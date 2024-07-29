@@ -12,7 +12,7 @@ def run_experiment_wrapped(varying_output, **kwargs):
 
 
 # fixed params
-N_JOBS = 4
+N_JOBS = 8
 m = 5
 p = 3
 n_concat = 5
