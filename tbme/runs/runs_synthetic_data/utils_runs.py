@@ -1,6 +1,7 @@
 import numpy as np
 from picard import amari_distance
 from time import time
+from multiviewica import multiviewica, groupica
 from multiviewica_delay import mvica_s, mvica_ds
 from multiviewica_delay.multiviewica_dilations_shifts import generate_data
 
@@ -58,6 +59,7 @@ def run_experiment(
     verbose=False,
     return_all_iterations=True,
     dict_varying_outputs=None,
+    max_iter=3000,
 ):
     rng = np.random.RandomState(random_state)
 
@@ -94,6 +96,7 @@ def run_experiment(
         number_of_filters_squarenorm_f=number_of_filters_squarenorm_f,
         filter_length_squarenorm_f=filter_length_squarenorm_f,
         use_envelop_term=use_envelop_term,
+        max_iter=max_iter,
         nb_points_grid_init=nb_points_grid_init,
         verbose=verbose,
         return_all_iterations=return_all_iterations,
@@ -115,6 +118,7 @@ def run_experiment(
         shared_delays=False,
         max_delay=int(max_shift*n),
         random_state=random_state,
+        max_iter=max_iter,
         continuous_delays=False,
     )
     time_mvicad = time() - start
@@ -130,10 +134,34 @@ def run_experiment(
         shared_delays=False,
         max_delay=max_delay_samples,
         random_state=random_state,
+        max_iter=max_iter,
         continuous_delays=False,
     )
     time_mvicad_2 = time() - start
     amari_mvicad_2 = np.mean([amari_distance(W, A) for W, A in zip(W_mvicad_2, A_list)])
+
+    # MVICA
+    start = time()
+    _, W_mvica, _ = multiviewica(
+        X_list,
+        init=W_list_permica,
+        max_iter=max_iter,
+        random_state=random_state,
+        tol=1e-3,
+    )
+    time_mvica = time() - start
+    amari_mvica = np.mean([amari_distance(W, A) for W, A in zip(W_mvica, A_list)])
+
+    # GroupICA
+    start = time()
+    _, W_groupica, _ = groupica(
+        X_list,
+        max_iter=max_iter,
+        random_state=random_state,
+        tol=1e-7,
+    )
+    time_groupica = time() - start
+    amari_groupica = np.mean([amari_distance(W, A) for W, A in zip(W_groupica, A_list)])
 
     # Amari distance after permica
     amari_permica = np.mean([amari_distance(W, A) for W, A in zip(W_list_permica, A_list)])
@@ -147,6 +175,10 @@ def run_experiment(
               "Time MVICAD": time_mvicad,
               "Amari MVICAD ext": amari_mvicad_2,
               "Time MVICAD ext": time_mvicad_2,
+              "Amari MVICA": amari_mvica,
+              "Time MVICA": time_mvica,
+              "Amari GroupICA": amari_groupica,
+              "Time GroupICA": time_groupica,
               "Amari permica": amari_permica,
               "random_state": random_state}
     if dict_varying_outputs is not None:
