@@ -12,35 +12,42 @@ save_path = results_dir + save_name
 df = pd.read_csv(save_path)
 
 # plot Amari distance
+fontsize = 12
 prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
-sns.lineplot(
-    data=df, x="m", y="Amari MVICAD", linewidth=2.5,
-    label="MVICAD", estimator=np.median, c=colors[1])
-sns.lineplot(
-    data=df, x="m", y="Amari MVICAD ext", linewidth=2.5,
-    label="MVICAD extended", estimator=np.median, c=colors[2])
+fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
+# sns.lineplot(
+#     data=df, x="m", y="Amari GroupICA", linewidth=2.5,
+#     label="GroupICA", estimator=np.median, c=colors[4])
+# sns.lineplot(
+#     data=df, x="m", y="Amari MVICA", linewidth=2.5,
+#     label="MVICA", estimator=np.median, c=colors[2])
 sns.lineplot(
     data=df, x="m", y="Amari permica", linewidth=2.5,
     label="PermICA", estimator=np.median, c=colors[3])
 sns.lineplot(
+    data=df, x="m", y="Amari MVICAD ext", linewidth=2.5,
+    label="MVICAD", estimator=np.median, c=colors[1])
+sns.lineplot(
     data=df, x="m", y="Amari LBFGSB", linewidth=2.5,
-    label="LBFGSB", estimator=np.median, c=colors[0])
-plt.legend()
+    label="MVICAD$^2$", estimator=np.median, c=colors[0])
+plt.legend(fontsize=fontsize)
 plt.yscale("log")
-plt.xlabel("Number of subjects")
-plt.ylabel("Amari distance")
+plt.xlabel("Number of subjects", fontsize=fontsize)
+plt.ylabel("Median Amari distance", fontsize=fontsize)
 xticks = np.unique(df["m"]).astype(int)
+xticks = xticks[2 * np.arange((len(xticks) + 1) // 2)]
 plt.xticks(xticks)
+ax.tick_params(axis='x', labelsize=fontsize)
+ax.tick_params(axis='y', labelsize=fontsize)
 plt.grid()
-plt.title("Median Amari distance with respect to the number of subjects")
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "amari_distance_wrt_n_subjects.pdf")
 plt.show()
 
 # plot shift and dilation's errors
-plt.figure(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 sns.lineplot(
     data=df, x="m", y="Dilations error LBFGSB", linewidth=2.5,
     label="dilations error", estimator=np.median, linestyle=":",
@@ -50,10 +57,11 @@ sns.lineplot(
     label="shifts error", estimator=np.median, c=colors[0], linestyle="--",
     marker="o")
 plt.yscale("log")
-plt.xlabel("Number of subjects")
-plt.ylabel("Error")
+plt.xlabel("Number of subjects", fontsize=fontsize)
+plt.ylabel("Error", fontsize=fontsize)
 plt.xticks(xticks)
+ax.tick_params(axis='x', labelsize=fontsize)
+ax.tick_params(axis='y', labelsize=fontsize)
 plt.grid()
-plt.title("Dilation and shift errors wrt the number of subjects")
 plt.savefig(figures_dir + "dilation_shift_errors_wrt_n_subjects.pdf")
 plt.show()
