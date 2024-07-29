@@ -32,6 +32,11 @@ def mvica_ds(
     use_envelop_term,
     penalization_scale,
     return_all_iterations,
+    factr=1e5,
+    pgtol=1e-8,
+    max_iter=3000,
+    tol_init=1e-9,
+    max_iter_init=1000,
     nb_points_grid_init=20,
     S_list_true=None,
     n_components=None,
@@ -45,7 +50,7 @@ def mvica_ds(
 
     # initialize W_list, S_list, dilations and shifts with permica
     _, W_list_permica, _, _ = permica(
-        X_list, max_iter=1000, random_state=random_state, tol=1e-9,
+        X_list, max_iter=max_iter_init, random_state=random_state, tol=tol_init,
         optim_delays=False)
     _, W_list_permica, dilations_permica, shifts_permica, S_avg_permica = permica_processing(
         W_list_permica=W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift,
@@ -124,9 +129,9 @@ def mvica_ds(
         args=(kwargs,),
         bounds=bounds_W_dilations_shifts,
         disp=verbose,
-        factr=1e5,
-        pgtol=1e-8,
-        maxiter=3000,
+        factr=factr,
+        pgtol=pgtol,
+        maxiter=max_iter,
         callback=callback,
     )
     if verbose:
