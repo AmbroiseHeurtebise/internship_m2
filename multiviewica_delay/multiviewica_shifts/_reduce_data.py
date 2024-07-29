@@ -6,7 +6,7 @@ from sklearn.utils.extmath import randomized_svd
 from fastsrm.identifiable_srm import IdentifiableFastSRM
 
 
-def reduce_data(X, n_components, dimension_reduction):
+def reduce_data(X, n_components, dimension_reduction, random_state=None):
     """
     Reduce the number of features in X to n_components
 
@@ -34,7 +34,7 @@ def reduce_data(X, n_components, dimension_reduction):
         return None, X
     else:
         if dimension_reduction == "pca":
-            return pca_reduce_data(X, n_components)
+            return pca_reduce_data(X, n_components, random_state)
         elif dimension_reduction == "srm":
             return srm_reduce_data(X, n_components)
         else:
