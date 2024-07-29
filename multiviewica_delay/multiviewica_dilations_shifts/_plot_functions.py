@@ -118,12 +118,23 @@ def plot_sources_3_steps(S_true, S_init, S_lbfgsb, source_number=0):
     plt.show()
 
 
-def plot_amari_across_iters(amari_lbfgsb, amari_rand=None, amari_mvicad=None, amari_mvicad_ext=None):
+def plot_amari_across_iters(
+    amari_lbfgsb,
+    amari_rand=None,
+    amari_mvicad=None,
+    amari_mvicad_ext=None,
+    amari_mvica=None,
+    amari_groupica=None,
+):
     plt.figure(figsize=(8, 6))
     plt.plot(amari_lbfgsb, label="LBFGSB")
     xmin, xmax = plt.xlim()
     if amari_rand is not None:
-        plt.hlines(y=amari_rand, xmin=xmin, xmax=xmax, linestyles='--', colors='k', label="random")
+        plt.hlines(y=amari_rand, xmin=xmin, xmax=xmax, linestyles='dashdot', colors='brown', label="random")
+    if amari_groupica is not None:
+        plt.hlines(y=amari_groupica, xmin=xmin, xmax=xmax, linestyles='--', colors='red', label="GroupICA")
+    if amari_mvica is not None:
+        plt.hlines(y=amari_mvica, xmin=xmin, xmax=xmax, linestyles='--', colors='black', label="MVICA")
     if amari_mvicad is not None:
         plt.hlines(y=amari_mvicad, xmin=xmin, xmax=xmax, linestyles='--', colors='dimgrey', label="MVICAD")
     if amari_mvicad_ext is not None:
