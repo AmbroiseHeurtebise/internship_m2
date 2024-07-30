@@ -54,10 +54,14 @@ X, subjects, ages = load_data(task, n_subjects_data, n_concat)
 print(f"Dataset shape : {X.shape}")
 
 # eventually reduce the number of subjects
-if n_subjects_subgroup is not None:
-    X = X[:n_subjects_subgroup]
-    subjects = subjects[:n_subjects_subgroup]
-    ages = ages[:n_subjects_subgroup]
+if n_subjects_subgroup < n_subjects_data:
+    rng = np.random.RandomState(random_state)
+    indices = rng.choice(
+        np.arange(n_subjects_data), size=n_subjects_subgroup, replace=False)
+    X = X[indices]
+    subjects = subjects[indices]
+    ages = ages[indices]
+print(f"Dataset shape after reducing the number of subjects : {X.shape}")
 
 # apply PCA
 P, X = pca_reduce_data(
