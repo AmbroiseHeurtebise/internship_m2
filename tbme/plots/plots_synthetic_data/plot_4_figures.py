@@ -49,7 +49,7 @@ def plot_figure_amari(
 
 def plot_figure_errors(
     df, x, xlabel, ax, font_properties=None, xscale_log=False, fig=None,
-    change_xticks=None,
+    change_xticks=None, change_yticks=False,
 ):
     sns.lineplot(
         data=df, x=x, y="Dilations error LBFGSB", linewidth=2.5,
@@ -69,6 +69,8 @@ def plot_figure_errors(
         if change_xticks == "half":
             xticks = xticks[2 * np.arange((len(xticks) + 1) // 2)]
         ax.set_xticks(xticks)
+    if change_yticks:
+        ax.set_yticklabels([], minor=True)
     for label in ax.get_xticklabels():
         label.set_fontproperties(font_properties)
     for label in ax.get_yticklabels():
@@ -127,7 +129,7 @@ plt.show()
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 plot_figure_errors(
     df_1, x="m", xlabel="Number of subjects", ax=axes[0, 0], font_properties=font_properties,
-    change_xticks="half")
+    change_xticks="half", change_yticks=True)
 plot_figure_errors(
     df_2, x="p", xlabel="Number of sources", ax=axes[0, 1], font_properties=font_properties)
 plot_figure_errors(

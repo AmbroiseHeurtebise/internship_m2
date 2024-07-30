@@ -5,7 +5,7 @@ import seaborn as sns
 
 
 # read dataframe
-nb_seeds = 20
+nb_seeds = 30
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
 save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_n_subjects"
 save_path = results_dir + save_name
@@ -17,12 +17,12 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
-# sns.lineplot(
-#     data=df, x="m", y="Amari GroupICA", linewidth=2.5,
-#     label="GroupICA", estimator=np.median, c=colors[4])
-# sns.lineplot(
-#     data=df, x="m", y="Amari MVICA", linewidth=2.5,
-#     label="MVICA", estimator=np.median, c=colors[2])
+sns.lineplot(
+    data=df, x="m", y="Amari GroupICA", linewidth=2.5,
+    label="GroupICA", estimator=np.median, c=colors[4])
+sns.lineplot(
+    data=df, x="m", y="Amari MVICA", linewidth=2.5,
+    label="MVICA", estimator=np.median, c=colors[2])
 sns.lineplot(
     data=df, x="m", y="Amari permica", linewidth=2.5,
     label="PermICA", estimator=np.median, c=colors[3])
@@ -62,6 +62,7 @@ plt.ylabel("Error", fontsize=fontsize)
 plt.xticks(xticks)
 ax.tick_params(axis='x', labelsize=fontsize)
 ax.tick_params(axis='y', labelsize=fontsize)
+ax.set_yticklabels([], minor=True)
 plt.grid()
 plt.savefig(figures_dir + "dilation_shift_errors_wrt_n_subjects.pdf")
 plt.show()
