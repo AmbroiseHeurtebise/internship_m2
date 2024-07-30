@@ -12,7 +12,7 @@ def run_experiment_wrapped(varying_output, **kwargs):
 
 
 # fixed params
-N_JOBS = 4
+N_JOBS = 8
 m = 5
 p = 3
 n_concat = 5
@@ -30,7 +30,7 @@ use_envelop_term = True
 number_of_filters_envelop = 1
 filter_length_envelop = 5
 dilation_scale_per_source = True
-penalization_scale = 1e-5
+penalization_scale = 1
 nb_points_grid_init = 10
 verbose = False
 return_all_iterations = True

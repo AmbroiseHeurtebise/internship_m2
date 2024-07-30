@@ -12,7 +12,7 @@ def run_experiment_wrapped(varying_output, **kwargs):
 
 
 # fixed params
-N_JOBS = 4
+N_JOBS = 8
 m = 5
 p = 3
 n_concat = 5
@@ -30,13 +30,13 @@ use_envelop_term = True
 number_of_filters_envelop = 1
 filter_length_envelop = 5
 dilation_scale_per_source = True
-W_scale = 15
+W_scale = 20
 nb_points_grid_init = 10
 verbose = False
 return_all_iterations = True
 
 # varying params
-nb_seeds = 2
+nb_seeds = 30
 random_states = np.arange(nb_seeds)
 penalization_scales = np.logspace(-8, 5, 27)
 nb_expes = len(penalization_scales) * len(random_states)
