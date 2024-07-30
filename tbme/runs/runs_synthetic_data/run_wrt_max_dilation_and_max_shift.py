@@ -32,7 +32,7 @@ use_envelop_term = True
 number_of_filters_envelop = 1
 filter_length_envelop = 5
 dilation_scale_per_source = True
-W_scale = 15
+W_scale = 20
 penalization_scale = 1
 nb_points_grid_init = 10
 verbose = False
@@ -85,7 +85,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_max_dilation_and_max_shift_bis"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_max_dilation_and_max_shift"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
