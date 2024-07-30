@@ -27,6 +27,6 @@ if n_subjects_subgroup is None:
     n_subjects_subgroup = n_subjects_data
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvica/"
 W_save_name = f"W_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
-S_save_name = f"Y_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
+S_save_name = f"S_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 np.save(results_dir + W_save_name, W_mvica)
 np.save(results_dir + S_save_name, S_mvica)
