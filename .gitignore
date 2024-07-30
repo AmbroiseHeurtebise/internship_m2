@@ -175,3 +175,6 @@ lbfgsb_results/
 
 # Cam-CAN data
 tbme/data/**
+
+# Times New Roman font file
+tbme/fonts/**
