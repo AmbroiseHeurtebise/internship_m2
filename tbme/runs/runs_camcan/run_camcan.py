@@ -1,6 +1,6 @@
 import numpy as np
 from multiviewica_delay import mvica_ds
-from utils import load_and_reduce_data
+from utils_camcan import load_and_reduce_data
 
 
 # parameters
@@ -17,7 +17,7 @@ random_state = 42
 X, subjects, ages, n_subjects_data = load_and_reduce_data(
     task, n_concat, n_components_pca, n_subjects_subgroup, random_state)
 
-# MVICA_DS
+# MVICAD^2
 W_list, dilations, shifts, Y_list = mvica_ds(
     X_list=X,
     n_concat=n_concat,
@@ -42,7 +42,7 @@ W_list, dilations, shifts, Y_list = mvica_ds(
 # save data
 if n_subjects_subgroup is None:
     n_subjects_subgroup = n_subjects_data
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvicad2/"
 W_save_name = f"W_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 dilations_save_name = f"dilations_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 shifts_save_name = f"shifts_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
