@@ -37,7 +37,9 @@ for label in ax.get_yticklabels():
 ax.legend_.remove()
 plt.grid()
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
-plt.savefig(figures_dir + "amari_distance_wrt_penalization_scale.pdf", bbox_inches="tight")
+plt.savefig(
+    figures_dir + "amari_distance_wrt_penalization_scale.pdf",
+    bbox_inches="tight")
 plt.show()
 
 # plot shift and dilation's errors
@@ -61,5 +63,7 @@ for label in ax.get_yticklabels():
     label.set_fontproperties(font_properties)
 plt.legend(prop=font_properties)
 plt.grid()
-plt.savefig(figures_dir + "dilation_shift_errors_wrt_penalization_scale.pdf", bbox_inches="tight")
+plt.savefig(
+    figures_dir + "dilation_shift_errors_wrt_penalization_scale.pdf",
+    bbox_inches="tight")
 plt.show()
