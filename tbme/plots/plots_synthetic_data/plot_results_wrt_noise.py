@@ -45,7 +45,7 @@ plt.savefig(figures_dir + "amari_distance_wrt_noise.pdf")
 plt.show()
 
 # plot shift and dilation's errors
-plt.figure(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 sns.lineplot(
     data=df, x="noise_data", y="Dilations error LBFGSB", linewidth=2.5,
     label="dilations error", estimator=np.median, c=colors[0], linestyle=":",
@@ -56,9 +56,10 @@ sns.lineplot(
     marker="o")
 plt.xscale("log")
 plt.yscale("log")
-plt.xlabel("Noise")
-plt.ylabel("Error")
+plt.xlabel("Noise", fontsize=fontsize)
+plt.ylabel("Error", fontsize=fontsize)
+ax.tick_params(axis='x', labelsize=fontsize)
+ax.tick_params(axis='y', labelsize=fontsize)
 plt.grid()
-plt.title("Dilation and shift errors wrt noise")
 plt.savefig(figures_dir + "dilation_shift_errors_wrt_noise.pdf")
 plt.show()
