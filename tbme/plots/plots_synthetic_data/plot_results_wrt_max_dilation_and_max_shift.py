@@ -60,37 +60,50 @@ sns.lineplot(
 # xticks
 max_dilation_all = np.unique(df["max_dilation"])
 max_shift_all = np.unique(df["max_shift"])
-xticks = max_dilation_all.copy()
-xticklabels = []
-for i in range(len(xticks)):
-    xticklabels.append(f"{max_dilation_all[i]} | {max_shift_all[i]}")
-ax.set_xticks(xticks)
-ax.set_xticklabels("")
-xticklabels_colors = ["blue", "black", "green"]
-for i, tick in enumerate(xticks):
-    if i % 2 == 1:
-        label_parts = xticklabels[i].split()
-        for j, part in enumerate(label_parts):
-            ax.text(
-                x=tick+0.013*(j-1), y=3*1e-5, s=part, transform=ax.transData,
-                color=xticklabels_colors[j], fontsize=10, rotation=0, ha="center",
-                font_properties=font_properties)
-# yticklabels
+# xticks = max_dilation_all.copy()
+# xticklabels = []
+# for i in range(len(xticks)):
+#     xticklabels.append(f"{max_dilation_all[i]} | {max_shift_all[i]}")
+# ax.set_xticks(xticks)
+# ax.set_xticklabels("")
+# xticklabels_colors = ["blue", "black", "green"]
+# for i, tick in enumerate(xticks):
+#     if i % 2 == 1:
+#         label_parts = xticklabels[i].split()
+#         for j, part in enumerate(label_parts):
+#             ax.text(
+#                 x=tick+0.013*(j-1), y=3*1e-5, s=part, transform=ax.transData,
+#                 color=xticklabels_colors[j], fontsize=10, rotation=0, ha="center",
+#                 font_properties=font_properties)
+ax.set_xticks(max_dilation_all)
+ax.set_xticklabels([])
+for i in range(len(max_dilation_all)):
+    ax.text(
+        x=max_dilation_all[i], y=2*1e-5,
+        s=f"{max_shift_all[i]:.2f}\n{max_dilation_all[i]:.2f}", ha="center",
+        fontsize=fontsize, font_properties=font_properties)
+ax.text(
+    x=0.96, y=2*1e-5, s="$\\tau_{max}$ :\n$\\rho_{max}$ :", ha="center", fontsize=fontsize,
+    font_properties=font_properties)
+# ticklabels
+for label in ax.get_xticklabels():
+    label.set_fontproperties(font_properties)
 for label in ax.get_yticklabels():
     label.set_fontproperties(font_properties)
 # legend
-leg1 = ax.legend(loc="upper left", prop=font_properties)
-ax.add_artist(leg1)
-obj_0 = AnyObject("1", xticklabels_colors[0])
-obj_1 = AnyObject("2", xticklabels_colors[2])
-ax.legend(
-    [obj_0, obj_1], ["max_dilation", "max_shift"],
-    handler_map={obj_0: AnyObjectHandler(), obj_1: AnyObjectHandler()},
-    bbox_to_anchor=(0.99, -0.08), prop=font_properties)
+# leg1 = ax.legend(loc="upper left", prop=font_properties)
+ax.legend(loc="upper left", prop=font_properties)
+# ax.add_artist(leg1)
+# obj_0 = AnyObject("1", xticklabels_colors[0])
+# obj_1 = AnyObject("2", xticklabels_colors[2])
+# ax.legend(
+#     [obj_0, obj_1], ["max_dilation", "max_shift"],
+#     handler_map={obj_0: AnyObjectHandler(), obj_1: AnyObjectHandler()},
+#     bbox_to_anchor=(0.99, -0.08), prop=font_properties)
 # other features
 plt.yscale("log")
-ax.set_xlabel("Maximum dilation and maximum shift", font_properties=font_properties)
-ax.xaxis.set_label_coords(0.35, -0.165)
+ax.set_xlabel("Maximum shift and maximum dilation", font_properties=font_properties)
+ax.xaxis.set_label_coords(0.5, -0.165)
 ax.set_ylabel("Median Amari distance", font_properties=font_properties)
 plt.grid()
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
