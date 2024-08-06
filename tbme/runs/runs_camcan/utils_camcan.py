@@ -4,7 +4,7 @@ from multiviewica_delay.multiviewica_shifts._reduce_data import pca_reduce_data
 
 
 def load_data(task, n_subjects, n_concat):
-    data_dir = f"/storage/store2/work/aheurteb/mvicad/tbme/data/camcan/{task}/"
+    data_dir = f"/storage/store2/work/aheurteb/mvicad/tbme/data/camcan/{task}/clean_subjects/"
     suffix1 = f"_{task}_task_mag_{n_subjects}_{n_concat}.npy"
     suffix2 = f"_{task}_task_{n_subjects}_{n_concat}.npy"
     # Load dataset
@@ -55,7 +55,7 @@ def load_and_reduce_data(
     if task == "visual":
         n_subjects_data = 477
     elif task == "auditory":
-        n_subjects_data = 501
+        n_subjects_data = 160  # 501
     # load data
     X, subjects, ages = load_data(
         task=task, n_subjects=n_subjects_data, n_concat=n_concat)
