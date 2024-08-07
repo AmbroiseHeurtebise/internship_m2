@@ -4,10 +4,10 @@ from utils_camcan import load_and_reduce_data
 
 
 # parameters
-task = "visual"
-n_concat = 6
-n_components_pca = 5
-n_subjects_subgroup = 50
+task = "auditory"
+n_concat = 1
+n_components_pca = 10
+n_subjects_subgroup = 100
 random_state = 42
 
 # load and reduce data
@@ -22,10 +22,17 @@ _, W_mvica, S_mvica = multiviewica(
     tol=1e-3,
 )
 
+# correct scale and sign
+scale = np.linalg.norm(S_mvica, axis=1)  # shape (p,)
+sign = 2 * ((np.max(S_mvica, axis=1) + np.min(S_mvica, axis=1) > 0) - 0.5)   # shape (p,)
+scale_and_sign = (scale * sign)[:, None]  # shape (p, 1)
+S_mvica /= scale_and_sign
+W_mvica = np.array([W / scale_and_sign for W in W_mvica])
+
 # save data
 if n_subjects_subgroup is None:
     n_subjects_subgroup = n_subjects_data
-results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvica/"
+results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvica/clean_subjects/"
 W_save_name = f"W_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 S_save_name = f"S_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 np.save(results_dir + W_save_name, W_mvica)
