@@ -69,4 +69,4 @@ def load_and_reduce_data(
     P, X = pca_reduce_data(
         X, n_components=n_components_pca, random_state=random_state)
     print(f"Dataset shape after PCA : {X.shape}")
-    return X, subjects, ages, n_subjects_data
+    return X, subjects, ages
