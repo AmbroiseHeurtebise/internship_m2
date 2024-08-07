@@ -14,6 +14,10 @@ random_state = 42
 X, subjects, ages, n_subjects_data = load_and_reduce_data(
     task, n_concat, n_components_pca, n_subjects_subgroup, random_state)
 
+# whitening of X
+X = np.array([x - np.mean(x, axis=1, keepdims=True) for x in X])
+X = np.array([x / np.linalg.norm(x, axis=1, keepdims=True) for x in X])
+
 # MVICA
 _, W_mvica, S_mvica = multiviewica(
     X,
@@ -33,7 +37,6 @@ W_mvica = np.array([W / scale_and_sign for W in W_mvica])
 if n_subjects_subgroup is None:
     n_subjects_subgroup = n_subjects_data
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvica/clean_subjects/"
-W_save_name = f"W_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
-S_save_name = f"S_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
-np.save(results_dir + W_save_name, W_mvica)
-np.save(results_dir + S_save_name, S_mvica)
+suffix = f"_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
+np.save(results_dir + "W" + suffix, W_mvica)
+np.save(results_dir + "S" + suffix, S_mvica)
