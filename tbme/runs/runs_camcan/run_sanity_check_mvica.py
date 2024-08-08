@@ -6,12 +6,12 @@ from utils_camcan import load_and_reduce_data
 # parameters
 task = "auditory"
 n_concat = 1
-n_components_pca = 10
+n_components_pca = 8
 n_subjects_subgroup = 100
 random_state = 42
 
 # load and reduce data
-X, subjects, ages, n_subjects_data = load_and_reduce_data(
+X, subjects, ages = load_and_reduce_data(
     task, n_concat, n_components_pca, n_subjects_subgroup, random_state)
 
 # whitening of X
@@ -35,7 +35,7 @@ W_mvica = np.array([W / scale_and_sign for W in W_mvica])
 
 # save data
 if n_subjects_subgroup is None:
-    n_subjects_subgroup = n_subjects_data
+    n_subjects_subgroup = len(X)
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvica/clean_subjects/"
 suffix = f"_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
 np.save(results_dir + "W" + suffix, W_mvica)
