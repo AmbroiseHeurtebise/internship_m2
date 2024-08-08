@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 from joblib import Parallel, delayed
-from utils_runs import run_experiment
+from utils_synthetic import run_experiment
 
 
 def run_experiment_wrapped(varying_output_row, **kwargs):
