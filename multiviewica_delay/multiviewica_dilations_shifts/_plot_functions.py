@@ -2,9 +2,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_sources_2d(S):
+def plot_sources_2d(S, n_concat=None, onset=None):
+    p, n_total = S.shape
+    if n_concat is None:
+        n_concat = 1
     plt.figure(figsize=(8, 6))
     plt.plot(S.T)
+    if n_concat > 1:
+        n = n_total // n_concat
+        for i in range(1, n_concat):
+            plt.vlines(
+                x=n*i, ymin=np.min(S), ymax=np.max(S), colors="k",
+                linestyles="--")
+    if onset is not None:
+        n = n_total // n_concat
+        assert isinstance(onset, int) and 0 <= onset < n
+        for i in range(n_concat):
+            plt.vlines(
+                x=onset+n*i, ymin=np.min(S), ymax=np.max(S), colors="grey",
+                linestyles="--")
     plt.xlabel("Samples")
     plt.ylabel("Amplitude")
     plt.title("Original sources")
@@ -12,12 +28,17 @@ def plot_sources_2d(S):
     plt.show()
 
 
-def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True, title="true sources S"):
-    m, p, n = S.shape
+def plot_sources_3d(
+    S, dilations=None, shifts=None, axes=None, show=True, title="true sources S",
+    n_concat=None, onset=None,
+):
+    m, p, n_total = S.shape
     if dilations is None:
-        dilations = np.zeros((m, p))
+        dilations = np.ones((m, p))
     if shifts is None:
         shifts = np.zeros((m, p))
+    if n_concat is None:
+        n_concat = 1
 
     if axes is None:
         fig, axes = plt.subplots(m, p, figsize=(10*p, 2*m))
@@ -25,15 +46,30 @@ def plot_sources_3d(S, dilations=None, shifts=None, axes=None, show=True, title=
         fig = axes.flatten()[0].get_figure()
     for i in range(m):
         for j in range(p):
-            axes[i, j].plot(S[i, j], label=f'a={dilations[i, j]:.3f} ; b={shifts[i, j]:.3f}')
+            axes[i, j].plot(
+                S[i, j], label=f'a={dilations[i, j]:.3f} ; b={shifts[i, j]:.3f}')
             axes[i, j].set_ylim([np.min(S), np.max(S)])
             if j == 0:
                 axes[i, j].set_ylabel(f"Subject {i}")
             if i == 1:
                 axes[i, j].set_xlabel(f"Source {j}")
             axes[i, j].legend()
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
+            if n_concat > 1:
+                n = n_total // n_concat
+                for k in range(1, n_concat):
+                    axes[i, j].vlines(
+                        x=n*k, ymin=np.min(S), ymax=np.max(S), colors="k",
+                        linestyles="--")
+            if onset is not None:
+                n = n_total // n_concat
+                assert isinstance(onset, int) and 0 <= onset < n
+                for k in range(n_concat):
+                    axes[i, j].vlines(
+                        x=onset+n*k, ymin=np.min(S), ymax=np.max(S), colors="lightgrey",
+                        linestyles="--")
+
     fig.suptitle(f"{title} ; there are {m} subjects and {p} sources", fontsize=24)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
     if show:
         plt.show()
     return axes
