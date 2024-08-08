@@ -12,6 +12,7 @@ max_dilation = 1.15
 max_shift = 0.05
 W_scale = 200
 random_state = 42
+onset = 200  # sample of the stimulus time
 
 # load and reduce data
 X, _, ages = load_and_reduce_data(
@@ -43,6 +44,7 @@ W_list, dilations, shifts, Y_list = mvica_ds(
     S_list_true=None,
     factr=1e-1,  # instead of 1e5
     pgtol=1e-8,
+    onset=onset,
 )
 
 # correct scale and sign
