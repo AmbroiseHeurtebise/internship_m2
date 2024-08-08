@@ -60,6 +60,7 @@ def run_experiment(
     return_all_iterations=True,
     dict_varying_outputs=None,
     max_iter=3000,
+    onset=0,
 ):
     rng = np.random.RandomState(random_state)
 
@@ -76,6 +77,7 @@ def run_experiment(
         freq_level=freq_level,
         S1_S2_scale=S1_S2_scale,
         rng=rng,
+        onset=onset,
     )
 
     # LBFGSB
@@ -101,6 +103,7 @@ def run_experiment(
         verbose=verbose,
         return_all_iterations=return_all_iterations,
         S_list_true=S_list,
+        onset=onset,
     )
     time_lbfgsb = time() - start
     print("LBFGSB done.")

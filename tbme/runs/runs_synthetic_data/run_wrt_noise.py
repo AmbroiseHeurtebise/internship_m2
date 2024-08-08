@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 from joblib import Parallel, delayed
-from utils_runs import run_experiment
+from utils_synthetic import run_experiment
 
 
 def run_experiment_wrapped(varying_output, **kwargs):
@@ -34,6 +34,7 @@ penalization_scale = 1
 nb_points_grid_init = 10
 verbose = False
 return_all_iterations = True
+onset = 200
 
 # varying params
 nb_seeds = 30
@@ -70,6 +71,7 @@ dict_res = Parallel(n_jobs=N_JOBS)(
         nb_points_grid_init=nb_points_grid_init,
         verbose=verbose,
         return_all_iterations=return_all_iterations,
+        onset=onset,
     ) for noise_data, random_state
     in product(noise_data_all, random_states)
 )
@@ -79,7 +81,7 @@ print(df_res)
 
 # save dataframe
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_synthetic_data/"
-save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_noise"
+save_name = f"DataFrame_with_{nb_seeds}_seeds_wrt_noise_with_onset"
 save_path = results_dir + save_name
 df_res.to_csv(save_path, index=False)
 print("\n################################################ End ################################################")
