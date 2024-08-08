@@ -41,6 +41,7 @@ def loss(
     use_envelop_term,
     n_concat,
     penalization_scale,
+    onset=0,
 ):
     m, p, _ = X_list.shape
     W_list = W_dilations_shifts[:m*p**2].reshape((m, p, p))
@@ -49,7 +50,7 @@ def loss(
     S_list = jnp.array([jnp.dot(W, X) for W, X in zip(W_list, X_list)])
     Y_list = apply_dilations_shifts_3d(
         S_list, dilations=dilations, shifts=shifts, max_dilation=max_dilation,
-        max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
+        max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat, onset=onset)
     # shifts and dilations' penalization term
     loss = penalization_scale * penalization(dilations, shifts, max_dilation, max_shift)
     # envelop fitting term

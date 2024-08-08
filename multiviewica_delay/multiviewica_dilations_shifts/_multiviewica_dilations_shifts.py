@@ -41,6 +41,7 @@ def mvica_ds(
     S_list_true=None,
     n_components=None,
     dimension_reduction="pca",
+    onset=0,
 ):
     # dimensionality reduction
     P_list, X_list = reduce_data(
@@ -54,7 +55,8 @@ def mvica_ds(
         optim_delays=False)
     _, W_list_permica, dilations_permica, shifts_permica, S_avg_permica = permica_processing(
         W_list_permica=W_list_permica, X_list=X_list, max_dilation=max_dilation, max_shift=max_shift,
-        n_concat=n_concat, nb_points_grid=nb_points_grid_init, S_list_true=S_list_true, verbose=verbose)
+        n_concat=n_concat, nb_points_grid=nb_points_grid_init, S_list_true=S_list_true, verbose=verbose,
+        onset=onset)
 
     # shift and dilation scales
     dilation_scale, shift_scale = compute_dilation_shift_scales(
@@ -85,6 +87,7 @@ def mvica_ds(
         "use_envelop_term": use_envelop_term,
         "n_concat": n_concat,
         "penalization_scale": penalization_scale,
+        "onset": onset,
     }
 
     # jit
@@ -93,7 +96,7 @@ def mvica_ds(
         static_argnames=("shift_scale", "max_shift", "max_dilation", "noise_model",
                          "number_of_filters_envelop", "filter_length_envelop",
                          "number_of_filters_squarenorm_f", "filter_length_squarenorm_f",
-                         "use_envelop_term", "n_concat", "penalization_scale"))
+                         "use_envelop_term", "n_concat", "penalization_scale", "onset"))
 
     def wrapper_loss_and_grad(W_dilations_shifts, kwargs):
         val, grad = val_and_grad(W_dilations_shifts, **kwargs)
@@ -152,7 +155,7 @@ def mvica_ds(
     S_list_lbfgsb = jnp.array([jnp.dot(W, X) for W, X in zip(W_lbfgsb, X_list)])
     Y_list_lbfgsb = apply_dilations_shifts_3d(
         S_list_lbfgsb, dilations=dilations_lbfgsb, shifts=shifts_lbfgsb, max_shift=max_shift,
-        max_dilation=max_dilation, shift_before_dilation=False, n_concat=n_concat)
+        max_dilation=max_dilation, shift_before_dilation=False, n_concat=n_concat, onset=onset)
 
     if return_all_iterations:
         return (W_lbfgsb, dilations_lbfgsb, shifts_lbfgsb, Y_list_lbfgsb, callback, W_list_permica, dilations_permica,
