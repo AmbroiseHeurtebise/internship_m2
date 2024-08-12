@@ -5,11 +5,11 @@ from utils_camcan import load_and_reduce_data
 
 # parameters
 task = "auditory"
-n_concat = 3
+n_concat = 2
 n_components_pca = 5
-n_subjects_subgroup = 50  # None if whole dataset
-max_dilation = 1.15
-max_shift = 0.05
+n_subjects_subgroup = 100  # None if whole dataset
+max_dilation = 1.25
+max_shift = 0.03
 W_scale = 200
 random_state = 42
 onset = 200  # sample of the stimulus time
@@ -58,7 +58,7 @@ Y_list /= scale_and_sign
 if n_subjects_subgroup is None:
     n_subjects_subgroup = len(X)
 results_dir = "/storage/store2/work/aheurteb/mvicad/tbme/results/results_camcan/mvicad2/clean_subjects/"
-suffix = f"_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}.npy"
+suffix = f"_{task}_task_{n_subjects_subgroup}_{n_components_pca}_{n_concat}_bis.npy"
 np.save(results_dir + "W" + suffix, W_list)
 np.save(results_dir + "dilations" + suffix, dilations)
 np.save(results_dir + "shifts" + suffix, shifts)
