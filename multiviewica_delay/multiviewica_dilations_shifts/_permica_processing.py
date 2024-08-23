@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+from time import time
 from ._apply_dilations_shifts import (
     apply_dilations_shifts_3d,
     apply_dilations_shifts_1d,
@@ -86,6 +87,7 @@ def permica_processing(
 ):
     if verbose:
         print("\nPreprocess permica data...")
+        start = time()
     S_list_permica = np.array([np.dot(W, X) for W, X in zip(W_list_permica, X_list)])
     m, p, n_total = S_list_permica.shape
     # find order, dilation and shift for each source of each subject
@@ -124,5 +126,5 @@ def permica_processing(
         S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
         max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat, onset=onset)
     if verbose:
-        print("Preprocessing done.")
+        print(f"Preprocessing time : {time() - start}")
     return S_list_permica, W_list_permica, dilations_permica, shifts_permica, S_avg_permica
