@@ -53,7 +53,7 @@ def load_and_reduce_data(
 ):
     # define n_subjects_data
     if task == "visual":
-        n_subjects_data = 477
+        n_subjects_data = 150  # 477
     elif task == "auditory":
         n_subjects_data = 160  # 501
     # load data
