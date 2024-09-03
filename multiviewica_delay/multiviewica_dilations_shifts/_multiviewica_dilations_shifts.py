@@ -42,6 +42,7 @@ def mvica_ds(
     n_components=None,
     dimension_reduction="pca",
     onset=0,
+    use_jit=True,
 ):
     # dimensionality reduction
     P_list, X_list = reduce_data(
@@ -91,23 +92,28 @@ def mvica_ds(
     }
 
     # jit
-    val_and_grad = jax.jit(
-        jax.value_and_grad(loss),
-        static_argnames=("shift_scale", "max_shift", "max_dilation", "noise_model",
-                         "number_of_filters_envelop", "filter_length_envelop",
-                         "number_of_filters_squarenorm_f", "filter_length_squarenorm_f",
-                         "use_envelop_term", "n_concat", "penalization_scale", "onset"))
+    if use_jit:
+        val_and_grad = jax.jit(
+            jax.value_and_grad(loss),
+            static_argnames=(
+                "shift_scale", "max_shift", "max_dilation", "noise_model",
+                "number_of_filters_envelop", "filter_length_envelop",
+                "number_of_filters_squarenorm_f", "filter_length_squarenorm_f",
+                "use_envelop_term", "n_concat", "penalization_scale", "onset"))
+    else:
+        val_and_grad = jax.value_and_grad(loss)
 
     def wrapper_loss_and_grad(W_dilations_shifts, kwargs):
         val, grad = val_and_grad(W_dilations_shifts, **kwargs)
         return val, np.array(grad)
 
-    if verbose:
-        print("Jit...")
-        start = time()
-    wrapper_loss_and_grad(W_dilations_shifts_init, kwargs)
-    if verbose:
-        print(f"Jit time : {time() - start}")
+    if use_jit:
+        if verbose:
+            print("Jit...")
+            start = time()
+        wrapper_loss_and_grad(W_dilations_shifts_init, kwargs)
+        if verbose:
+            print(f"Jit time : {time() - start}")
 
     # bounds
     bounds_W = [(-jnp.inf, jnp.inf)] * (m * p**2)
