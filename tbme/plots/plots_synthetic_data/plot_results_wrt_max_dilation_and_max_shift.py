@@ -32,7 +32,7 @@ save_path = results_dir + save_name
 df = pd.read_csv(save_path)
 
 # get Times New Roman font
-fontsize = 12
+fontsize = 18
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
@@ -41,7 +41,7 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # plot the Amari distance
-fig, ax = plt.subplots(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(6, 3.5))
 sns.lineplot(
     data=df, x="max_dilation", y="Amari GroupICA", linewidth=2.5,
     label="GroupICA", estimator=np.median, c=colors[4])
@@ -60,50 +60,26 @@ sns.lineplot(
 # xticks
 max_dilation_all = np.unique(df["max_dilation"])
 max_shift_all = np.unique(df["max_shift"])
-# xticks = max_dilation_all.copy()
-# xticklabels = []
-# for i in range(len(xticks)):
-#     xticklabels.append(f"{max_dilation_all[i]} | {max_shift_all[i]}")
-# ax.set_xticks(xticks)
-# ax.set_xticklabels("")
-# xticklabels_colors = ["blue", "black", "green"]
-# for i, tick in enumerate(xticks):
-#     if i % 2 == 1:
-#         label_parts = xticklabels[i].split()
-#         for j, part in enumerate(label_parts):
-#             ax.text(
-#                 x=tick+0.013*(j-1), y=3*1e-5, s=part, transform=ax.transData,
-#                 color=xticklabels_colors[j], fontsize=10, rotation=0, ha="center",
-#                 font_properties=font_properties)
 ax.set_xticks(max_dilation_all)
 ax.set_xticklabels([])
+xticklabels_height = 1.2 * 1e-5
 for i in range(len(max_dilation_all)):
     ax.text(
-        x=max_dilation_all[i], y=2*1e-5,
+        x=max_dilation_all[i], y=xticklabels_height,
         s=f"{max_shift_all[i]:.2f}\n{max_dilation_all[i]:.2f}", ha="center",
-        fontsize=fontsize, font_properties=font_properties)
+        fontsize=fontsize, font_properties=FontProperties(fname=font_path, size=fontsize-2))
 ax.text(
-    x=0.96, y=2*1e-5, s="$\\tau_{max}$ :\n$\\rho_{max}$ :", ha="center", fontsize=fontsize,
+    x=0.96, y=xticklabels_height, s="$\\tau_{max}$ :\n$\\rho_{max}$ :", ha="center", fontsize=fontsize,
     font_properties=font_properties)
-# ticklabels
-for label in ax.get_xticklabels():
-    label.set_fontproperties(font_properties)
+# yticklabels
 for label in ax.get_yticklabels():
-    label.set_fontproperties(font_properties)
+    label.set_fontproperties(FontProperties(fname=font_path, size=fontsize-2))
 # legend
-# leg1 = ax.legend(loc="upper left", prop=font_properties)
-ax.legend(loc="upper left", prop=font_properties)
-# ax.add_artist(leg1)
-# obj_0 = AnyObject("1", xticklabels_colors[0])
-# obj_1 = AnyObject("2", xticklabels_colors[2])
-# ax.legend(
-#     [obj_0, obj_1], ["max_dilation", "max_shift"],
-#     handler_map={obj_0: AnyObjectHandler(), obj_1: AnyObjectHandler()},
-#     bbox_to_anchor=(0.99, -0.08), prop=font_properties)
+ax.legend(loc="upper right", prop=font_properties)
 # other features
 plt.yscale("log")
 ax.set_xlabel("Maximum shift and maximum dilation", font_properties=font_properties)
-ax.xaxis.set_label_coords(0.5, -0.165)
+ax.xaxis.set_label_coords(0.5, -0.22)
 ax.set_ylabel("Median Amari distance", font_properties=font_properties)
 plt.grid()
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"

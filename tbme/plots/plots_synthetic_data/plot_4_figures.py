@@ -42,8 +42,8 @@ def plot_figure_amari(
     if fig is not None:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(
-            handles, labels, bbox_to_anchor=(0.5, 1.07), loc="center",
-            ncol=2, borderaxespad=0., prop=font_properties)
+            handles, labels, bbox_to_anchor=(0.5, 0.94), loc="center",
+            ncol=5, borderaxespad=0., prop=font_properties)
     ax.grid()
 
 
@@ -79,7 +79,7 @@ def plot_figure_errors(
     if fig is not None:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(
-            handles, labels, bbox_to_anchor=(0.5, 1.02), loc="center",
+            handles, labels, bbox_to_anchor=(0.5, 0.94), loc="center",
             fontsize=fontsize, ncol=2, borderaxespad=0., prop=font_properties)
     ax.grid()
 
@@ -106,7 +106,7 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # plot Amari distance
-fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+fig, axes = plt.subplots(2, 2, figsize=(12, 7))
 plot_figure_amari(
     df_1, x="m", xlabel="Number of subjects", ax=axes[0, 0], font_properties=font_properties,
     change_xticks="half")
@@ -118,15 +118,18 @@ plot_figure_amari(
 plot_figure_amari(
     df_4, x="noise_data", xlabel="Noise", ax=axes[1, 1], font_properties=font_properties,
     xscale_log=True, fig=fig)
-fig.supylabel("Median Amari distance", fontsize=fontsize, font_properties=font_properties)
-plt.tight_layout(pad=1.5, w_pad=4.0, h_pad=1.5)
+plt.gcf().align_labels()
+label = fig.supylabel("Median Amari distance", fontsize=fontsize, font_properties=font_properties)
+label.set_position((0.05, 0.5))
+# plt.tight_layout(pad=1.5, w_pad=4.0, h_pad=1.5)
+plt.subplots_adjust(wspace=0.3, hspace=0.3)
 
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "amari_distance_4_figures.pdf", bbox_inches="tight")
 plt.show()
 
 # plot shift and dilation's errors
-fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+fig, axes = plt.subplots(2, 2, figsize=(12, 7))
 plot_figure_errors(
     df_1, x="m", xlabel="Number of subjects", ax=axes[0, 0], font_properties=font_properties,
     change_xticks="half", change_yticks=True)
@@ -138,8 +141,11 @@ plot_figure_errors(
 plot_figure_errors(
     df_4, x="noise_data", xlabel="Noise", ax=axes[1, 1], font_properties=font_properties,
     xscale_log=True, fig=fig)
-fig.supylabel("Error", fontsize=fontsize, font_properties=font_properties)
-plt.tight_layout(pad=1.5, w_pad=4.0, h_pad=1.5)
+plt.gcf().align_labels()
+label = fig.supylabel("Error", fontsize=fontsize, font_properties=font_properties)
+label.set_position((0.05, 0.5))
+# plt.tight_layout(pad=1.5, w_pad=4.0, h_pad=1.5)
+plt.subplots_adjust(wspace=0.3, hspace=0.3)
 
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "dilation_shift_errors_4_figures.pdf", bbox_inches="tight")

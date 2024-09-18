@@ -50,21 +50,20 @@ def one_scatter_plot(
     ax.scatter(ages, time_params)
     ax.plot(ages, fitLine, c=colors[1], linewidth=2)
     if sup_ylabel is not None:
-        ylabel_1st_line = sup_ylabel + "\n\n"
-    else:
-        ylabel_1st_line = ""
+        ax.text(
+            x=-0.34, y=0.5, s=sup_ylabel, font_properties=font_properties, rotation=90,
+            va="center", transform=ax.transAxes)
     if dilations_or_shifts == "dilations":
         y_hlines = 100
-        ylabel = f"{ylabel_1st_line}Dilation (%)"
+        ylabel = "Dilation (%)"
     elif dilations_or_shifts == "shifts":
         y_hlines = 0
-        ylabel = f"{ylabel_1st_line}Shift (ms)"
+        ylabel = "Shift (ms)"
     else:
         raise ValueError("dilations_or_shifts must be 'dilations' or 'shifts'")
     xmin, xmax = ax.get_xlim()
     ax.hlines(
-        y=y_hlines, xmin=xmin, xmax=xmax, linestyles=(5, (10, 3)), colors="black",
-        linewidth=3)
+        y=y_hlines, xmin=xmin, xmax=xmax, linestyles=(5, (10, 3)), colors="black")
     ax.set_xlabel("Age (years)", font_properties=font_properties)
     ax.set_ylabel(ylabel, font_properties=font_properties)
     for label in ax.get_xticklabels():
@@ -73,17 +72,18 @@ def one_scatter_plot(
         label.set_fontproperties(font_properties)
     if full_title:
         if dilations_or_shifts == "dilations":
-            title_1st_line = "Dilation\n\n"
+            sup_title = "Dilation"
         else:
-            title_1st_line = "Shift\n\n"
-    else:
-        title_1st_line = ""
+            sup_title = "Shift"
+        ax.text(
+            x=0.5, y=1.2, s=sup_title, font_properties=font_properties,
+            ha="center", transform=ax.transAxes)
     if np.sign(slope) == 1:
         plus_or_minus = "+"
     else:
         plus_or_minus = "-"
     ax.set_title(
-        f"{title_1st_line}R$^2$={r2:.2f} ; m={len(ages)} ; p-value={pvalue:.3f}\n"
+        f"R$^2$={r2:.2f} ; m={len(ages)} ; p-value={pvalue:.3f}\n"
         f"y={intercept:.0f}{plus_or_minus}{np.abs(slope):.2f}x",
         font_properties=font_properties)
 
@@ -152,12 +152,12 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # get Times New Roman font
-fontsize = 16
+fontsize = 20
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
 # 4 scatter plots
-fig, axes = plt.subplots(2, 2, figsize=(9, 9))
+fig, axes = plt.subplots(2, 2, figsize=(12, 12))
 one_scatter_plot(
     ages_aud, shifts_avg_aud, fitLine_shi_aud, slope_shi_aud, intercept_shi_aud,
     r2_shi_aud, pvalue_shi_aud, "shifts", colors, axes[0, 0], sup_ylabel="Auditory",
@@ -174,7 +174,8 @@ one_scatter_plot(
     ages_vis, dilations_avg_vis, fitLine_dil_vis, slope_dil_vis, intercept_dil_vis,
     r2_dil_vis, pvalue_dil_vis, "dilations", colors, axes[1, 1],
     font_properties=font_properties)
-plt.tight_layout()
+# plt.tight_layout()
+plt.subplots_adjust(wspace=0.38, hspace=0.38)
 
 # save figure
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"

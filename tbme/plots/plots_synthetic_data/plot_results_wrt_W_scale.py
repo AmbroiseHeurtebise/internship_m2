@@ -12,7 +12,7 @@ def plot_figure_amari(df, ax, font_properties, xlabel=True):
     plt.xscale("log", base=2)
     plt.yscale("log")
     if xlabel:
-        plt.xlabel("Parameter W_scale", font_properties=font_properties)
+        plt.xlabel("Parameter time_params_scale", font_properties=font_properties)
     else:
         plt.xlabel("")
     plt.ylabel("Median Amari distance", font_properties=font_properties)
@@ -36,7 +36,7 @@ def plot_figure_errors(df, ax, font_properties, xlabel=True):
     plt.xscale("log", base=2)
     plt.yscale("log")
     if xlabel:
-        plt.xlabel("Parameter W_scale", font_properties=font_properties)
+        plt.xlabel("Parameter time_params_scale", font_properties=font_properties)
     else:
         plt.xlabel("")
     plt.ylabel("Error", font_properties=font_properties)
@@ -58,7 +58,7 @@ save_path = results_dir + save_name
 df = pd.read_csv(save_path)
 
 # get Times New Roman font
-fontsize = 16
+fontsize = 18
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
@@ -67,22 +67,22 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # plot Amari distance
-fig, ax = plt.subplots(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(6, 3.5))
 plot_figure_amari(df, ax, font_properties)
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "amari_distance_wrt_W_scale.pdf", bbox_inches="tight")
 
 # plot shift and dilation's errors
-fig, ax = plt.subplots(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(6, 3.5))
 plot_figure_errors(df, ax, font_properties)
 plt.savefig(figures_dir + "dilation_shift_errors_wrt_W_scale.pdf", bbox_inches="tight")
 
 # plot both figures side by side
-fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+fig, axes = plt.subplots(1, 2, figsize=(12, 3.5))
 plt.subplot(1, 2, 1)
 plot_figure_amari(df, axes[0], font_properties, xlabel=False)
 plt.subplot(1, 2, 2)
 plot_figure_errors(df, axes[1], font_properties, xlabel=False)
-fig.supxlabel("Parameter W_scale", fontsize=fontsize, font_properties=font_properties)
+fig.supxlabel("Parameter time_params_scale", fontsize=fontsize, font_properties=font_properties)
 plt.tight_layout(pad=0.5, w_pad=4.0)
 plt.savefig(figures_dir + "both_figures_wrt_W_scale.pdf", bbox_inches="tight")
