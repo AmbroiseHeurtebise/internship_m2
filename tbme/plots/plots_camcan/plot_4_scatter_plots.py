@@ -43,16 +43,12 @@ def find_r2_and_pvalue(dilations, shifts, fitLine_dil, fitLine_shi, ages):
 
 def one_scatter_plot(
     ages, time_params, fitLine, slope, intercept, r2, pvalue, dilations_or_shifts,
-    colors, ax=None, sup_ylabel=None, full_title=False, font_properties=None,
+    colors, ax=None, sup_title=None, font_properties=None,
 ):
     if ax is None:
         _, ax = plt.subplots()
     ax.scatter(ages, time_params)
-    ax.plot(ages, fitLine, c=colors[1], linewidth=2)
-    if sup_ylabel is not None:
-        ax.text(
-            x=-0.34, y=0.5, s=sup_ylabel, font_properties=font_properties, rotation=90,
-            va="center", transform=ax.transAxes)
+    ax.plot(ages, fitLine, c=colors[1], linewidth=3)
     if dilations_or_shifts == "dilations":
         y_hlines = 100
         ylabel = "Dilation (%)"
@@ -63,29 +59,26 @@ def one_scatter_plot(
         raise ValueError("dilations_or_shifts must be 'dilations' or 'shifts'")
     xmin, xmax = ax.get_xlim()
     ax.hlines(
-        y=y_hlines, xmin=xmin, xmax=xmax, linestyles=(5, (10, 3)), colors="black")
+        y=y_hlines, xmin=xmin, xmax=xmax, linestyles=(5, (10, 3)), colors="black",
+        linewidth=3)
     ax.set_xlabel("Age (years)", font_properties=font_properties)
     ax.set_ylabel(ylabel, font_properties=font_properties)
     for label in ax.get_xticklabels():
         label.set_fontproperties(font_properties)
     for label in ax.get_yticklabels():
         label.set_fontproperties(font_properties)
-    if full_title:
-        if dilations_or_shifts == "dilations":
-            sup_title = "Dilation"
-        else:
-            sup_title = "Shift"
+    if sup_title is not None:
         ax.text(
-            x=0.5, y=1.2, s=sup_title, font_properties=font_properties,
+            x=1.17, y=1.4, s=sup_title, font_properties=font_properties,
             ha="center", transform=ax.transAxes)
     if np.sign(slope) == 1:
         plus_or_minus = "+"
     else:
         plus_or_minus = "-"
     ax.set_title(
-        f"R$^2$={r2:.2f} ; m={len(ages)} ; p-value={pvalue:.3f}\n"
-        f"y={intercept:.0f}{plus_or_minus}{np.abs(slope):.2f}x",
-        font_properties=font_properties)
+        f"R$^2$={r2:.2f} ; p-value={pvalue:.3f}\n"
+        f"m={len(ages)} ; y={intercept:.0f}{plus_or_minus}{np.abs(slope):.2f}x",
+        font_properties=font_properties, pad=10)
 
 
 # parameters
@@ -152,30 +145,29 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # get Times New Roman font
-fontsize = 20
+fontsize = 26
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
 # 4 scatter plots
-fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+fig, axes = plt.subplots(1, 4, figsize=(24, 3.3))
 one_scatter_plot(
     ages_aud, shifts_avg_aud, fitLine_shi_aud, slope_shi_aud, intercept_shi_aud,
-    r2_shi_aud, pvalue_shi_aud, "shifts", colors, axes[0, 0], sup_ylabel="Auditory",
-    full_title=True, font_properties=font_properties)
+    r2_shi_aud, pvalue_shi_aud, "shifts", colors, axes[0], sup_title="Auditory",
+    font_properties=font_properties)
 one_scatter_plot(
     ages_aud, dilations_avg_aud, fitLine_dil_aud, slope_dil_aud, intercept_dil_aud,
-    r2_dil_aud, pvalue_dil_aud, "dilations", colors, axes[0, 1], full_title=True,
+    r2_dil_aud, pvalue_dil_aud, "dilations", colors, axes[1], sup_title=None,
     font_properties=font_properties)
 one_scatter_plot(
     ages_vis, shifts_avg_vis, fitLine_shi_vis, slope_shi_vis, intercept_shi_vis,
-    r2_shi_vis, pvalue_shi_vis, "shifts", colors, axes[1, 0], sup_ylabel="Visual",
+    r2_shi_vis, pvalue_shi_vis, "shifts", colors, axes[2], sup_title="Visual",
     font_properties=font_properties)
 one_scatter_plot(
     ages_vis, dilations_avg_vis, fitLine_dil_vis, slope_dil_vis, intercept_dil_vis,
-    r2_dil_vis, pvalue_dil_vis, "dilations", colors, axes[1, 1],
+    r2_dil_vis, pvalue_dil_vis, "dilations", colors, axes[3], sup_title=None,
     font_properties=font_properties)
-# plt.tight_layout()
-plt.subplots_adjust(wspace=0.38, hspace=0.38)
+plt.subplots_adjust(wspace=0.36)
 
 # save figure
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
