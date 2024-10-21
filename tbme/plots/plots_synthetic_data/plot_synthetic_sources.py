@@ -36,15 +36,15 @@ _, _, _, _, _, S = generate_data(
 )
 
 # get Times New Roman font
-fontsize = 18
+fontsize = 26
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
 # plot
-fig, ax = plt.subplots(figsize=(6, 3.5))
+fig, ax = plt.subplots(figsize=(5, 3.3))
 height = 0.25
 for i in range(p):
-    ax.plot(S[i] + height * i)
+    ax.plot(S[i] + height * i, linewidth=2)
     ax.hlines(y=height*i, xmin=0, xmax=n, colors="lightgrey")
 ax.set_yticks([])
 ax.set_yticklabels([])
