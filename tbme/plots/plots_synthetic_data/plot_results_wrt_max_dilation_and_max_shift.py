@@ -32,7 +32,7 @@ save_path = results_dir + save_name
 df = pd.read_csv(save_path)
 
 # get Times New Roman font
-fontsize = 18
+fontsize = 26
 font_path = "/storage/store2/work/aheurteb/mvicad/tbme/fonts/Times_New_Roman.ttf"
 font_properties = FontProperties(fname=font_path, size=fontsize)
 
@@ -41,7 +41,7 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
 
 # plot the Amari distance
-fig, ax = plt.subplots(figsize=(6, 3.5))
+fig, ax = plt.subplots(figsize=(5, 3.3))
 sns.lineplot(
     data=df, x="max_dilation", y="Amari GroupICA", linewidth=2.5,
     label="GroupICA", estimator=np.median, c=colors[4])
@@ -62,25 +62,25 @@ max_dilation_all = np.unique(df["max_dilation"])
 max_shift_all = np.unique(df["max_shift"])
 ax.set_xticks(max_dilation_all)
 ax.set_xticklabels([])
-xticklabels_height = 1.2 * 1e-5
-for i in range(len(max_dilation_all)):
+xticklabels_height = 4 * 1e-6
+for i in np.arange(0, len(max_dilation_all), 2):
     ax.text(
         x=max_dilation_all[i], y=xticklabels_height,
         s=f"{max_shift_all[i]:.2f}\n{max_dilation_all[i]:.2f}", ha="center",
         fontsize=fontsize, font_properties=FontProperties(fname=font_path, size=fontsize-2))
 ax.text(
-    x=0.96, y=xticklabels_height, s="$\\tau_{max}$ :\n$\\rho_{max}$ :", ha="center", fontsize=fontsize,
+    x=0.91, y=xticklabels_height, s="$\\tau_{max}$ :\n$\\rho_{max}$ :", ha="center", fontsize=fontsize,
     font_properties=font_properties)
 # yticklabels
 for label in ax.get_yticklabels():
     label.set_fontproperties(FontProperties(fname=font_path, size=fontsize-2))
 # legend
-ax.legend(loc="upper right", prop=font_properties)
+ax.legend(bbox_to_anchor=(0.98, 1.095), prop=font_properties, handlelength=1.0)
 # other features
 plt.yscale("log")
 ax.set_xlabel("Maximum shift and maximum dilation", font_properties=font_properties)
-ax.xaxis.set_label_coords(0.5, -0.22)
-ax.set_ylabel("Median Amari distance", font_properties=font_properties)
+ax.xaxis.set_label_coords(0.5, -0.36)
+ax.set_ylabel("Median Amari\ndistance", font_properties=font_properties)
 plt.grid()
 figures_dir = "/storage/store2/work/aheurteb/mvicad/tbme/figures/"
 plt.savefig(figures_dir + "amari_distance_wrt_max_dilation_and_max_shift.pdf", bbox_inches="tight")
