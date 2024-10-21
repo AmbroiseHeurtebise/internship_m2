@@ -12,7 +12,7 @@ def plot_figure_amari(df, ax, font_properties, xlabel=True):
     plt.xscale("log", base=2)
     plt.yscale("log")
     if xlabel:
-        plt.xlabel("Parameter time_params_scale", font_properties=font_properties)
+        plt.xlabel(r"Parameter $\Lambda^2$", font_properties=font_properties)
     else:
         plt.xlabel("")
     plt.ylabel("Median Amari distance", font_properties=font_properties)
@@ -36,7 +36,7 @@ def plot_figure_errors(df, ax, font_properties, xlabel=True):
     plt.xscale("log", base=2)
     plt.yscale("log")
     if xlabel:
-        plt.xlabel("Parameter time_params_scale", font_properties=font_properties)
+        plt.xlabel(r"Parameter $\Lambda^2$", font_properties=font_properties)
     else:
         plt.xlabel("")
     plt.ylabel("Error", font_properties=font_properties)
@@ -83,6 +83,6 @@ plt.subplot(1, 2, 1)
 plot_figure_amari(df, axes[0], font_properties, xlabel=False)
 plt.subplot(1, 2, 2)
 plot_figure_errors(df, axes[1], font_properties, xlabel=False)
-fig.supxlabel("Parameter time_params_scale", fontsize=fontsize, font_properties=font_properties)
+fig.supxlabel(r"Parameter $\Lambda^2$", fontsize=fontsize, font_properties=font_properties)
 plt.tight_layout(pad=0.5, w_pad=4.0)
 plt.savefig(figures_dir + "both_figures_wrt_W_scale.pdf", bbox_inches="tight")
