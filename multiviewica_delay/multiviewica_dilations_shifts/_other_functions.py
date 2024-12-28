@@ -28,7 +28,7 @@ def compute_lambda(s, n_concat=1):
 
 
 def compute_dilation_shift_scales(
-    max_dilation, max_shift, W_scale, dilation_scale_per_source, S_list, n_concat
+    max_dilation, max_shift, W_scale, dilation_scale_per_source, S_avg, n_concat, m,
 ):
     if max_shift > 0:
         shift_scale = W_scale / max_shift  # scalar
@@ -37,10 +37,10 @@ def compute_dilation_shift_scales(
     if max_dilation > 1:
         dilation_scale = W_scale / (max_dilation - 1)  # scalar
         if dilation_scale_per_source:
-            lambdas = np.array(
-                [[compute_lambda(s, n_concat=n_concat) for s in S]
-                 for S in S_list])
-            dilation_scale *= lambdas  # (m, p) matrix
+            lambdas = np.array([compute_lambda(s, n_concat=n_concat) for s in S_avg])
+            # lambdas = 1 / lambdas
+            dilation_scale *= lambdas  # vector of length p
+            dilation_scale = np.array([dilation_scale] * m)  # matrix of shape (m, p)
     else:
         dilation_scale = 1.
     return dilation_scale, shift_scale

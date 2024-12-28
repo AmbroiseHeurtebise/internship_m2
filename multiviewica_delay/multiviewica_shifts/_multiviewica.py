@@ -103,8 +103,8 @@ def multiviewica(
         W = init
     # Performs multiview ica
     W, S, loss_total = _multiview_ica_main(
-        X, noise=noise, n_iter=max_iter, tol=tol, init=W, 
-        verbose=verbose, return_loss=return_loss, 
+        X, noise=noise, n_iter=max_iter, tol=tol, init=W,
+        verbose=verbose, return_loss=return_loss,
         return_basis_list=return_basis_list,
     )
     if return_loss or return_basis_list:

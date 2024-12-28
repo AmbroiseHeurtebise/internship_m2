@@ -74,6 +74,7 @@ def generate_data(
     S1_S2_scale=0.6,
     rng=None,
     n_concat=1,
+    onset=0,
 ):
     if n % n_bins != 0:
         print("n_bins should divide n \n")
@@ -102,7 +103,8 @@ def generate_data(
     shifts[1:] = rng.uniform(low=-max_shift, high=max_shift, size=(m-1, p))
     S_list = apply_dilations_shifts_3d(
         S_list, dilations=dilations, shifts=shifts, max_shift=max_shift,
-        max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat)
+        max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat,
+        onset=onset)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, dilations, shifts, S_list, S
 
@@ -157,7 +159,7 @@ def generate_frequencies(n, rng, n_intervals=10):
 def generate_source(n, rng, n_intervals=10):
     s1 = generate_main_pattern(n=n, rng=rng)
     s2 = generate_frequencies(n=n, rng=rng, n_intervals=n_intervals)
-    s = tukey(n) * (s1 + s2)
+    s = tukey(n) * (s1 + s2) / 4
     return s
 
 
@@ -174,6 +176,7 @@ def generate_data_multiple_peaks(
     noise_data=0.01,
     rng=None,
     n_concat=1,
+    onset=0,
 ):
     # shared sources
     S = np.array([generate_sources(p=p, n=n, rng=rng) for _ in range(n_concat)])  # shape (n_concat, p, n)
@@ -190,6 +193,7 @@ def generate_data_multiple_peaks(
     shifts[1:] = rng.uniform(low=-max_shift, high=max_shift, size=(m-1, p))
     S_list = apply_dilations_shifts_3d(
         S_list, dilations=dilations, shifts=shifts, max_shift=max_shift,
-        max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat)
+        max_dilation=max_dilation, shift_before_dilation=True, n_concat=n_concat,
+        onset=onset)
     X_list = np.array([np.dot(A, S) for A, S in zip(A_list, S_list)])
     return X_list, A_list, dilations, shifts, S_list, S

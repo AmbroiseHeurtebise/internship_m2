@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+from time import time
 from ._apply_dilations_shifts import (
     apply_dilations_shifts_3d,
     apply_dilations_shifts_1d,
@@ -7,7 +8,9 @@ from ._apply_dilations_shifts import (
 
 
 # initialize dilations and shifts with a gridsearch after permica
-def grid_search_orders_dilations_shifts(S_list, max_dilation, max_shift, n_concat=1, nb_points_grid=10):
+def grid_search_orders_dilations_shifts(
+    S_list, max_dilation, max_shift, n_concat=1, nb_points_grid=10, onset=0,
+):
     m, p, _ = S_list.shape
     allowed_dilations = np.linspace(1/max_dilation, max_dilation, nb_points_grid)
     allowed_shifts = np.linspace(-max_shift, max_shift, nb_points_grid)
@@ -27,13 +30,16 @@ def grid_search_orders_dilations_shifts(S_list, max_dilation, max_shift, n_conca
             scores = np.zeros((len(grid_d), p))
             for k, (dilation, shift) in enumerate(zip(grid_d, grid_s)):
                 s_delayed = apply_dilations_shifts_1d(
-                    s, dilation, shift, max_dilation, max_shift, False, n_concat)
-                scores[k] = np.minimum(np.mean((S - s_delayed) ** 2, axis=1), np.mean((S + s_delayed) ** 2, axis=1))
+                    s, dilation=dilation, shift=shift, max_dilation=max_dilation, max_shift=max_shift,
+                    shift_before_dilation=False, n_concat=n_concat, onset=onset)
+                scores[k] = np.minimum(
+                    np.mean((S - s_delayed) ** 2, axis=1), np.mean((S + s_delayed) ** 2, axis=1))
             best_scores[j] = np.min(scores, axis=0)
             best_dilation_shift[j] = np.argmin(scores, axis=0)
         _, order = scipy.optimize.linear_sum_assignment(best_scores)
         orders[i] = order
-        best_dilation_shift_idx = np.array([best_dilation_shift[k, order[k]] for k in range(p)]).astype(int)
+        best_dilation_shift_idx = np.array(
+            [best_dilation_shift[k, order[k]] for k in range(p)]).astype(int)
         dilations[i] = np.array([grid_d[idx] for idx in best_dilation_shift_idx])
         shifts[i] = np.array([grid_s[idx] for idx in best_dilation_shift_idx])
     orders = orders.astype(int)
@@ -77,18 +83,20 @@ def permica_processing(
     nb_points_grid=20,
     S_list_true=None,
     verbose=False,
+    onset=0,
 ):
     if verbose:
         print("\nPreprocess permica data...")
+        start = time()
     S_list_permica = np.array([np.dot(W, X) for W, X in zip(W_list_permica, X_list)])
     m, p, n_total = S_list_permica.shape
     # find order, dilation and shift for each source of each subject
     orders_permica, dilations_permica, shifts_permica = grid_search_orders_dilations_shifts(
         S_list_permica, max_dilation=max_dilation, max_shift=max_shift, n_concat=n_concat,
-        nb_points_grid=nb_points_grid)
+        nb_points_grid=nb_points_grid, onset=onset)
     S_list_permica = apply_dilations_shifts_3d(
         S_list_permica, dilations=dilations_permica, shifts=shifts_permica, max_dilation=max_dilation,
-        max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat)
+        max_shift=max_shift, shift_before_dilation=False, n_concat=n_concat, onset=onset)
     W_list_permica = np.array([W_list_permica[i][orders_permica[i]] for i in range(m)])
     S_list_permica = np.array([S_list_permica[i][orders_permica[i]] for i in range(m)])
     dilations_permica = np.array([dilations_permica[i][orders_permica[i]] for i in range(m)])
@@ -113,9 +121,10 @@ def permica_processing(
         signs = find_signs_sources(S_list_permica)
         W_list_permica *= np.repeat(signs, p, axis=1).reshape(m, p, p)
         S_list_permica *= np.repeat(signs, n_total, axis=1).reshape(m, p, n_total)
+    S_avg_permica = np.mean(S_list_permica, axis=0)
     S_list_permica = apply_dilations_shifts_3d(
         S_list_permica, 1/dilations_permica, -shifts_permica, max_dilation=max_dilation,
-        max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat)
+        max_shift=max_shift, shift_before_dilation=True, n_concat=n_concat, onset=onset)
     if verbose:
-        print("Preprocessing done.")
-    return S_list_permica, W_list_permica, dilations_permica, shifts_permica
+        print(f"Preprocessing time : {time() - start}")
+    return S_list_permica, W_list_permica, dilations_permica, shifts_permica, S_avg_permica

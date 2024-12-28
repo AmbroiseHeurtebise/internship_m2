@@ -9,6 +9,7 @@ def interp_mapped(*args):
 
 def apply_dilations_shifts_3d(
     S, dilations, shifts, max_dilation=1., max_shift=0., shift_before_dilation=True, n_concat=1,
+    onset=0,
 ):
     """ Apply dilations and shifts to sources.
     It is suited for jax computations.
@@ -34,6 +35,9 @@ def apply_dilations_shifts_3d(
         n_concat (int, optional)
             Number of concatenations, i.e. number of epochs in the context of M/EEG data.
             Default to 1.
+        onset (int, optional)
+            Onset parameter representing the sample when stimulus occurs.
+            Default to 0.
 
     Returns:
         S_ds (nd.array):
@@ -42,11 +46,12 @@ def apply_dilations_shifts_3d(
     """
     m, p, n_total = S.shape
     n = n_total // n_concat
+    assert isinstance(onset, int) and 0 <= onset < n  # XXX
     S_4d = jnp.moveaxis(jnp.array(jnp.split(S, n_concat, axis=-1)), source=0, destination=2)
     max_delay_time = (1 + max_shift) * max_dilation - 1
     max_delay_samples = np.ceil(max_delay_time * n).astype("int")
-    t_extended = jnp.arange(n+2*max_delay_samples) - max_delay_samples
-    t = jnp.arange(n)
+    t_extended = jnp.arange(n+2*max_delay_samples) - max_delay_samples - onset
+    t = jnp.arange(n) - onset
     T = jnp.array([t] * m * p * n_concat).reshape(S_4d.shape)
     dilations_newaxis = dilations[:, :, jnp.newaxis, jnp.newaxis]
     shifts_newaxis = shifts[:, :, jnp.newaxis, jnp.newaxis] * n
@@ -54,9 +59,9 @@ def apply_dilations_shifts_3d(
         T_ds = (T - shifts_newaxis) * dilations_newaxis
     else:
         T_ds = T * dilations_newaxis - shifts_newaxis
-    T_ds_clipped = jnp.clip(T_ds, -max_delay_samples+1, n+max_delay_samples-2)
+    T_ds_clipped = jnp.clip(T_ds, -max_delay_samples+1-onset, n+max_delay_samples-2-onset)
     T_ref = jnp.rint(T_ds).astype(int)
-    ind = T_ref + max_delay_samples
+    ind = T_ref + max_delay_samples + onset
     # jnp.copysign allows to avoid the case sign==0
     signs = jnp.copysign(1, jnp.sign(T_ds_clipped - T_ref)).astype(int)
     S_extended = jnp.concatenate(
@@ -72,23 +77,25 @@ def apply_dilations_shifts_3d(
 
 
 def apply_dilations_shifts_1d(
-    s, dilation, shift, max_dilation=1., max_shift=0., shift_before_dilation=True, n_concat=1
+    s, dilation, shift, max_dilation=1., max_shift=0., shift_before_dilation=True, n_concat=1,
+    onset=0,
 ):
     assert len(s) % n_concat == 0
     S = np.array(np.split(s, n_concat))
     n = S.shape[1]
+    assert isinstance(onset, int) and 0 <= onset < n
     max_delay_time = (1 + max_shift) * max_dilation - 1
     max_delay_samples = np.ceil(max_delay_time * n).astype("int")
-    t_extended = jnp.arange(n+2*max_delay_samples) - max_delay_samples
-    t = jnp.arange(n)
+    t_extended = jnp.arange(n+2*max_delay_samples) - max_delay_samples - onset
+    t = jnp.arange(n) - onset
     shift *= n
     if shift_before_dilation:
         t_ds = (t - shift) * dilation
     else:
         t_ds = t * dilation - shift
-    t_ds_clipped = np.clip(t_ds, -max_delay_samples+1, n+max_delay_samples-2)
+    t_ds_clipped = np.clip(t_ds, -max_delay_samples+1-onset, n+max_delay_samples-2-onset)
     t_ref = t_ds_clipped.astype(int)
-    ind = (t_ref + max_delay_samples)[np.newaxis, :]
+    ind = (t_ref + max_delay_samples + onset)[np.newaxis, :]
     signs = np.copysign(1, np.sign(t_ds_clipped - t_ref)).astype(int)
     S_extended = np.concatenate([S[:, n-max_delay_samples:], S, S[:, :max_delay_samples]], axis=-1)
     S_extended_ind = np.take_along_axis(S_extended, ind, axis=1)

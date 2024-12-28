@@ -67,11 +67,11 @@ def groupica(
     multiviewica
     """
     P, X = reduce_data(
-        X, n_components=n_components, dimension_reduction=dimension_reduction
-    )
+        X, n_components=n_components, dimension_reduction=dimension_reduction,
+        random_state=random_state)
     n_pb, p, n = X.shape
     X_concat = np.vstack(X)
-    U, S, V = randomized_svd(X_concat, n_components=p)
+    U, S, V = randomized_svd(X_concat, n_components=p, random_state=random_state)
     X_reduced = np.diag(S).dot(V)
     U = np.split(U, n_pb, axis=0)
     K, W, S = picard(
